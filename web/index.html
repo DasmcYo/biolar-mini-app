@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Biolar Organics</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --green:   #3db87a;
+    --green2:  #2ea066;
+    --bg:      #f4f7f4;
+    --card:    #ffffff;
+    --text:    #1a2a1a;
+    --muted:   #7a8f7a;
+    --border:  #e0ece0;
+    --danger:  #e05050;
+    --radius:  14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* NAV */
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 4px 8px;
+    font-size: 11px; color: var(--muted);
+    background: none; border: none; cursor: pointer;
+    transition: color .15s;
+  }
+  .nav-btn .icon { font-size: 22px; margin-bottom: 3px; }
+  .nav-btn.active { color: var(--green); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px; animation: fadeIn .2s; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    color: #fff; border-radius: var(--radius);
+    padding: 20px; margin-bottom: 16px;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header p  { font-size: 14px; opacity: .85; margin-top: 4px; }
+
+  /* CARD */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+  .card-sub   { font-size: 13px; color: var(--muted); }
+
+  /* BUTTON */
+  .btn {
+    display: block; width: 100%; padding: 14px;
+    background: var(--green); color: #fff;
+    border: none; border-radius: var(--radius);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn:active { background: var(--green2); }
+  .btn.secondary {
+    background: none; color: var(--green);
+    border: 2px solid var(--green);
+  }
+  .btn.danger { background: var(--danger); }
+  .btn + .btn { margin-top: 10px; }
+
+  /* QUIZ */
+  .quiz-question { font-size: 18px; font-weight: 700; margin-bottom: 20px; line-height: 1.3; }
+  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+  .quiz-option {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    font-size: 15px; cursor: pointer; text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+  .quiz-option:active, .quiz-option.selected {
+    border-color: var(--green); background: #edf7f0;
+  }
+  .quiz-back {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--muted); font-size: 14px;
+    background: none; border: none; cursor: pointer;
+    margin-bottom: 16px; padding: 0;
+  }
+
+  /* PRODUCT RESULT CARD */
+  .product-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 16px;
+    margin-bottom: 12px;
+  }
+  .product-emoji { font-size: 28px; margin-bottom: 8px; }
+  .product-name  { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .product-tag   { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .product-benefits { list-style: none; margin-bottom: 14px; }
+  .product-benefits li { font-size: 13px; padding: 2px 0; }
+  .product-benefits li::before { content: "✓ "; color: var(--green); font-weight: 700; }
+  .product-links { display: flex; gap: 8px; }
+  .product-links a {
+    flex: 1; padding: 10px; text-align: center; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-decoration: none; color: #fff;
+  }
+  .link-wb   { background: #cb11ab; }
+  .link-ozon { background: #005bff; }
+  .btn-add-tracker {
+    width: 100%; margin-top: 10px; padding: 10px;
+    background: none; border: 2px solid var(--green);
+    border-radius: 10px; color: var(--green);
+    font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-add-tracker.added {
+    background: var(--green); color: #fff; border-color: var(--green);
+  }
+
+  /* TRACKER */
+  .tracker-item {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 14px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+  }
+  .tracker-check {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 2px solid var(--border); background: none;
+    font-size: 18px; cursor: pointer; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .tracker-check.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .tracker-info { flex: 1; }
+  .tracker-name   { font-size: 14px; font-weight: 600; }
+  .tracker-streak { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tracker-del {
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 4px;
+  }
+  .streak-fire { color: #ff6b00; }
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--muted);
+  }
+  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.5; }
+
+  /* REFERRAL */
+  .ref-progress {
+    background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 16px; margin-bottom: 12px;
+  }
+  .ref-count { font-size: 36px; font-weight: 700; color: var(--green); }
+  .ref-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ref-bar-wrap { background: var(--border); border-radius: 99px; height: 8px; margin: 14px 0 8px; overflow: hidden; }
+  .ref-bar { background: var(--green); height: 100%; border-radius: 99px; transition: width .4s; }
+  .ref-next { font-size: 13px; color: var(--muted); }
+  .levels { list-style: none; }
+  .levels li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .levels li:last-child { border: none; }
+  .level-badge {
+    background: #edf7f0; color: var(--green);
+    border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .level-badge.done { background: var(--green); color: #fff; }
+
+  /* GIVEAWAY */
+  .giveaway-hero {
+    background: linear-gradient(135deg, #ff6b00, #ff9f00);
+    color: #fff; border-radius: var(--radius); padding: 24px;
+    text-align: center; margin-bottom: 16px;
+  }
+  .giveaway-hero .big { font-size: 52px; margin-bottom: 8px; }
+  .giveaway-hero h2 { font-size: 20px; font-weight: 700; }
+  .giveaway-hero p  { font-size: 14px; opacity: .9; margin-top: 6px; }
+  .participants-count {
+    font-size: 32px; font-weight: 700; color: var(--green); text-align: center; margin: 12px 0 4px;
+  }
+  .participants-label { text-align: center; font-size: 13px; color: var(--muted); }
+
+  /* SPINNER */
+  .spinner {
+    display: flex; justify-content: center; align-items: center; padding: 40px;
+  }
+  .spinner::after {
+    content: ""; width: 32px; height: 32px;
+    border: 3px solid var(--border); border-top-color: var(--green);
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: #222; color: #fff; padding: 10px 20px;
+    border-radius: 99px; font-size: 14px; z-index: 200;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div id="screen-quiz"     class="screen active"></div>
+<div id="screen-tracker"  class="screen"></div>
+<div id="screen-referral" class="screen"></div>
+<div id="screen-giveaway" class="screen"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">
+    <span class="icon">🌿</span>Квиз
+  </button>
+  <button class="nav-btn" onclick="showScreen('tracker')"  id="nav-tracker">
+    <span class="icon">📅</span>Трекер
+  </button>
+  <button class="nav-btn" onclick="showScreen('referral')" id="nav-referral">
+    <span class="icon">🔗</span>Друзья
+  </button>
+  <button class="nav-btn" onclick="showScreen('giveaway')" id="nav-giveaway">
+    <span class="icon">🎁</span>Розыгрыш
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
+
+const initData = tg.initData || "";
+const user     = tg.initDataUnsafe?.user || {};
+
+// ── Утилиты ───────────────────────────────────────────────────────────────────
+
+function api(method, path, body) {
+  return fetch(path, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      "X-Telegram-Init-Data": initData,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  }).then(r => r.json());
+}
+
+function toast(msg, ms = 2000) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), ms);
+}
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("screen-" + name).classList.add("active");
+  document.getElementById("nav-"    + name).classList.add("active");
+  if (name === "tracker")  loadTracker();
+  if (name === "referral") loadReferral();
+  if (name === "giveaway") loadGiveaway();
+}
+
+// ── Инициализация пользователя ────────────────────────────────────────────────
+
+const urlParams = new URLSearchParams(location.search);
+const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
+
+api("POST", "/api/user/init", { ref }).catch(() => {});
+
+// ── КВИЗ ──────────────────────────────────────────────────────────────────────
+
+let quizGoal   = null;
+let quizDetail = null;
+const addedToTracker = new Set();
+
+async function loadQuiz() {
+  const screen = document.getElementById("screen-quiz");
+  screen.innerHTML = '<div class="spinner"></div>';
+  const q = await api("GET", "/api/quiz/start");
+  renderQuestion(q, null);
+}
+
+function renderQuestion(q, backFn) {
+  const screen = document.getElementById("screen-quiz");
+  const html = `
+    ${backFn ? `<button class="quiz-back" onclick="loadQuiz()">← Начать заново</button>` : ""}
+    <div class="header">
+      <h1>🌿 Biolar Organics</h1>
+      <p>Подбираем добавки под твою цель</p>
+    </div>
+    <div class="quiz-question">${q.text}</div>
+    <div class="quiz-options">
+      ${q.options.map(o => `
+        <button class="quiz-option" onclick="onQuizOption('${q.id}', '${o.id}', this)">
+          ${o.text}
+        </button>`).join("")}
+    </div>`;
+  screen.innerHTML = html;
+}
+
+async function onQuizOption(qid, optId, btn) {
+  document.querySelectorAll(".quiz-option").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+
+  if (qid === "goal") {
+    quizGoal = optId;
+    const follow = await api("POST", "/api/quiz/followup", { goal: optId });
+    if (follow && follow.id) {
+      renderQuestion(follow, true);
+    } else {
+      quizDetail = null;
+      await showQuizResult();
+    }
+  } else {
+    quizDetail = optId;
+    await showQuizResult();
+  }
+}
+
+async function showQuizResult() {
+  const screen = document.getElementById("screen-quiz");
+  screen.innerHTML = '<div class="spinner"></div>';
+  const data = await api("POST", "/api/quiz/result", { goal: quizGoal, detail: quizDetail });
+  const products = data.products || [];
+
+  if (!products.length) {
+    screen.innerHTML = `<div class="empty-state"><div class="big">🤔</div><p>Ничего не нашли — напиши нам напрямую!</p></div>`;
+    return;
+  }
+
+  let html = `
+    <button class="quiz-back" onclick="loadQuiz()">← Пройти заново</button>
+    <div class="header">
+      <h1>Твоя программа готова ✅</h1>
+      <p>Добавь продукты в трекер чтобы не забывать принимать</p>
+    </div>`;
+
+  for (const p of products) {
+    const benefits = (p.benefits || []).map(b => `<li>${b}</li>`).join("");
+    const added = addedToTracker.has(p.id);
+    html += `
+      <div class="product-card">
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-tag">${p.tagline}</div>
+        <ul class="product-benefits">${benefits}</ul>
+        <div class="product-links">
+          <a class="link-wb"   href="${p.wb_url}"   target="_blank">WB</a>
+          <a class="link-ozon" href="${p.ozon_url}" target="_blank">Ozon</a>
+        </div>
+        <button class="btn-add-tracker ${added ? 'added' : ''}"
+                id="add-btn-${p.id}"
+                onclick="addToTracker('${p.id}', '${p.name}')">
+          ${added ? "✓ Добавлено в трекер" : "+ Добавить в трекер"}
+        </button>
+      </div>`;
+  }
+  screen.innerHTML = html;
+}
+
+async function addToTracker(productId, productName) {
+  if (addedToTracker.has(productId)) return;
+  await api("POST", "/api/tracker/add", { product_id: productId });
+  addedToTracker.add(productId);
+  const btn = document.getElementById("add-btn-" + productId);
+  if (btn) { btn.textContent = "✓ Добавлено в трекер"; btn.classList.add("added"); }
+  toast("Добавлено в трекер 🌿");
+}
+
+loadQuiz();
+
+// ── ТРЕКЕР ────────────────────────────────────────────────────────────────────
+
+async function loadTracker() {
+  const screen = document.getElementById("screen-tracker");
+  screen.innerHTML = '<div class="spinner"></div>';
+  const data = await api("GET", "/api/tracker");
+  const products = data.products || [];
+
+  if (!products.length) {
+    screen.innerHTML = `
+      <div class="empty-state">
+        <div class="big">📅</div>
+        <p>Пока ничего нет.<br>Пройди квиз и добавь продукты в трекер.</p>
+      </div>
+      <button class="btn secondary" onclick="showScreen('quiz')">Пройти квиз</button>`;
+    return;
+  }
+
+  const today = new Date().toLocaleDateString("ru", { day: "numeric", month: "long" });
+  let html = `
+    <div class="header">
+      <h1>📅 Трекер</h1>
+      <p>Сегодня, ${today}</p>
+    </div>`;
+
+  for (const p of products) {
+    const fire = p.streak >= 7 ? " 🔥" : p.streak >= 3 ? " ✨" : "";
+    const streakText = p.streak > 0 ? `${p.streak} дн. подряд${fire}` : "Начни сегодня";
+    html += `
+      <div class="tracker-item" id="tracker-${p.product_id}">
+        <button class="tracker-check ${p.taken_today ? 'done' : ''}"
+                onclick="logIntake('${p.product_id}', this)">
+          ${p.taken_today ? "✓" : ""}
+        </button>
+        <div class="tracker-info">
+          <div class="tracker-name">${p.product_name}</div>
+          <div class="tracker-streak">${streakText}</div>
+        </div>
+        <button class="tracker-del" onclick="removeProduct('${p.product_id}')">×</button>
+      </div>`;
+  }
+  screen.innerHTML = html;
+}
+
+async function logIntake(productId, btn) {
+  if (btn.classList.contains("done")) { toast("Уже отмечено на сегодня ✓"); return; }
+  const data = await api("POST", "/api/tracker/log", { product_id: productId });
+  if (data.already_taken) { toast("Уже отмечено на сегодня ✓"); return; }
+
+  btn.classList.add("done");
+  btn.textContent = "✓";
+  const item = btn.closest(".tracker-item");
+  const streakEl = item.querySelector(".tracker-streak");
+  const s = data.streak;
+  const fire = s >= 7 ? " 🔥" : s >= 3 ? " ✨" : "";
+  streakEl.textContent = `${s} дн. подряд${fire}`;
+  if (s > 0 && s % 7 === 0) toast(`${s} дней подряд! 🔥`);
+  else toast("Отмечено ✓");
+}
+
+async function removeProduct(productId) {
+  await api("DELETE", `/api/tracker/${productId}`);
+  const el = document.getElementById("tracker-" + productId);
+  if (el) el.remove();
+  toast("Удалено из трекера");
+}
+
+// ── РЕФЕРАЛКА ─────────────────────────────────────────────────────────────────
+
+async function loadReferral() {
+  const screen = document.getElementById("screen-referral");
+  screen.innerHTML = '<div class="spinner"></div>';
+  const data = await api("GET", "/api/referral");
+
+  const nextCount  = data.next_level?.count  || data.levels[data.levels.length - 1].count;
+  const nextReward = data.next_level?.reward || "Максимальный уровень достигнут! 🎉";
+  const progress   = Math.min((data.ref_count / nextCount) * 100, 100);
+
+  const botUsername = "Biolarapp_bot";
+  const refLink = `https://t.me/${botUsername}?start=ref_${data.ref_code}`;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Подбери добавки под свою цель 🌿")}`;
+
+  const levelsHtml = data.levels.map(l => `
+    <li>
+      <span class="level-badge ${data.ref_count >= l.count ? 'done' : ''}">${l.count} чел.</span>
+      ${l.reward}
+      ${data.ref_count >= l.count ? "✅" : ""}
+    </li>`).join("");
+
+  screen.innerHTML = `
+    <div class="header">
+      <h1>🔗 Приглашай друзей</h1>
+      <p>Получай скидки за каждого приглашённого</p>
+    </div>
+
+    <div class="ref-progress">
+      <div class="ref-count">${data.ref_count}</div>
+      <div class="ref-label">приглашённых друзей</div>
+      <div class="ref-bar-wrap">
+        <div class="ref-bar" style="width:${progress}%"></div>
+      </div>
+      <div class="ref-next">До следующей награды: <strong>${nextReward}</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Уровни наград</div>
+      <ul class="levels">${levelsHtml}</ul>
+    </div>
+
+    <button class="btn" onclick="window.open('${shareUrl}', '_blank')">
+      📤 Поделиться ссылкой
+    </button>
+    <button class="btn secondary" onclick="copyRef('${refLink}')">
+      📋 Скопировать ссылку
+    </button>`;
+}
+
+function copyRef(link) {
+  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована!"));
+}
+
+// ── РОЗЫГРЫШ ──────────────────────────────────────────────────────────────────
+
+async function loadGiveaway() {
+  const screen = document.getElementById("screen-giveaway");
+  screen.innerHTML = '<div class="spinner"></div>';
+  const data = await api("GET", "/api/giveaway");
+
+  const botUsername = "Biolarapp_bot";
+  const refLink = `https://t.me/${botUsername}?start=ref_YOUR_CODE`;
+
+  screen.innerHTML = `
+    <div class="giveaway-hero">
+      <div class="big">🎁</div>
+      <h2>Розыгрыш месяца</h2>
+      <p>Разыгрываем набор продуктов Biolar Organics</p>
+    </div>
+
+    <div class="card">
+      <div class="participants-count">${data.total_participants}</div>
+      <div class="participants-label">участников уже в игре</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Как участвовать</div>
+      <div class="card-sub" style="margin-top:8px;line-height:1.7">
+        ✅ Подпишись на наш Telegram-канал<br>
+        ✅ Нажми кнопку ниже<br>
+        🎯 За каждого приглашённого друга — +1 шанс на победу<br>
+        📅 Итоги подводим в конце месяца
+      </div>
+    </div>
+
+    ${data.participating
+      ? `<div class="card" style="text-align:center;color:var(--green);font-weight:700">
+           ✅ Ты уже участвуешь! Удачи 🍀
+         </div>`
+      : `<button class="btn" onclick="joinGiveaway(this)">🎉 Участвовать в розыгрыше</button>`
+    }`;
+}
+
+async function joinGiveaway(btn) {
+  btn.disabled = true;
+  btn.textContent = "...";
+  const data = await api("POST", "/api/giveaway/join");
+  const count = data.total_participants;
+  btn.closest(".screen").querySelector(".participants-count").textContent = count;
+  btn.replaceWith(Object.assign(document.createElement("div"), {
+    className: "card",
+    style: "text-align:center;color:var(--green);font-weight:700",
+    textContent: "✅ Ты в игре! Удачи 🍀",
+  }));
+  toast("Ты участвуешь в розыгрыше! 🎉");
+}
+</script>
+</body>
+</html>
