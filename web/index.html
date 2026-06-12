@@ -4,103 +4,148 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Biolar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg:      #0d1117;
-    --surface: #161b22;
-    --card:    #21262d;
-    --accent:  #3ecf8e;
-    --adim:    rgba(62,207,142,0.1);
-    --text:    #e6edf3;
-    --muted:   #7d8590;
-    --border:  rgba(240,246,252,0.1);
-    --danger:  #f85149;
-    --radius:  10px;
+    --bg:     #f7f3ed;
+    --bg2:    #ede8df;
+    --card:   #ffffff;
+    --green:  #2c4a2e;
+    --green2: #4a7c59;
+    --gold:   #c4965a;
+    --gold2:  #dab07a;
+    --text:   #1c1c1a;
+    --muted:  #8c8070;
+    --border: rgba(44,74,46,0.1);
+    --radius: 14px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
-    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding-bottom: 68px;
+    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
   }
+
+  .serif { font-family: 'DM Serif Display', Georgia, serif; }
 
   /* ── NAV ── */
   .nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--surface);
+    background: rgba(247,243,237,0.94);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
     display: flex; z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .nav-btn {
-    flex: 1; padding: 12px 4px 10px;
-    font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase;
-    color: var(--muted); background: none; border: none; cursor: pointer;
+    flex: 1; padding: 11px 4px 9px;
+    font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    color: #c0b4a4; background: none; border: none; cursor: pointer;
     transition: color .15s; position: relative;
   }
   .nav-btn::before {
-    content: ""; position: absolute; top: 0; left: 20%; right: 20%; height: 1.5px;
-    background: var(--accent); opacity: 0; transition: opacity .15s;
+    content: ""; position: absolute; top: 0; left: 22%; right: 22%; height: 1.5px;
+    background: linear-gradient(90deg, var(--green), var(--green2));
+    opacity: 0; transition: opacity .2s;
   }
-  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active { color: var(--green); }
   .nav-btn.active::before { opacity: 1; }
 
   /* ── SCREENS ── */
-  .screen { display: none; padding: 20px 16px; animation: fadeIn .18s; }
+  .screen { display: none; padding: 20px 16px; animation: fadeIn .2s; }
   .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; } }
 
   /* ── LABEL ── */
   .label {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.3px;
-    text-transform: uppercase; color: var(--muted); display: block;
+    display: block;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
   }
 
   /* ── BUTTONS ── */
   .btn {
-    display: block; width: 100%; padding: 15px;
-    background: var(--accent); color: #0d1117;
-    border: none; border-radius: var(--radius);
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    letter-spacing: .2px; transition: opacity .15s;
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    color: #f7f3ed; border: none; border-radius: var(--radius);
+    font-size: 14px; font-weight: 700; letter-spacing: .3px;
+    cursor: pointer; transition: opacity .15s, transform .1s;
   }
-  .btn:active { opacity: .8; }
-  .btn.secondary {
-    background: transparent; color: var(--text);
-    border: 1px solid var(--border);
+  .btn:active { opacity: .85; transform: scale(.99); }
+  .btn.outline {
+    background: transparent; color: var(--green);
+    border: 1.5px solid rgba(44,74,46,0.25);
   }
   .btn + .btn { margin-top: 8px; }
 
   /* ── CARD ── */
   .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px; margin-bottom: 10px;
+    box-shadow: 0 2px 12px rgba(44,74,46,0.05);
   }
 
-  /* ── QUIZ ── */
-  .quiz-meta {
+  /* ══════════════════════════════════════════
+     WELCOME
+  ══════════════════════════════════════════ */
+  .welcome-wrap {
+    margin: -20px -16px 0;
+    padding: 52px 28px 44px;
+    min-height: calc(100vh - 68px);
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(160deg, #f7f3ed 0%, #edf2ea 42%, #f5efe4 100%);
+  }
+  .welcome-brand {
+    font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--green2); margin-bottom: 28px;
+  }
+  .welcome-h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 40px; line-height: 1.1; letter-spacing: -.5px;
+    color: var(--text); margin-bottom: 20px;
+  }
+  .welcome-h1 em { font-style: italic; color: var(--green); }
+  .welcome-sub {
+    font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 44px;
+  }
+  .welcome-note {
+    text-align: center; font-size: 10px; letter-spacing: .8px; text-transform: uppercase;
+    color: #c0b4a4; margin-top: 14px;
+  }
+
+  /* ══════════════════════════════════════════
+     QUIZ
+  ══════════════════════════════════════════ */
+  .quiz-head {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .quiz-counter {
-    font-size: 13px; font-weight: 600; color: var(--muted);
-    font-variant-numeric: tabular-nums; letter-spacing: .5px;
+    font-size: 12px; font-weight: 700; letter-spacing: .5px; color: var(--muted);
+    font-variant-numeric: tabular-nums;
   }
   .quiz-prog-wrap {
-    height: 2px; background: var(--border); border-radius: 99px;
-    margin-bottom: 28px; overflow: hidden;
+    height: 2px; border-radius: 99px;
+    background: rgba(196,150,90,0.2); margin-bottom: 32px; overflow: hidden;
   }
   .quiz-prog-bar {
-    height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease;
+    height: 100%; border-radius: 99px;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 100%);
+    transition: width .4s ease;
   }
   .quiz-q {
-    font-size: 22px; font-weight: 700; line-height: 1.25;
-    letter-spacing: -.3px; margin-bottom: 24px;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 26px; line-height: 1.2; letter-spacing: -.2px;
+    color: var(--text); margin-bottom: 24px;
   }
 
   /* Option cards */
@@ -110,39 +155,51 @@
     background: var(--card); border: 1.5px solid var(--border);
     border-radius: var(--radius); padding: 18px 14px;
     font-size: 14px; font-weight: 500; text-align: center;
-    cursor: pointer; color: var(--text); line-height: 1.3;
-    transition: border-color .15s, background .15s, color .15s;
+    cursor: pointer; color: var(--text); line-height: 1.35;
+    transition: all .18s; box-shadow: 0 1px 6px rgba(44,74,46,0.04);
   }
+  .quiz-card:active { transform: scale(.97); }
   .quiz-card.selected {
-    border-color: var(--accent); background: var(--adim); color: var(--accent);
+    background: linear-gradient(135deg, var(--green) 0%, #3d6b4a 100%);
+    border-color: transparent; color: #f7f3ed;
+    box-shadow: 0 4px 16px rgba(44,74,46,0.22);
   }
   .quiz-card.selected::after {
-    content: "✓"; position: absolute; top: 8px; right: 10px;
-    font-size: 10px; color: var(--accent); font-weight: 700;
+    content: "✓"; position: absolute; top: 9px; right: 11px;
+    font-size: 10px; color: rgba(247,243,237,0.65); font-weight: 700;
   }
 
-  /* Multi-select chips */
+  /* Chips */
   .quiz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
   .quiz-chip {
     background: var(--card); border: 1.5px solid var(--border);
     border-radius: 99px; padding: 9px 16px;
     font-size: 13px; font-weight: 500; color: var(--text);
-    cursor: pointer; transition: border-color .15s, background .15s, color .15s;
+    cursor: pointer; transition: all .18s;
+    box-shadow: 0 1px 4px rgba(44,74,46,0.04);
   }
-  .quiz-chip.selected { border-color: var(--accent); background: var(--adim); color: var(--accent); }
+  .quiz-chip.selected {
+    background: linear-gradient(135deg, var(--green), #3d6b4a);
+    border-color: transparent; color: #f7f3ed;
+  }
 
   /* Scale */
   .scale-row { display: flex; gap: 6px; margin-bottom: 24px; }
   .scale-seg {
-    flex: 1; padding: 12px 4px; text-align: center;
+    flex: 1; padding: 13px 4px; text-align: center;
     background: var(--card); border: 1.5px solid var(--border);
     border-radius: var(--radius); cursor: pointer;
-    transition: border-color .15s, background .15s;
+    transition: all .18s; box-shadow: 0 1px 4px rgba(44,74,46,0.04);
   }
-  .scale-seg.selected { border-color: var(--accent); background: var(--adim); }
+  .scale-seg.selected {
+    background: linear-gradient(135deg, var(--green), #3d6b4a);
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(44,74,46,0.2);
+  }
   .scale-num { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
-  .scale-seg.selected .scale-num { color: var(--accent); }
+  .scale-seg.selected .scale-num { color: #f7f3ed; }
   .scale-lbl { font-size: 10px; color: var(--muted); line-height: 1.2; }
+  .scale-seg.selected .scale-lbl { color: rgba(247,243,237,0.7); }
 
   .quiz-back-btn {
     display: inline-flex; align-items: center;
@@ -150,134 +207,193 @@
     color: var(--muted); font-size: 13px; padding: 0; margin-top: 16px;
   }
 
-  /* ── RESULTS ── */
-  .analysis-block {
-    border: 1px solid var(--border); border-left: 2px solid var(--accent);
-    border-radius: var(--radius); padding: 14px 16px;
-    background: var(--adim); margin-bottom: 20px;
+  /* ══════════════════════════════════════════
+     RESULTS
+  ══════════════════════════════════════════ */
+  .results-hero {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 24px 22px; margin-bottom: 20px;
+    box-shadow: 0 8px 28px rgba(44,74,46,0.2);
   }
-  .analysis-list { list-style: none; margin-top: 10px; }
+  .results-hero .label { color: rgba(247,243,237,0.55); margin-bottom: 6px; }
+  .results-hero-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 28px; color: #f7f3ed; line-height: 1.1; letter-spacing: -.3px;
+  }
+
+  .analysis-block {
+    background: linear-gradient(135deg, #eef5ee 0%, #f7f3ed 100%);
+    border: 1px solid rgba(44,74,46,0.1); border-left: 3px solid var(--green);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px;
+  }
+  .analysis-block .label { color: var(--green); margin-bottom: 10px; }
+  .analysis-list { list-style: none; }
   .analysis-list li {
     font-size: 13px; color: var(--text); padding: 3px 0;
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
   }
   .analysis-list li::before {
-    content: ""; display: inline-block; width: 4px; height: 4px;
-    background: var(--accent); border-radius: 50%;
-    flex-shrink: 0; margin-top: 7px;
+    content: ""; display: inline-block; flex-shrink: 0;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--green); margin-top: 8px;
   }
 
   .product-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px; margin-bottom: 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(44,74,46,0.06);
   }
   .product-name { font-size: 16px; font-weight: 700; letter-spacing: -.2px; margin-bottom: 4px; }
-  .product-tag  { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .product-tag  { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
   .product-reason-lbl {
-    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
     color: var(--muted); margin-bottom: 6px;
   }
   .product-reason-txt {
-    font-size: 13px; line-height: 1.55;
-    padding-left: 12px; border-left: 2px solid var(--accent); margin-bottom: 16px;
-    color: var(--text);
+    font-size: 13px; line-height: 1.6; color: var(--text);
+    padding-left: 12px; border-left: 2.5px solid var(--gold);
+    margin-bottom: 16px;
   }
-  .product-benefits { list-style: none; margin-bottom: 16px; }
+  .product-benefits { list-style: none; margin-bottom: 18px; }
   .product-benefits li {
     font-size: 13px; color: var(--muted); padding: 3px 0;
-    display: flex; align-items: flex-start; gap: 10px;
+    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
   }
   .product-benefits li::before {
-    content: ""; display: inline-block; width: 3px; height: 3px;
-    background: var(--muted); border-radius: 50%;
-    flex-shrink: 0; margin-top: 8px;
+    content: ""; display: inline-block; flex-shrink: 0;
+    width: 3px; height: 3px; border-radius: 50%;
+    background: var(--bg2); margin-top: 9px;
   }
   .product-links { display: flex; gap: 8px; margin-bottom: 10px; }
   .product-links a {
-    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
+    flex: 1; padding: 10px; text-align: center; border-radius: 9px;
     font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .3px;
   }
-  .link-wb   { background: rgba(203,17,171,.1);  color: #d060c0; border: 1px solid rgba(203,17,171,.2); }
-  .link-ozon { background: rgba(0,91,255,.1);    color: #6090ff; border: 1px solid rgba(0,91,255,.2); }
-  .btn-tracker {
+  .link-wb   { background: rgba(203,17,171,.08); color: #b050a0; border: 1px solid rgba(203,17,171,.18); }
+  .link-ozon { background: rgba(0,91,255,.07);   color: #4070e0; border: 1px solid rgba(0,91,255,.18); }
+  .btn-course {
     width: 100%; padding: 11px;
-    background: transparent; border: 1px solid var(--border);
-    border-radius: 8px; color: var(--muted);
+    background: transparent; border: 1.5px solid rgba(44,74,46,0.18);
+    border-radius: 9px; color: var(--muted);
     font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .3px;
-    transition: border-color .15s, color .15s;
+    transition: all .18s;
   }
-  .btn-tracker.added { border-color: var(--accent); color: var(--accent); }
+  .btn-course.added {
+    background: linear-gradient(135deg, #eef5ee, #f7f3ed);
+    border-color: var(--green2); color: var(--green);
+  }
 
-  /* ── TRACKER ── */
-  .tracker-item {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px 16px;
-    margin-bottom: 8px; display: flex; align-items: center; gap: 14px;
+  /* ══════════════════════════════════════════
+     КУРС (TRACKER)
+  ══════════════════════════════════════════ */
+  .course-item {
+    background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 10px rgba(44,74,46,0.04);
   }
-  .tracker-check {
-    width: 36px; height: 36px; border-radius: 50%;
+  .course-check {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
     border: 1.5px solid var(--border); background: none;
-    font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0;
+    font-size: 14px; font-weight: 700; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    color: transparent; transition: all .15s;
+    color: transparent; transition: all .2s;
   }
-  .tracker-check.done { background: var(--accent); border-color: var(--accent); color: #0d1117; }
-  .tracker-info { flex: 1; }
-  .tracker-name   { font-size: 14px; font-weight: 600; }
-  .tracker-streak { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: .2px; }
-  .tracker-del {
-    background: none; border: none; color: var(--muted);
-    font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; opacity: .4;
+  .course-check.done {
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    border-color: transparent; color: #f7f3ed;
+    box-shadow: 0 3px 10px rgba(44,74,46,0.2);
   }
-  .tracker-del:active { opacity: 1; }
+  .course-info { flex: 1; }
+  .course-name   { font-size: 14px; font-weight: 600; }
+  .course-streak { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: .1px; }
+  .course-del {
+    background: none; border: none; color: #c0b4a4;
+    font-size: 20px; cursor: pointer; padding: 4px; line-height: 1;
+  }
 
-  /* ── REFERRAL ── */
-  .ref-big { font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 2px; }
-  .ref-bar-wrap {
-    height: 2px; background: var(--border); border-radius: 99px; margin: 14px 0 6px; overflow: hidden;
+  /* ══════════════════════════════════════════
+     REFERRAL
+  ══════════════════════════════════════════ */
+  .stat-card {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 22px 20px; margin-bottom: 16px;
+    box-shadow: 0 8px 28px rgba(44,74,46,0.2);
+    color: #f7f3ed;
   }
-  .ref-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width .5s; }
+  .stat-number {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 56px; line-height: 1; letter-spacing: -2px;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(247,243,237,0.6); }
+  .stat-prog-wrap {
+    height: 2px; background: rgba(247,243,237,0.2); border-radius: 99px;
+    margin: 14px 0 6px; overflow: hidden;
+  }
+  .stat-prog-bar { height: 100%; background: rgba(247,243,237,0.7); border-radius: 99px; transition: width .5s; }
+  .stat-next { font-size: 12px; color: rgba(247,243,237,0.7); }
+
   .levels { list-style: none; }
   .levels li {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 0; border-bottom: 1px solid var(--border);
-    font-size: 13px;
+    padding: 13px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px; color: var(--text);
   }
   .levels li:last-child { border: none; }
   .level-badge {
-    font-size: 11px; font-weight: 700; color: var(--muted);
-    border: 1px solid var(--border); border-radius: 6px;
-    padding: 3px 8px; white-space: nowrap; min-width: 52px; text-align: center;
+    font-size: 10px; font-weight: 700; letter-spacing: .5px;
+    color: var(--muted); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px; white-space: nowrap;
+    min-width: 54px; text-align: center;
   }
-  .level-badge.done { border-color: var(--accent); color: var(--accent); }
+  .level-badge.done { border-color: var(--green2); color: var(--green); }
   .ref-link-box {
-    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-    padding: 12px 14px; font-size: 12px; color: var(--muted);
-    word-break: break-all; line-height: 1.6; margin-bottom: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 13px 16px; font-size: 12px; color: var(--muted);
+    word-break: break-all; line-height: 1.6;
+    box-shadow: 0 1px 6px rgba(44,74,46,0.04);
   }
 
-  /* ── GIVEAWAY ── */
-  .give-count { font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 2px; }
+  /* ══════════════════════════════════════════
+     КЛУБ (GIVEAWAY)
+  ══════════════════════════════════════════ */
+  .club-hero {
+    background: linear-gradient(135deg, #c4965a 0%, #dab07a 50%, #c4965a 100%);
+    border-radius: 18px; padding: 28px 22px; margin-bottom: 16px;
+    text-align: center; color: #1c1c1a;
+    box-shadow: 0 8px 28px rgba(196,150,90,0.3);
+  }
+  .club-hero-count {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 64px; line-height: 1; letter-spacing: -3px; margin-bottom: 4px;
+  }
+  .club-hero-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(28,28,26,0.6);
+  }
 
-  /* ── EMPTY ── */
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty p { font-size: 14px; line-height: 1.7; }
+  /* ══════════════════════════════════════════
+     MISC
+  ══════════════════════════════════════════ */
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty p { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
-  /* ── SPINNER ── */
   .spinner { display: flex; justify-content: center; padding: 60px; }
   .spinner::after {
     content: ""; width: 24px; height: 24px;
-    border: 2px solid var(--border); border-top-color: var(--accent);
+    border: 2px solid rgba(44,74,46,0.12); border-top-color: var(--green);
     border-radius: 50%; animation: spin .7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── TOAST ── */
   .toast {
     position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
-    background: var(--card); color: var(--text);
-    border: 1px solid var(--border);
-    padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 500;
+    background: var(--text); color: #f7f3ed;
+    padding: 10px 22px; border-radius: 99px;
+    font-size: 13px; font-weight: 500; letter-spacing: .1px;
     z-index: 200; opacity: 0; pointer-events: none;
     transition: opacity .2s; white-space: nowrap;
   }
@@ -292,10 +408,10 @@
 <div id="screen-giveaway" class="screen"></div>
 
 <nav class="nav">
-  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">Квиз</button>
-  <button class="nav-btn"        onclick="showScreen('tracker')"  id="nav-tracker">Трекер</button>
+  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">Анализ</button>
+  <button class="nav-btn"        onclick="showScreen('tracker')"  id="nav-tracker">Курс</button>
   <button class="nav-btn"        onclick="showScreen('referral')" id="nav-referral">Друзья</button>
-  <button class="nav-btn"        onclick="showScreen('giveaway')" id="nav-giveaway">Розыгрыш</button>
+  <button class="nav-btn"        onclick="showScreen('giveaway')" id="nav-giveaway">Клуб</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -339,7 +455,7 @@ const urlParams = new URLSearchParams(location.search);
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
 api("POST", "/api/user/init", { ref }).catch(() => {});
 
-// ── QUIZ ───────────────────────────────────────────────────────────────────
+// ── АНАЛИЗ (QUIZ) ──────────────────────────────────────────────────────────
 
 const QUIZ_BASE_STEPS = [
   {
@@ -425,22 +541,20 @@ function getActiveSteps() {
 }
 
 function renderWelcome() {
-  const name = user.first_name ? `, ${user.first_name}` : "";
+  const name = user.first_name ? `, <em>${user.first_name}</em>` : "";
   document.getElementById("screen-quiz").innerHTML = `
-    <div style="min-height:calc(100vh - 90px);display:flex;flex-direction:column;justify-content:center">
-      <span class="label" style="margin-bottom:24px">Biolar Organics</span>
-      <div style="font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.15;margin-bottom:16px">
-        Привет${name}.<br>Ты уверен,<br>что пьёшь то,<br>что нужно<br>именно тебе?
-      </div>
-      <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:40px">
-        Большинство берут добавки наугад.<br>
-        Ответь на несколько вопросов — подберём<br>
-        программу точно под твой организм.
-      </div>
-      <button class="btn" onclick="renderQuiz()">Начать подбор</button>
-      <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:12px;letter-spacing:.5px">
-        2 МИНУТЫ · БЕСПЛАТНО
-      </div>
+    <div class="welcome-wrap">
+      <div class="welcome-brand">Biolar Organics</div>
+      <h1 class="welcome-h1 serif">
+        Узнай, что нужно<br>именно тебе${name}.
+      </h1>
+      <p class="welcome-sub">
+        Персональный анализ нутриентов<br>
+        на основе твоего образа жизни и целей.<br>
+        Без воды — только то, что работает.
+      </p>
+      <button class="btn" onclick="renderQuiz()">Начать анализ</button>
+      <div class="welcome-note">3 минуты · бесплатно</div>
     </div>
   `;
 }
@@ -453,8 +567,6 @@ function renderQuiz() {
   const total   = quizActiveSteps.length;
   const current = quizStepIdx + 1;
   const pct     = Math.round((quizStepIdx / total) * 100);
-  const cStr    = String(current).padStart(2, "0");
-  const tStr    = String(total).padStart(2, "0");
 
   let body = "";
 
@@ -491,9 +603,9 @@ function renderQuiz() {
     : `<button class="quiz-back-btn" onclick="renderWelcome()">← На главную</button>`;
 
   document.getElementById("screen-quiz").innerHTML = `
-    <div class="quiz-meta">
-      <span class="label">Шаг</span>
-      <span class="quiz-counter">${cStr} / ${tStr}</span>
+    <div class="quiz-head">
+      <span class="label">Анализ</span>
+      <span class="quiz-counter">${String(current).padStart(2,"0")} / ${String(total).padStart(2,"0")}</span>
     </div>
     <div class="quiz-prog-wrap">
       <div class="quiz-prog-bar" style="width:${pct}%"></div>
@@ -562,8 +674,8 @@ async function showSmartResults() {
 
   const analysisHtml = analysis.length ? `
     <div class="analysis-block">
-      <span class="label" style="color:var(--accent)">Что мы выявили</span>
-      <ul class="analysis-list">${analysis.map(a => `<li>${a}</li>`).join("")}</ul>
+      <span class="label" style="color:var(--green);margin-bottom:10px">Что мы выявили</span>
+      <ul class="analysis-list" style="margin-top:10px">${analysis.map(a => `<li>${a}</li>`).join("")}</ul>
     </div>` : "";
 
   const productsHtml = products.map(p => {
@@ -580,22 +692,22 @@ async function showSmartResults() {
           <a class="link-wb"   href="${p.wb_url}"   target="_blank">Wildberries</a>
           <a class="link-ozon" href="${p.ozon_url}" target="_blank">Ozon</a>
         </div>
-        <button class="btn-tracker ${added ? 'added' : ''}"
+        <button class="btn-course ${added ? 'added' : ''}"
                 id="add-btn-${p.id}"
                 onclick="addToTracker('${p.id}')">
-          ${added ? "Добавлено в трекер" : "+ Добавить в трекер"}
+          ${added ? "Добавлено в курс" : "+ Добавить в курс"}
         </button>
       </div>`;
   }).join("");
 
   screen.innerHTML = `
-    <div style="margin-bottom:24px">
-      <span class="label" style="margin-bottom:6px">Твоя программа</span>
-      <div style="font-size:24px;font-weight:800;letter-spacing:-.3px;margin-top:4px">Персональный подбор</div>
+    <div class="results-hero">
+      <span class="label">Персональный анализ</span>
+      <div class="results-hero-title">Твоя программа<br>готова.</div>
     </div>
     ${analysisHtml}
     ${productsHtml}
-    <button class="btn secondary" onclick="restartQuiz()" style="margin-top:8px">Пройти заново</button>
+    <button class="btn outline" onclick="restartQuiz()" style="margin-top:8px">Пройти анализ заново</button>
   `;
 }
 
@@ -604,8 +716,8 @@ async function addToTracker(productId) {
   await api("POST", "/api/tracker/add", { product_id: productId });
   addedToTracker.add(productId);
   const btn = document.getElementById("add-btn-" + productId);
-  if (btn) { btn.textContent = "Добавлено в трекер"; btn.classList.add("added"); }
-  toast("Добавлено в трекер");
+  if (btn) { btn.textContent = "Добавлено в курс"; btn.classList.add("added"); }
+  toast("Добавлено в курс");
 }
 
 function restartQuiz() {
@@ -617,7 +729,7 @@ function restartQuiz() {
 
 renderWelcome();
 
-// ── TRACKER ────────────────────────────────────────────────────────────────
+// ── КУРС (TRACKER) ─────────────────────────────────────────────────────────
 
 async function loadTracker() {
   const screen = document.getElementById("screen-tracker");
@@ -627,33 +739,36 @@ async function loadTracker() {
 
   if (!products.length) {
     screen.innerHTML = `
-      <span class="label" style="margin-bottom:20px">Трекер</span>
-      <div class="empty">
-        <p>Пока ничего нет.<br>Пройди квиз и добавь продукты.</p>
+      <div style="margin-bottom:24px">
+        <span class="label" style="margin-bottom:6px">Твой курс</span>
+        <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Курс пуст</div>
       </div>
-      <button class="btn secondary" onclick="showScreen('quiz')">Пройти квиз</button>`;
+      <div class="empty"><p>Пройди анализ и добавь<br>продукты в свой курс.</p></div>
+      <button class="btn" onclick="showScreen('quiz')">Пройти анализ</button>`;
     return;
   }
 
   const today = new Date().toLocaleDateString("ru", { day: "numeric", month: "long" });
   let html = `
-    <span class="label" style="margin-bottom:4px">Трекер</span>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">${today}</div>`;
+    <div style="margin-bottom:24px">
+      <span class="label" style="margin-bottom:6px">Твой курс</span>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">${today}</div>
+    </div>`;
 
   for (const p of products) {
     const s = p.streak;
-    const streakTxt = s > 0 ? `${s} ${s === 1 ? 'день' : 'дней'} подряд` : "Начни сегодня";
+    const streakTxt = s > 0 ? `${s} ${s === 1 ? 'день' : s < 5 ? 'дня' : 'дней'} в курсе` : "Начни сегодня";
     html += `
-      <div class="tracker-item" id="tracker-${p.product_id}">
-        <button class="tracker-check ${p.taken_today ? 'done' : ''}"
+      <div class="course-item" id="tracker-${p.product_id}">
+        <button class="course-check ${p.taken_today ? 'done' : ''}"
                 onclick="logIntake('${p.product_id}', this)">
           ${p.taken_today ? "✓" : ""}
         </button>
-        <div class="tracker-info">
-          <div class="tracker-name">${p.product_name}</div>
-          <div class="tracker-streak">${streakTxt}</div>
+        <div class="course-info">
+          <div class="course-name">${p.product_name}</div>
+          <div class="course-streak">${streakTxt}</div>
         </div>
-        <button class="tracker-del" onclick="removeProduct('${p.product_id}')">×</button>
+        <button class="course-del" onclick="removeProduct('${p.product_id}')">×</button>
       </div>`;
   }
   screen.innerHTML = html;
@@ -665,8 +780,8 @@ async function logIntake(productId, btn) {
   if (data.already_taken) { toast("Уже отмечено сегодня"); return; }
   btn.classList.add("done"); btn.textContent = "✓";
   const s = data.streak;
-  btn.closest(".tracker-item").querySelector(".tracker-streak").textContent =
-    `${s} ${s === 1 ? 'день' : 'дней'} подряд`;
+  btn.closest(".course-item").querySelector(".course-streak").textContent =
+    `${s} ${s === 1 ? 'день' : s < 5 ? 'дня' : 'дней'} в курсе`;
   toast("Отмечено");
 }
 
@@ -674,10 +789,10 @@ async function removeProduct(productId) {
   await api("DELETE", `/api/tracker/${productId}`);
   const el = document.getElementById("tracker-" + productId);
   if (el) el.remove();
-  toast("Удалено");
+  toast("Удалено из курса");
 }
 
-// ── REFERRAL ───────────────────────────────────────────────────────────────
+// ── ДРУЗЬЯ (REFERRAL) ──────────────────────────────────────────────────────
 
 async function loadReferral() {
   const screen = document.getElementById("screen-referral");
@@ -689,38 +804,40 @@ async function loadReferral() {
   const progress   = Math.min((data.ref_count / nextCount) * 100, 100);
   const botUsername = "Biolarapp_bot";
   const refLink  = `https://t.me/${botUsername}?start=ref_${data.ref_code}`;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Подбери добавки под свою цель")}`;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Пройди персональный анализ нутриентов")}`;
 
   const levelsHtml = data.levels.map(l => `
     <li>
       <span class="level-badge ${data.ref_count >= l.count ? 'done' : ''}">${l.count} чел.</span>
-      <span style="flex:1;color:var(--text)">${l.reward}</span>
-      ${data.ref_count >= l.count ? `<span style="color:var(--accent);font-size:12px;font-weight:700">✓</span>` : ""}
+      <span style="flex:1">${l.reward}</span>
+      ${data.ref_count >= l.count ? `<span style="color:var(--green);font-weight:700;font-size:13px">✓</span>` : ""}
     </li>`).join("");
 
   screen.innerHTML = `
-    <span class="label" style="margin-bottom:4px">Приглашай друзей</span>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Получай скидки за каждого</div>
-
-    <div class="card" style="margin-bottom:20px">
-      <div class="ref-big">${data.ref_count}</div>
-      <span class="label">Приглашённых</span>
-      <div class="ref-bar-wrap">
-        <div class="ref-bar" style="width:${progress}%"></div>
-      </div>
-      <div style="font-size:12px;color:var(--muted)">До следующей: ${nextReward}</div>
+    <div style="margin-bottom:20px">
+      <span class="label" style="margin-bottom:6px">Приглашай друзей</span>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Получай награды</div>
     </div>
 
-    <div class="card" style="margin-bottom:20px">
-      <span class="label" style="margin-bottom:12px">Уровни наград</span>
-      <ul class="levels" style="margin-top:12px">${levelsHtml}</ul>
+    <div class="stat-card">
+      <div class="stat-number">${data.ref_count}</div>
+      <div class="stat-label">Приглашённых</div>
+      <div class="stat-prog-wrap">
+        <div class="stat-prog-bar" style="width:${progress}%"></div>
+      </div>
+      <div class="stat-next">До следующей: ${nextReward}</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <span class="label" style="margin-bottom:14px">Уровни наград</span>
+      <ul class="levels" style="margin-top:14px">${levelsHtml}</ul>
     </div>
 
     <span class="label" style="margin-bottom:8px">Твоя ссылка</span>
-    <div class="ref-link-box" style="margin-top:8px">${refLink}</div>
+    <div class="ref-link-box" style="margin-top:8px;margin-bottom:12px">${refLink}</div>
 
-    <button class="btn" onclick="window.open('${shareUrl}', '_blank')" style="margin-top:4px">Поделиться</button>
-    <button class="btn secondary" onclick="copyRef('${refLink}')">Скопировать ссылку</button>
+    <button class="btn" onclick="window.open('${shareUrl}', '_blank')">Поделиться</button>
+    <button class="btn outline" onclick="copyRef('${refLink}')">Скопировать ссылку</button>
   `;
 }
 
@@ -728,7 +845,7 @@ function copyRef(link) {
   navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована"));
 }
 
-// ── GIVEAWAY ───────────────────────────────────────────────────────────────
+// ── КЛУБ (GIVEAWAY) ────────────────────────────────────────────────────────
 
 async function loadGiveaway() {
   const screen = document.getElementById("screen-giveaway");
@@ -736,17 +853,19 @@ async function loadGiveaway() {
   const data = await api("GET", "/api/giveaway");
 
   screen.innerHTML = `
-    <span class="label" style="margin-bottom:4px">Розыгрыш</span>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Каждый месяц разыгрываем набор продуктов</div>
-
-    <div class="card" style="margin-bottom:20px">
-      <div class="give-count">${data.total_participants}</div>
-      <span class="label">Участников</span>
+    <div style="margin-bottom:20px">
+      <span class="label" style="margin-bottom:6px">Клуб</span>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Розыгрыш месяца</div>
     </div>
 
-    <div class="card" style="margin-bottom:20px">
-      <span class="label" style="margin-bottom:12px">Как участвовать</span>
-      <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:2">
+    <div class="club-hero">
+      <div class="club-hero-count">${data.total_participants}</div>
+      <div class="club-hero-label">участников</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <span class="label" style="margin-bottom:14px">Как участвовать</span>
+      <div style="margin-top:14px;font-size:13px;color:var(--muted);line-height:2.1">
         Подпишись на Telegram-канал<br>
         Нажми кнопку участия<br>
         За каждого приглашённого — дополнительный шанс<br>
@@ -755,7 +874,10 @@ async function loadGiveaway() {
     </div>
 
     ${data.participating
-      ? `<div class="card" style="text-align:center;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.2px">Ты участвуешь. Удачи.</div>`
+      ? `<div class="card" style="text-align:center">
+           <div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div>
+           <div style="font-size:13px;color:var(--muted);margin-top:4px">Удачи.</div>
+         </div>`
       : `<button class="btn" onclick="joinGiveaway(this)">Участвовать</button>`
     }
   `;
@@ -764,12 +886,12 @@ async function loadGiveaway() {
 async function joinGiveaway(btn) {
   btn.disabled = true; btn.textContent = "...";
   const data = await api("POST", "/api/giveaway/join");
-  btn.closest(".screen").querySelector(".give-count").textContent = data.total_participants;
-  btn.replaceWith(Object.assign(document.createElement("div"), {
-    className: "card",
-    style: "text-align:center;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.2px",
-    textContent: "Ты участвуешь. Удачи.",
-  }));
+  btn.closest(".screen").querySelector(".club-hero-count").textContent = data.total_participants;
+  const el = document.createElement("div");
+  el.className = "card";
+  el.style.textAlign = "center";
+  el.innerHTML = `<div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Удачи.</div>`;
+  btn.replaceWith(el);
   toast("Ты в розыгрыше");
 }
 </script>
