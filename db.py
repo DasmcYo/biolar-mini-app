@@ -42,6 +42,17 @@ async def init_db():
                 joined_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(user_id)
             );
+
+            CREATE TABLE IF NOT EXISTS wellness_logs (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id  INTEGER NOT NULL,
+                date     TEXT NOT NULL,
+                energy   INTEGER NOT NULL,
+                sleep_q  INTEGER NOT NULL,
+                mood     INTEGER NOT NULL,
+                UNIQUE(user_id, date),
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
         """)
         await db.commit()
 
@@ -193,3 +204,60 @@ async def get_referral_count(ref_code: str) -> int:
             "SELECT COUNT(*) FROM users WHERE referred_by = ?", (ref_code,)
         ) as cur:
             return (await cur.fetchone())[0]
+
+
+async def log_wellness(user_id: int, date: str, energy: int, sleep_q: int, mood: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT INTO wellness_logs (user_id, date, energy, sleep_q, mood) VALUES (?,?,?,?,?)
+               ON CONFLICT(user_id, date) DO UPDATE SET energy=excluded.energy,
+               sleep_q=excluded.sleep_q, mood=excluded.mood""",
+            (user_id, date, energy, sleep_q, mood),
+        )
+        await db.commit()
+
+
+async def get_wellness_today(user_id: int, date: str) -> dict | None:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT energy, sleep_q, mood FROM wellness_logs WHERE user_id=? AND date=?",
+            (user_id, date),
+        ) as cur:
+            row = await cur.fetchone()
+            return dict(row) if row else None
+
+
+async def get_wellness_history(user_id: int, days: int = 14) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT date, energy, sleep_q, mood FROM wellness_logs WHERE user_id=? ORDER BY date DESC LIMIT ?",
+            (user_id, days),
+        ) as cur:
+            return [dict(r) for r in await cur.fetchall()]
+
+
+async def get_course_days(user_id: int) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT COUNT(DISTINCT logged_at) FROM tracker_logs WHERE user_id=?",
+            (user_id,),
+        ) as cur:
+            return (await cur.fetchone())[0]
+
+
+async def get_global_streak(user_id: int) -> int:
+    from datetime import date, timedelta
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT DISTINCT logged_at FROM tracker_logs WHERE user_id=? ORDER BY logged_at DESC",
+            (user_id,),
+        ) as cur:
+            dates = {r[0] for r in await cur.fetchall()}
+    streak = 0
+    day = date.today()
+    while day.isoformat() in dates:
+        streak += 1
+        day -= __import__("datetime").timedelta(days=1)
+    return streak

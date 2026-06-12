@@ -11,7 +11,6 @@
 <style>
   :root {
     --bg:     #f7f3ed;
-    --bg2:    #ede8df;
     --card:   #ffffff;
     --green:  #2c4a2e;
     --green2: #4a7c59;
@@ -32,8 +31,6 @@
     min-height: 100vh;
     padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
   }
-
-  .serif { font-family: 'DM Serif Display', Georgia, serif; }
 
   /* ── NAV ── */
   .nav {
@@ -59,327 +56,40 @@
   .nav-btn.active::before { opacity: 1; }
 
   /* ── SCREENS ── */
-  .screen { display: none; padding: 20px 16px; animation: fadeIn .2s; }
+  .screen { display: none; padding: 20px 16px; animation: fadeIn .18s; }
   .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
-  /* ── LABEL ── */
+  /* ── PRIMITIVES ── */
   .label {
-    display: block;
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--muted);
+    display: block; font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted);
   }
+  .serif { font-family: 'DM Serif Display', Georgia, serif; }
 
-  /* ── BUTTONS ── */
   .btn {
-    display: block; width: 100%; padding: 16px;
+    display: block; width: 100%; padding: 15px;
     background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
     color: #f7f3ed; border: none; border-radius: var(--radius);
     font-size: 14px; font-weight: 700; letter-spacing: .3px;
     cursor: pointer; transition: opacity .15s, transform .1s;
   }
-  .btn:active { opacity: .85; transform: scale(.99); }
+  .btn:active { opacity: .82; transform: scale(.99); }
   .btn.outline {
     background: transparent; color: var(--green);
-    border: 1.5px solid rgba(44,74,46,0.25);
+    border: 1.5px solid rgba(44,74,46,0.22);
+  }
+  .btn.gold-btn {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 100%);
+    color: #1c1c1a;
   }
   .btn + .btn { margin-top: 8px; }
 
-  /* ── CARD ── */
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px; margin-bottom: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 10px;
     box-shadow: 0 2px 12px rgba(44,74,46,0.05);
   }
-
-  /* ══════════════════════════════════════════
-     WELCOME
-  ══════════════════════════════════════════ */
-  .welcome-wrap {
-    margin: -20px -16px 0;
-    padding: 52px 28px 44px;
-    min-height: calc(100vh - 68px);
-    display: flex; flex-direction: column; justify-content: center;
-    background: linear-gradient(160deg, #f7f3ed 0%, #edf2ea 42%, #f5efe4 100%);
-  }
-  .welcome-brand {
-    font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
-    color: var(--green2); margin-bottom: 28px;
-  }
-  .welcome-h1 {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 40px; line-height: 1.1; letter-spacing: -.5px;
-    color: var(--text); margin-bottom: 20px;
-  }
-  .welcome-h1 em { font-style: italic; color: var(--green); }
-  .welcome-sub {
-    font-size: 15px; color: var(--muted); line-height: 1.75; margin-bottom: 44px;
-  }
-  .welcome-note {
-    text-align: center; font-size: 10px; letter-spacing: .8px; text-transform: uppercase;
-    color: #c0b4a4; margin-top: 14px;
-  }
-
-  /* ══════════════════════════════════════════
-     QUIZ
-  ══════════════════════════════════════════ */
-  .quiz-head {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .quiz-counter {
-    font-size: 12px; font-weight: 700; letter-spacing: .5px; color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-  .quiz-prog-wrap {
-    height: 2px; border-radius: 99px;
-    background: rgba(196,150,90,0.2); margin-bottom: 32px; overflow: hidden;
-  }
-  .quiz-prog-bar {
-    height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, var(--gold) 0%, var(--gold2) 100%);
-    transition: width .4s ease;
-  }
-  .quiz-q {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 26px; line-height: 1.2; letter-spacing: -.2px;
-    color: var(--text); margin-bottom: 24px;
-  }
-
-  /* Option cards */
-  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-  .quiz-card {
-    position: relative;
-    background: var(--card); border: 1.5px solid var(--border);
-    border-radius: var(--radius); padding: 18px 14px;
-    font-size: 14px; font-weight: 500; text-align: center;
-    cursor: pointer; color: var(--text); line-height: 1.35;
-    transition: all .18s; box-shadow: 0 1px 6px rgba(44,74,46,0.04);
-  }
-  .quiz-card:active { transform: scale(.97); }
-  .quiz-card.selected {
-    background: linear-gradient(135deg, var(--green) 0%, #3d6b4a 100%);
-    border-color: transparent; color: #f7f3ed;
-    box-shadow: 0 4px 16px rgba(44,74,46,0.22);
-  }
-  .quiz-card.selected::after {
-    content: "✓"; position: absolute; top: 9px; right: 11px;
-    font-size: 10px; color: rgba(247,243,237,0.65); font-weight: 700;
-  }
-
-  /* Chips */
-  .quiz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
-  .quiz-chip {
-    background: var(--card); border: 1.5px solid var(--border);
-    border-radius: 99px; padding: 9px 16px;
-    font-size: 13px; font-weight: 500; color: var(--text);
-    cursor: pointer; transition: all .18s;
-    box-shadow: 0 1px 4px rgba(44,74,46,0.04);
-  }
-  .quiz-chip.selected {
-    background: linear-gradient(135deg, var(--green), #3d6b4a);
-    border-color: transparent; color: #f7f3ed;
-  }
-
-  /* Scale */
-  .scale-row { display: flex; gap: 6px; margin-bottom: 24px; }
-  .scale-seg {
-    flex: 1; padding: 13px 4px; text-align: center;
-    background: var(--card); border: 1.5px solid var(--border);
-    border-radius: var(--radius); cursor: pointer;
-    transition: all .18s; box-shadow: 0 1px 4px rgba(44,74,46,0.04);
-  }
-  .scale-seg.selected {
-    background: linear-gradient(135deg, var(--green), #3d6b4a);
-    border-color: transparent;
-    box-shadow: 0 4px 14px rgba(44,74,46,0.2);
-  }
-  .scale-num { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
-  .scale-seg.selected .scale-num { color: #f7f3ed; }
-  .scale-lbl { font-size: 10px; color: var(--muted); line-height: 1.2; }
-  .scale-seg.selected .scale-lbl { color: rgba(247,243,237,0.7); }
-
-  .quiz-back-btn {
-    display: inline-flex; align-items: center;
-    background: none; border: none; cursor: pointer;
-    color: var(--muted); font-size: 13px; padding: 0; margin-top: 16px;
-  }
-
-  /* ══════════════════════════════════════════
-     RESULTS
-  ══════════════════════════════════════════ */
-  .results-hero {
-    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
-    border-radius: 18px; padding: 24px 22px; margin-bottom: 20px;
-    box-shadow: 0 8px 28px rgba(44,74,46,0.2);
-  }
-  .results-hero .label { color: rgba(247,243,237,0.55); margin-bottom: 6px; }
-  .results-hero-title {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 28px; color: #f7f3ed; line-height: 1.1; letter-spacing: -.3px;
-  }
-
-  .analysis-block {
-    background: linear-gradient(135deg, #eef5ee 0%, #f7f3ed 100%);
-    border: 1px solid rgba(44,74,46,0.1); border-left: 3px solid var(--green);
-    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px;
-  }
-  .analysis-block .label { color: var(--green); margin-bottom: 10px; }
-  .analysis-list { list-style: none; }
-  .analysis-list li {
-    font-size: 13px; color: var(--text); padding: 3px 0;
-    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
-  }
-  .analysis-list li::before {
-    content: ""; display: inline-block; flex-shrink: 0;
-    width: 4px; height: 4px; border-radius: 50%;
-    background: var(--green); margin-top: 8px;
-  }
-
-  .product-card {
-    background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);
-    border: 1px solid var(--border); border-radius: 16px;
-    padding: 20px; margin-bottom: 12px;
-    box-shadow: 0 4px 20px rgba(44,74,46,0.06);
-  }
-  .product-name { font-size: 16px; font-weight: 700; letter-spacing: -.2px; margin-bottom: 4px; }
-  .product-tag  { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
-  .product-reason-lbl {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 6px;
-  }
-  .product-reason-txt {
-    font-size: 13px; line-height: 1.6; color: var(--text);
-    padding-left: 12px; border-left: 2.5px solid var(--gold);
-    margin-bottom: 16px;
-  }
-  .product-benefits { list-style: none; margin-bottom: 18px; }
-  .product-benefits li {
-    font-size: 13px; color: var(--muted); padding: 3px 0;
-    display: flex; align-items: flex-start; gap: 10px; line-height: 1.5;
-  }
-  .product-benefits li::before {
-    content: ""; display: inline-block; flex-shrink: 0;
-    width: 3px; height: 3px; border-radius: 50%;
-    background: var(--bg2); margin-top: 9px;
-  }
-  .product-links { display: flex; gap: 8px; margin-bottom: 10px; }
-  .product-links a {
-    flex: 1; padding: 10px; text-align: center; border-radius: 9px;
-    font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .3px;
-  }
-  .link-wb   { background: rgba(203,17,171,.08); color: #b050a0; border: 1px solid rgba(203,17,171,.18); }
-  .link-ozon { background: rgba(0,91,255,.07);   color: #4070e0; border: 1px solid rgba(0,91,255,.18); }
-  .btn-course {
-    width: 100%; padding: 11px;
-    background: transparent; border: 1.5px solid rgba(44,74,46,0.18);
-    border-radius: 9px; color: var(--muted);
-    font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .3px;
-    transition: all .18s;
-  }
-  .btn-course.added {
-    background: linear-gradient(135deg, #eef5ee, #f7f3ed);
-    border-color: var(--green2); color: var(--green);
-  }
-
-  /* ══════════════════════════════════════════
-     КУРС (TRACKER)
-  ══════════════════════════════════════════ */
-  .course-item {
-    background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);
-    border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 14px;
-    box-shadow: 0 2px 10px rgba(44,74,46,0.04);
-  }
-  .course-check {
-    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
-    border: 1.5px solid var(--border); background: none;
-    font-size: 14px; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    color: transparent; transition: all .2s;
-  }
-  .course-check.done {
-    background: linear-gradient(135deg, var(--green), var(--green2));
-    border-color: transparent; color: #f7f3ed;
-    box-shadow: 0 3px 10px rgba(44,74,46,0.2);
-  }
-  .course-info { flex: 1; }
-  .course-name   { font-size: 14px; font-weight: 600; }
-  .course-streak { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: .1px; }
-  .course-del {
-    background: none; border: none; color: #c0b4a4;
-    font-size: 20px; cursor: pointer; padding: 4px; line-height: 1;
-  }
-
-  /* ══════════════════════════════════════════
-     REFERRAL
-  ══════════════════════════════════════════ */
-  .stat-card {
-    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
-    border-radius: 18px; padding: 22px 20px; margin-bottom: 16px;
-    box-shadow: 0 8px 28px rgba(44,74,46,0.2);
-    color: #f7f3ed;
-  }
-  .stat-number {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 56px; line-height: 1; letter-spacing: -2px;
-    margin-bottom: 4px;
-  }
-  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(247,243,237,0.6); }
-  .stat-prog-wrap {
-    height: 2px; background: rgba(247,243,237,0.2); border-radius: 99px;
-    margin: 14px 0 6px; overflow: hidden;
-  }
-  .stat-prog-bar { height: 100%; background: rgba(247,243,237,0.7); border-radius: 99px; transition: width .5s; }
-  .stat-next { font-size: 12px; color: rgba(247,243,237,0.7); }
-
-  .levels { list-style: none; }
-  .levels li {
-    display: flex; align-items: center; gap: 12px;
-    padding: 13px 0; border-bottom: 1px solid var(--border);
-    font-size: 13px; color: var(--text);
-  }
-  .levels li:last-child { border: none; }
-  .level-badge {
-    font-size: 10px; font-weight: 700; letter-spacing: .5px;
-    color: var(--muted); border: 1px solid var(--border);
-    border-radius: 6px; padding: 3px 8px; white-space: nowrap;
-    min-width: 54px; text-align: center;
-  }
-  .level-badge.done { border-color: var(--green2); color: var(--green); }
-  .ref-link-box {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 13px 16px; font-size: 12px; color: var(--muted);
-    word-break: break-all; line-height: 1.6;
-    box-shadow: 0 1px 6px rgba(44,74,46,0.04);
-  }
-
-  /* ══════════════════════════════════════════
-     КЛУБ (GIVEAWAY)
-  ══════════════════════════════════════════ */
-  .club-hero {
-    background: linear-gradient(135deg, #c4965a 0%, #dab07a 50%, #c4965a 100%);
-    border-radius: 18px; padding: 28px 22px; margin-bottom: 16px;
-    text-align: center; color: #1c1c1a;
-    box-shadow: 0 8px 28px rgba(196,150,90,0.3);
-  }
-  .club-hero-count {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 64px; line-height: 1; letter-spacing: -3px; margin-bottom: 4px;
-  }
-  .club-hero-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(28,28,26,0.6);
-  }
-
-  /* ══════════════════════════════════════════
-     MISC
-  ══════════════════════════════════════════ */
-  .empty { text-align: center; padding: 60px 20px; }
-  .empty p { font-size: 14px; color: var(--muted); line-height: 1.7; }
 
   .spinner { display: flex; justify-content: center; padding: 60px; }
   .spinner::after {
@@ -393,25 +103,383 @@
     position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
     background: var(--text); color: #f7f3ed;
     padding: 10px 22px; border-radius: 99px;
-    font-size: 13px; font-weight: 500; letter-spacing: .1px;
+    font-size: 13px; font-weight: 500;
     z-index: 200; opacity: 0; pointer-events: none;
     transition: opacity .2s; white-space: nowrap;
   }
   .toast.show { opacity: 1; }
+
+  /* ══ ГЛАВНАЯ ════════════════════════════════════════════════════════════════ */
+
+  .home-greeting { margin-bottom: 20px; }
+  .home-greeting .label { margin-bottom: 6px; }
+  .home-greeting-name {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 28px; letter-spacing: -.3px; line-height: 1.1;
+  }
+
+  .streak-card {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 20px 22px; margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 6px 24px rgba(44,74,46,0.18);
+  }
+  .streak-card-left .label { color: rgba(247,243,237,0.55); margin-bottom: 4px; }
+  .streak-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 48px; color: #f7f3ed; line-height: 1; letter-spacing: -2px;
+  }
+  .streak-sub { font-size: 12px; color: rgba(247,243,237,0.65); margin-top: 2px; }
+  .streak-card-right {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  }
+  .stat-pill {
+    background: rgba(247,243,237,0.15); border-radius: 99px;
+    padding: 5px 12px; font-size: 11px; color: rgba(247,243,237,0.8);
+    font-weight: 600; letter-spacing: .3px;
+  }
+
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-head .label { color: var(--muted); }
+  .section-link {
+    font-size: 11px; font-weight: 700; color: var(--green);
+    letter-spacing: .3px; background: none; border: none; cursor: pointer; padding: 0;
+  }
+
+  /* Мини-курс на главной */
+  .mini-task {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 8px;
+    box-shadow: 0 1px 6px rgba(44,74,46,0.04);
+  }
+  .mini-check {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    border: 1.5px solid var(--border); background: none;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent; transition: all .2s;
+  }
+  .mini-check.done {
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    border-color: transparent; color: #f7f3ed;
+  }
+  .mini-task-name { font-size: 13px; font-weight: 600; flex: 1; }
+
+  /* Wellness виджет на главной */
+  .wellness-widget {
+    background: linear-gradient(135deg, #fdf9f4 0%, #f0f5ef 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 10px;
+  }
+  .wellness-scores { display: flex; gap: 12px; margin-top: 12px; }
+  .ws-item { flex: 1; text-align: center; }
+  .ws-val {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 28px; line-height: 1; margin-bottom: 4px;
+  }
+  .ws-val.energy { color: #e8a020; }
+  .ws-val.sleep  { color: var(--green2); }
+  .ws-val.mood   { color: var(--gold); }
+  .ws-label { font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+
+  /* Контент-карточки */
+  .content-card {
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 8px;
+    box-shadow: 0 1px 8px rgba(44,74,46,0.04);
+    cursor: pointer;
+  }
+  .content-tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--green2); margin-bottom: 8px; }
+  .content-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .content-preview { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .content-body { font-size: 13px; color: var(--text); line-height: 1.7; margin-top: 10px; display: none; }
+  .content-body.open { display: block; }
+  .content-toggle {
+    font-size: 11px; font-weight: 700; color: var(--green);
+    background: none; border: none; cursor: pointer;
+    margin-top: 10px; padding: 0; letter-spacing: .3px;
+  }
+
+  /* ══ ПРОГРАММА ══════════════════════════════════════════════════════════════ */
+
+  /* 30-day progress */
+  .course-banner {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+    border-radius: 18px; padding: 20px 22px; margin-bottom: 16px;
+    box-shadow: 0 6px 24px rgba(196,150,90,0.25);
+    color: #1c1c1a;
+  }
+  .course-banner .label { color: rgba(28,28,26,0.55); margin-bottom: 4px; }
+  .course-day-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 48px; line-height: 1; letter-spacing: -2px; margin-bottom: 8px;
+  }
+  .course-prog-wrap { height: 4px; background: rgba(28,28,26,0.15); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
+  .course-prog-bar  { height: 100%; background: rgba(28,28,26,0.55); border-radius: 99px; transition: width .5s; }
+  .course-prog-sub  { font-size: 11px; color: rgba(28,28,26,0.55); font-weight: 600; letter-spacing: .3px; }
+
+  /* Quiz inside program */
+  .quiz-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .quiz-counter { font-size: 12px; font-weight: 700; letter-spacing: .5px; color: var(--muted); }
+  .quiz-prog-wrap { height: 2px; background: rgba(196,150,90,0.2); border-radius: 99px; margin-bottom: 32px; overflow: hidden; }
+  .quiz-prog-bar  { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold2)); border-radius: 99px; transition: width .4s; }
+  .quiz-q {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 26px; line-height: 1.2; letter-spacing: -.2px; margin-bottom: 24px;
+  }
+  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .quiz-card {
+    position: relative;
+    background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+    padding: 18px 14px; font-size: 14px; font-weight: 500; text-align: center;
+    cursor: pointer; color: var(--text); line-height: 1.35;
+    transition: all .18s; box-shadow: 0 1px 6px rgba(44,74,46,0.04);
+  }
+  .quiz-card:active { transform: scale(.97); }
+  .quiz-card.selected {
+    background: linear-gradient(135deg, var(--green) 0%, #3d6b4a 100%);
+    border-color: transparent; color: #f7f3ed;
+    box-shadow: 0 4px 16px rgba(44,74,46,0.22);
+  }
+  .quiz-card.selected::after {
+    content: "✓"; position: absolute; top: 9px; right: 11px;
+    font-size: 10px; color: rgba(247,243,237,0.6); font-weight: 700;
+  }
+  .quiz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .quiz-chip {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 99px;
+    padding: 9px 16px; font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; transition: all .18s;
+  }
+  .quiz-chip.selected { background: linear-gradient(135deg, var(--green), #3d6b4a); border-color: transparent; color: #f7f3ed; }
+  .scale-row { display: flex; gap: 6px; margin-bottom: 24px; }
+  .scale-seg {
+    flex: 1; padding: 13px 4px; text-align: center;
+    background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius);
+    cursor: pointer; transition: all .18s;
+  }
+  .scale-seg.selected { background: linear-gradient(135deg, var(--green), #3d6b4a); border-color: transparent; box-shadow: 0 4px 14px rgba(44,74,46,0.2); }
+  .scale-num { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .scale-seg.selected .scale-num { color: #f7f3ed; }
+  .scale-lbl { font-size: 10px; color: var(--muted); line-height: 1.2; }
+  .scale-seg.selected .scale-lbl { color: rgba(247,243,237,0.7); }
+  .back-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 0; margin-top: 16px; }
+
+  /* Results */
+  .results-hero {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 24px 22px; margin-bottom: 20px;
+    box-shadow: 0 8px 28px rgba(44,74,46,0.2);
+  }
+  .results-hero .label { color: rgba(247,243,237,0.55); margin-bottom: 6px; }
+  .results-hero-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 28px; color: #f7f3ed; line-height: 1.1; }
+
+  .analysis-block {
+    background: linear-gradient(135deg, #eef5ee 0%, #f7f3ed 100%);
+    border: 1px solid rgba(44,74,46,0.1); border-left: 3px solid var(--green);
+    border-radius: var(--radius); padding: 16px 18px; margin-bottom: 20px;
+  }
+  .analysis-block .label { color: var(--green); margin-bottom: 10px; }
+  .analysis-list { list-style: none; margin-top: 10px; }
+  .analysis-list li { font-size: 13px; padding: 3px 0; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+  .analysis-list li::before { content: ""; display: inline-block; flex-shrink: 0; width: 4px; height: 4px; border-radius: 50%; background: var(--green); margin-top: 8px; }
+
+  .product-card {
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(44,74,46,0.06);
+  }
+  .product-name { font-size: 16px; font-weight: 700; letter-spacing: -.2px; margin-bottom: 4px; }
+  .product-tag  { font-size: 12px; color: var(--muted); margin-bottom: 16px; line-height: 1.4; }
+  .product-reason-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .product-reason-txt { font-size: 13px; line-height: 1.6; padding-left: 12px; border-left: 2.5px solid var(--gold); margin-bottom: 16px; }
+  .product-benefits { list-style: none; margin-bottom: 18px; }
+  .product-benefits li { font-size: 13px; color: var(--muted); padding: 3px 0; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+  .product-benefits li::before { content: ""; display: inline-block; flex-shrink: 0; width: 3px; height: 3px; border-radius: 50%; background: #c8bfb2; margin-top: 9px; }
+  .product-links { display: flex; gap: 8px; margin-bottom: 10px; }
+  .product-links a { flex: 1; padding: 10px; text-align: center; border-radius: 9px; font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .3px; }
+  .link-wb   { background: rgba(203,17,171,.08); color: #b050a0; border: 1px solid rgba(203,17,171,.18); }
+  .link-ozon { background: rgba(0,91,255,.07); color: #4070e0; border: 1px solid rgba(0,91,255,.18); }
+  .btn-course {
+    width: 100%; padding: 11px; background: transparent;
+    border: 1.5px solid rgba(44,74,46,0.18); border-radius: 9px;
+    color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .3px;
+    transition: all .18s;
+  }
+  .btn-course.added { background: linear-gradient(135deg, #eef5ee, #f7f3ed); border-color: var(--green2); color: var(--green); }
+
+  /* Tracker list */
+  .course-item {
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 2px 10px rgba(44,74,46,0.04);
+  }
+  .course-check {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    border: 1.5px solid var(--border); background: none;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent; transition: all .2s;
+  }
+  .course-check.done { background: linear-gradient(135deg, var(--green), var(--green2)); border-color: transparent; color: #f7f3ed; box-shadow: 0 3px 10px rgba(44,74,46,0.2); }
+  .course-info { flex: 1; }
+  .course-name   { font-size: 14px; font-weight: 600; }
+  .course-streak { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .course-del { background: none; border: none; color: #c0b4a4; font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; }
+
+  /* ══ ДНЕВНИК ════════════════════════════════════════════════════════════════ */
+
+  /* Check-in */
+  .checkin-card {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 22px; margin-bottom: 16px;
+    box-shadow: 0 6px 24px rgba(44,74,46,0.18);
+  }
+  .checkin-card .label { color: rgba(247,243,237,0.55); margin-bottom: 8px; }
+  .checkin-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: #f7f3ed; margin-bottom: 20px; line-height: 1.2; }
+  .checkin-row { margin-bottom: 18px; }
+  .checkin-row-label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: rgba(247,243,237,0.6); margin-bottom: 8px; }
+  .dot-row { display: flex; gap: 8px; }
+  .dot {
+    flex: 1; height: 42px; border-radius: 10px;
+    background: rgba(247,243,237,0.12); border: none; cursor: pointer;
+    font-size: 15px; font-weight: 700; color: rgba(247,243,237,0.5);
+    transition: all .15s;
+  }
+  .dot.sel { background: rgba(247,243,237,0.9); color: var(--green); }
+  .checkin-done {
+    text-align: center; padding: 20px 0;
+  }
+  .checkin-done-scores { display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; }
+  .checkin-score-item { text-align: center; }
+  .checkin-score-val {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 36px; color: #f7f3ed; line-height: 1;
+  }
+  .checkin-score-lbl { font-size: 10px; color: rgba(247,243,237,0.55); font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-top: 4px; }
+  .checkin-edit-btn {
+    font-size: 11px; color: rgba(247,243,237,0.6); background: none; border: none;
+    cursor: pointer; letter-spacing: .5px; text-transform: uppercase; font-weight: 700;
+  }
+
+  /* Trend chart */
+  .trend-wrap { margin-bottom: 20px; }
+  .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin-top: 12px; margin-bottom: 8px; }
+  .trend-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .trend-bar {
+    width: 100%; border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, var(--green2), var(--green));
+    min-height: 4px; transition: height .4s;
+  }
+  .trend-bar.empty { background: rgba(44,74,46,0.12); }
+  .trend-day { font-size: 9px; font-weight: 700; letter-spacing: .5px; color: var(--muted); text-transform: uppercase; }
+
+  /* AI chat */
+  .chat-wrap { display: flex; flex-direction: column; height: 360px; }
+  .chat-messages { flex: 1; overflow-y: auto; padding-bottom: 12px; }
+  .msg { margin-bottom: 10px; display: flex; }
+  .msg.user { justify-content: flex-end; }
+  .msg-bubble {
+    max-width: 78%; padding: 10px 14px; border-radius: 16px;
+    font-size: 13px; line-height: 1.5;
+  }
+  .msg.bot .msg-bubble  { background: var(--card); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+  .msg.user .msg-bubble { background: linear-gradient(135deg, var(--green), var(--green2)); color: #f7f3ed; border-bottom-right-radius: 4px; }
+  .chat-input-row { display: flex; gap: 8px; margin-top: 12px; }
+  .chat-input {
+    flex: 1; padding: 12px 16px; background: var(--card);
+    border: 1.5px solid var(--border); border-radius: var(--radius);
+    font-size: 14px; color: var(--text); outline: none;
+  }
+  .chat-input:focus { border-color: var(--green2); }
+  .chat-send {
+    width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--green), var(--green2));
+    border: none; cursor: pointer; font-size: 18px; color: #f7f3ed;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .chat-sug {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 99px;
+    padding: 7px 14px; font-size: 12px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: all .15s;
+  }
+  .chat-sug:active { border-color: var(--green); color: var(--green); }
+  .stub-notice {
+    background: linear-gradient(135deg, #fdf9f0, #f7f3ed);
+    border: 1px solid rgba(196,150,90,0.2); border-radius: var(--radius);
+    padding: 12px 16px; margin-bottom: 12px;
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+
+  /* ══ КЛУБ ═══════════════════════════════════════════════════════════════════ */
+
+  /* Achievements */
+  .ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .ach-card {
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 14px; text-align: center;
+    box-shadow: 0 1px 8px rgba(44,74,46,0.04);
+  }
+  .ach-card.locked { opacity: .45; filter: grayscale(1); }
+  .ach-icon { font-size: 28px; margin-bottom: 8px; filter: grayscale(0); }
+  .ach-card.locked .ach-icon { filter: grayscale(1); }
+  .ach-name { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+  .ach-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* Stat card (referral) */
+  .stat-card {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
+    border-radius: 18px; padding: 22px 20px; margin-bottom: 16px;
+    box-shadow: 0 8px 28px rgba(44,74,46,0.2); color: #f7f3ed;
+  }
+  .stat-number {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 56px; line-height: 1; letter-spacing: -2px; margin-bottom: 4px;
+  }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(247,243,237,0.55); }
+  .stat-prog-wrap { height: 2px; background: rgba(247,243,237,0.2); border-radius: 99px; margin: 14px 0 6px; overflow: hidden; }
+  .stat-prog-bar  { height: 100%; background: rgba(247,243,237,0.7); border-radius: 99px; transition: width .5s; }
+  .stat-next { font-size: 12px; color: rgba(247,243,237,0.7); }
+
+  .levels { list-style: none; }
+  .levels li { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .levels li:last-child { border: none; }
+  .level-badge { font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; white-space: nowrap; min-width: 54px; text-align: center; }
+  .level-badge.done { border-color: var(--green2); color: var(--green); }
+  .ref-link-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 12px; color: var(--muted); word-break: break-all; line-height: 1.6; }
+
+  /* Club hero (giveaway) */
+  .club-hero {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 50%, var(--gold) 100%);
+    border-radius: 18px; padding: 28px 22px; margin-bottom: 16px;
+    text-align: center; color: #1c1c1a;
+    box-shadow: 0 8px 28px rgba(196,150,90,0.28);
+  }
+  .club-count { font-family: 'DM Serif Display', Georgia, serif; font-size: 64px; line-height: 1; letter-spacing: -3px; margin-bottom: 4px; }
+  .club-count-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(28,28,26,0.55); }
 </style>
 </head>
 <body>
 
-<div id="screen-quiz"     class="screen active"></div>
-<div id="screen-tracker"  class="screen"></div>
-<div id="screen-referral" class="screen"></div>
-<div id="screen-giveaway" class="screen"></div>
+<div id="screen-home"    class="screen active"></div>
+<div id="screen-program" class="screen"></div>
+<div id="screen-diary"   class="screen"></div>
+<div id="screen-club"    class="screen"></div>
 
 <nav class="nav">
-  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">Анализ</button>
-  <button class="nav-btn"        onclick="showScreen('tracker')"  id="nav-tracker">Курс</button>
-  <button class="nav-btn"        onclick="showScreen('referral')" id="nav-referral">Друзья</button>
-  <button class="nav-btn"        onclick="showScreen('giveaway')" id="nav-giveaway">Клуб</button>
+  <button class="nav-btn active" onclick="showScreen('home')"    id="nav-home">Главная</button>
+  <button class="nav-btn"        onclick="showScreen('program')" id="nav-program">Программа</button>
+  <button class="nav-btn"        onclick="showScreen('diary')"   id="nav-diary">Дневник</button>
+  <button class="nav-btn"        onclick="showScreen('club')"    id="nav-club">Клуб</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -434,10 +502,9 @@ function api(method, path, body) {
   }).then(r => r.json());
 }
 
-function toast(msg, ms = 2000) {
+function toast(msg, ms = 2200) {
   const el = document.getElementById("toast");
-  el.textContent = msg;
-  el.classList.add("show");
+  el.textContent = msg; el.classList.add("show");
   setTimeout(() => el.classList.remove("show"), ms);
 }
 
@@ -446,88 +513,180 @@ function showScreen(name) {
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("screen-" + name).classList.add("active");
   document.getElementById("nav-"    + name).classList.add("active");
-  if (name === "tracker")  loadTracker();
-  if (name === "referral") loadReferral();
-  if (name === "giveaway") loadGiveaway();
+  if (name === "home")    loadHome();
+  if (name === "program") loadProgram();
+  if (name === "diary")   loadDiary();
+  if (name === "club")    loadClub();
 }
 
 const urlParams = new URLSearchParams(location.search);
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
 api("POST", "/api/user/init", { ref }).catch(() => {});
 
-// ── АНАЛИЗ (QUIZ) ──────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ГЛАВНАЯ
+// ══════════════════════════════════════════════════════════════════════════
+
+const CONTENT_CARDS = [
+  {
+    tag: "Нутриология",
+    title: "Почему магний заканчивается при стрессе",
+    preview: "Стресс запускает реакцию надпочечников, которая буквально вымывает магний из клеток...",
+    body: `При хроническом стрессе кортизол стимулирует выведение магния через почки. Одновременно магний нужен для синтеза ГАМК — тормозного нейромедиатора, который снижает тревогу. Получается замкнутый круг: стресс → потеря магния → больше тревоги → больше стресса.\n\nЧто делать: принимать цитрат или глицинат магния (лучше усваиваются), желательно на ночь. Норма для взрослого — 300–400 мг элементарного магния в сутки.`
+  },
+  {
+    tag: "Дефициты",
+    title: "D3 — чего не хватает 80% россиян",
+    preview: "В России из-за географии почти невозможно получить достаточно витамина D из солнца...",
+    body: `Выше 35° северной широты (Москва — 55°) с октября по апрель солнце под таким углом, что UVB-лучи не достигают кожи. Витамин D не синтезируется.\n\nПри этом D3 участвует в иммунитете, регуляции кальция, настроении и сотнях ферментативных реакций. Нормальный уровень в крови — 40–80 нг/мл. Большинство жителей России — в зоне 10–20 нг/мл.\n\nЕжедневный приём 2000–4000 МЕ D3 с K2 — разумная поддержка в осенне-зимний период.`
+  },
+  {
+    tag: "Анализы",
+    title: "3 показателя крови, которые стоит проверить",
+    preview: "Ферритин, витамин D и ТТГ — три анализа, которые объясняют большинство жалоб на усталость...",
+    body: `Ферритин (запасы железа): норма 40–150 нг/мл. При 12–20 нг/мл появляется усталость и выпадение волос, даже если гемоглобин ещё нормальный.\n\nВитамин D (25-OH): норма 40–80 нг/мл. Всё ниже 30 — уже дефицит, влияет на иммунитет, настроение, кости.\n\nТТГ (гормон щитовидной железы): норма 0.4–2.5 мкМЕ/мл. Даже «пограничные» значения могут вызывать сонливость, набор веса и туман в голове.`
+  },
+  {
+    tag: "Железо",
+    title: "Почему железо из таблеток не усваивается",
+    preview: "Сульфат железа — дёшево и сердито, но желудок скажет спасибо за что-то другое...",
+    body: `Традиционные препараты железа (сульфат, фумарат) усваиваются на 5–15% и раздражают ЖКТ. Приём с кофе, чаем или молоком снижает усвоение ещё в 2–3 раза.\n\nЛипосомальное железо — технология, при которой молекула железа «упакована» в фосфолипидную оболочку. Усваивается на 30–90%, не раздражает слизистую, можно принимать в любое время.\n\nДополнительный совет: витамин C с едой увеличивает усвоение железа в 3–4 раза.`
+  },
+];
+
+async function loadHome() {
+  const screen = document.getElementById("screen-home");
+  screen.innerHTML = '<div class="spinner"></div>';
+
+  const data = await api("GET", "/api/home");
+  const name = user.first_name || "";
+  const streak     = data.global_streak || 0;
+  const courseDays = data.course_days || 0;
+  const refCount   = data.ref_count || 0;
+  const products   = data.products  || [];
+  const wellness   = data.wellness_today;
+
+  // Streak card
+  const streakHtml = `
+    <div class="streak-card">
+      <div class="streak-card-left">
+        <span class="label">Дней в курсе подряд</span>
+        <div class="streak-num">${streak}</div>
+        <div class="streak-sub">${streak === 0 ? "Начни сегодня" : streak >= 30 ? "Невероятно" : streak >= 7 ? "Отличная серия" : "Продолжай"}</div>
+      </div>
+      <div class="streak-card-right">
+        <div class="stat-pill">${courseDays} дней всего</div>
+        <div class="stat-pill">${refCount} друзей</div>
+      </div>
+    </div>`;
+
+  // Сегодняшний курс
+  let courseHtml = "";
+  if (products.length) {
+    const items = products.map(p => `
+      <div class="mini-task" id="mini-${p.product_id}">
+        <button class="mini-check ${p.taken_today ? 'done' : ''}"
+                onclick="homeLogIntake('${p.product_id}', this)">
+          ${p.taken_today ? "✓" : ""}
+        </button>
+        <div class="mini-task-name">${p.product_name}</div>
+      </div>`).join("");
+    courseHtml = `
+      <div class="section-head">
+        <span class="label">Сегодняшний курс</span>
+        <button class="section-link" onclick="showScreen('program')">Весь курс →</button>
+      </div>
+      ${items}`;
+  } else {
+    courseHtml = `
+      <div class="section-head"><span class="label">Программа</span></div>
+      <div class="card" style="text-align:center;padding:24px">
+        <div style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          Пройди анализ, чтобы получить<br>персональный курс добавок
+        </div>
+        <button class="btn" onclick="showScreen('program')">Пройти анализ</button>
+      </div>`;
+  }
+
+  // Самочувствие
+  let wellnessHtml = "";
+  if (wellness) {
+    wellnessHtml = `
+      <div class="section-head" style="margin-top:4px">
+        <span class="label">Самочувствие сегодня</span>
+        <button class="section-link" onclick="showScreen('diary')">Подробнее →</button>
+      </div>
+      <div class="wellness-widget">
+        <div class="wellness-scores">
+          <div class="ws-item"><div class="ws-val energy">${wellness.energy}</div><div class="ws-label">Энергия</div></div>
+          <div class="ws-item"><div class="ws-val sleep">${wellness.sleep_q}</div><div class="ws-label">Сон</div></div>
+          <div class="ws-item"><div class="ws-val mood">${wellness.mood}</div><div class="ws-label">Настроение</div></div>
+        </div>
+      </div>`;
+  } else {
+    wellnessHtml = `
+      <div class="section-head" style="margin-top:4px">
+        <span class="label">Самочувствие</span>
+        <button class="section-link" onclick="showScreen('diary')">Отметить →</button>
+      </div>
+      <div class="card" style="cursor:pointer;padding:16px" onclick="showScreen('diary')">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Как ты сегодня?</div>
+        <div style="font-size:12px;color:var(--muted)">Отметь самочувствие в Дневнике — увидишь динамику за неделю</div>
+      </div>`;
+  }
+
+  // Контент
+  const contentHtml = CONTENT_CARDS.map((c, i) => `
+    <div class="content-card">
+      <div class="content-tag">${c.tag}</div>
+      <div class="content-title">${c.title}</div>
+      <div class="content-preview">${c.preview}</div>
+      <div class="content-body" id="cb-${i}">${c.body.replace(/\n/g,"<br>")}</div>
+      <button class="content-toggle" onclick="toggleContent(${i}, this)">Читать далее</button>
+    </div>`).join("");
+
+  screen.innerHTML = `
+    <div class="home-greeting">
+      <span class="label" style="margin-bottom:6px">Biolar Organics</span>
+      <div class="serif home-greeting-name">
+        ${name ? `Привет, <em style="font-style:italic;color:var(--green)">${name}</em>.` : "Добро пожаловать."}
+      </div>
+    </div>
+    ${streakHtml}
+    ${courseHtml}
+    <div style="height:8px"></div>
+    ${wellnessHtml}
+    <div style="height:8px"></div>
+    <div class="section-head"><span class="label">Открытия</span></div>
+    ${contentHtml}
+  `;
+}
+
+function toggleContent(i, btn) {
+  const body = document.getElementById("cb-" + i);
+  body.classList.toggle("open");
+  btn.textContent = body.classList.contains("open") ? "Свернуть" : "Читать далее";
+}
+
+async function homeLogIntake(productId, btn) {
+  if (btn.classList.contains("done")) return;
+  const data = await api("POST", "/api/tracker/log", { product_id: productId });
+  if (!data.already_taken) { btn.classList.add("done"); btn.textContent = "✓"; toast("Отмечено"); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ПРОГРАММА (QUIZ + КУРС)
+// ══════════════════════════════════════════════════════════════════════════
 
 const QUIZ_BASE_STEPS = [
-  {
-    id: "gender", title: "Укажи свой пол", type: "grid", options: [
-      {id:"female", text:"Женщина"},
-      {id:"male",   text:"Мужчина"},
-    ]
-  },
-  {
-    id: "age", title: "Сколько тебе лет?", type: "grid", options: [
-      {id:"18-25", text:"18–25"},
-      {id:"26-35", text:"26–35"},
-      {id:"36-45", text:"36–45"},
-      {id:"45+",   text:"45+"},
-    ]
-  },
-  {
-    id: "goal", title: "Какая основная цель?", type: "grid", options: [
-      {id:"energy",       text:"Энергия и бодрость"},
-      {id:"sleep",        text:"Улучшить сон"},
-      {id:"immunity",     text:"Иммунитет"},
-      {id:"brain",        text:"Мозг и фокус"},
-      {id:"women_health", text:"Женское здоровье"},
-      {id:"thyroid",      text:"Щитовидная железа"},
-      {id:"beauty",       text:"Кожа и волосы"},
-      {id:"weight",       text:"Контроль веса"},
-    ]
-  },
-  {
-    id: "symptoms", title: "Отметь симптомы, если есть", type: "multiselect", options: [
-      {id:"fatigue",    text:"Постоянная усталость"},
-      {id:"anemia",     text:"Анемия / дефицит железа"},
-      {id:"hair_loss",  text:"Выпадение волос"},
-      {id:"often_sick", text:"Часто болею"},
-      {id:"low_sun",    text:"Мало бываю на солнце"},
-      {id:"brain_fog",  text:"Туман в голове"},
-      {id:"anxiety",    text:"Тревожность / раздражительность"},
-    ]
-  },
-  {
-    id: "stress", title: "Уровень стресса", type: "scale", options: [
-      {id:1, label:"Нет"},
-      {id:2, label:"Умер."},
-      {id:3, label:"Высокий"},
-      {id:4, label:"Хрон."},
-    ]
-  },
-  {
-    id: "sleep_q", title: "Качество сна", type: "scale", options: [
-      {id:1, label:"Плохо"},
-      {id:2, label:"Неплохо"},
-      {id:3, label:"Хорошо"},
-      {id:4, label:"Отлично"},
-    ]
-  },
-  {
-    id: "diet", title: "Как питаешься?", type: "grid", options: [
-      {id:"balanced", text:"Сбалансированно"},
-      {id:"low_meat", text:"Редко ем мясо"},
-      {id:"vegan",    text:"Веганство"},
-      {id:"sugary",   text:"Много сладкого"},
-    ]
-  },
-  {
-    id: "women_health", title: "Уточни по женскому здоровью", type: "grid", femaleOnly: true, options: [
-      {id:"normal",    text:"Всё в порядке"},
-      {id:"pms",       text:"ПМС"},
-      {id:"pcos",      text:"СПКЯ"},
-      {id:"thyroid_f", text:"Щитовидная железа"},
-      {id:"fertility", text:"Фертильность / ЭКО"},
-    ]
-  },
+  { id:"gender",       title:"Укажи свой пол",                  type:"grid", options:[{id:"female",text:"Женщина"},{id:"male",text:"Мужчина"}] },
+  { id:"age",          title:"Сколько тебе лет?",               type:"grid", options:[{id:"18-25",text:"18–25"},{id:"26-35",text:"26–35"},{id:"36-45",text:"36–45"},{id:"45+",text:"45+"}] },
+  { id:"goal",         title:"Какая основная цель?",            type:"grid", options:[{id:"energy",text:"Энергия и бодрость"},{id:"sleep",text:"Улучшить сон"},{id:"immunity",text:"Иммунитет"},{id:"brain",text:"Мозг и фокус"},{id:"women_health",text:"Женское здоровье"},{id:"thyroid",text:"Щитовидная железа"},{id:"beauty",text:"Кожа и волосы"},{id:"weight",text:"Контроль веса"}] },
+  { id:"symptoms",     title:"Отметь симптомы, если есть",      type:"multiselect", options:[{id:"fatigue",text:"Постоянная усталость"},{id:"anemia",text:"Анемия / дефицит железа"},{id:"hair_loss",text:"Выпадение волос"},{id:"often_sick",text:"Часто болею"},{id:"low_sun",text:"Мало бываю на солнце"},{id:"brain_fog",text:"Туман в голове"},{id:"anxiety",text:"Тревожность / раздражительность"}] },
+  { id:"stress",       title:"Уровень стресса",                 type:"scale",  options:[{id:1,label:"Нет"},{id:2,label:"Умер."},{id:3,label:"Высокий"},{id:4,label:"Хрон."}] },
+  { id:"sleep_q",      title:"Качество сна",                    type:"scale",  options:[{id:1,label:"Плохо"},{id:2,label:"Неплохо"},{id:3,label:"Хорошо"},{id:4,label:"Отлично"}] },
+  { id:"diet",         title:"Как питаешься?",                  type:"grid",   options:[{id:"balanced",text:"Сбалансированно"},{id:"low_meat",text:"Редко ем мясо"},{id:"vegan",text:"Веганство"},{id:"sugary",text:"Много сладкого"}] },
+  { id:"women_health", title:"Уточни по женскому здоровью",     type:"grid",   femaleOnly:true, options:[{id:"normal",text:"Всё в порядке"},{id:"pms",text:"ПМС"},{id:"pcos",text:"СПКЯ"},{id:"thyroid_f",text:"Щитовидная"},{id:"fertility",text:"Фертильность / ЭКО"}] },
 ];
 
 let quizAnswers     = {};
@@ -540,23 +699,85 @@ function getActiveSteps() {
   return QUIZ_BASE_STEPS.filter(s => !(s.femaleOnly && quizAnswers.gender !== "female"));
 }
 
-function renderWelcome() {
-  const name = user.first_name ? `, <em>${user.first_name}</em>` : "";
-  document.getElementById("screen-quiz").innerHTML = `
-    <div class="welcome-wrap">
-      <div class="welcome-brand">Biolar Organics</div>
-      <h1 class="welcome-h1 serif">
-        Узнай, что нужно<br>именно тебе${name}.
-      </h1>
-      <p class="welcome-sub">
-        Персональный анализ нутриентов<br>
-        на основе твоего образа жизни и целей.<br>
-        Без воды — только то, что работает.
-      </p>
-      <button class="btn" onclick="renderQuiz()">Начать анализ</button>
-      <div class="welcome-note">3 минуты · бесплатно</div>
+async function loadProgram() {
+  const screen = document.getElementById("screen-program");
+  screen.innerHTML = '<div class="spinner"></div>';
+
+  const [trackerData, homeData] = await Promise.all([
+    api("GET", "/api/tracker"),
+    api("GET", "/api/home"),
+  ]);
+  const products   = trackerData.products || [];
+  const today_logs = await api("GET", "/api/tracker").then(() =>
+    homeData.products.filter(p => p.taken_today).map(p => p.product_id)
+  );
+  const courseDays = homeData.course_days || 0;
+  const pct = Math.min(Math.round((courseDays / 30) * 100), 100);
+
+  let courseBanner = "";
+  if (courseDays > 0 || products.length > 0) {
+    courseBanner = `
+      <div class="course-banner">
+        <span class="label">30-дневный курс</span>
+        <div class="course-day-num">${courseDays}</div>
+        <div class="course-prog-wrap">
+          <div class="course-prog-bar" style="width:${pct}%"></div>
+        </div>
+        <div class="course-prog-sub">${courseDays} из 30 дней пройдено${courseDays >= 30 ? " — курс завершён!" : ""}</div>
+      </div>`;
+  }
+
+  let courseList = "";
+  if (products.length) {
+    const today = homeData.products || [];
+    const todayMap = Object.fromEntries(today.map(p => [p.product_id, p.taken_today]));
+    courseList = `
+      <div class="section-head">
+        <span class="label">Твой курс</span>
+      </div>
+      ${products.map(p => {
+        const done = todayMap[p.product_id] || false;
+        return `
+          <div class="course-item" id="tracker-${p.product_id}">
+            <button class="course-check ${done ? 'done' : ''}"
+                    onclick="logIntake('${p.product_id}', this)">
+              ${done ? "✓" : ""}
+            </button>
+            <div class="course-info">
+              <div class="course-name">${p.product_name}</div>
+              <div class="course-streak">Добавлено в курс</div>
+            </div>
+            <button class="course-del" onclick="removeProduct('${p.product_id}')">×</button>
+          </div>`;
+      }).join("")}
+      <div style="height:12px"></div>`;
+  }
+
+  screen.innerHTML = `
+    ${courseBanner}
+    ${courseList}
+    <div class="section-head">
+      <span class="label">${products.length ? "Пересмотреть анализ" : "Персональный анализ"}</span>
     </div>
+    <div class="card" style="cursor:pointer;padding:20px;margin-bottom:4px" onclick="startQuiz()">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">
+        ${products.length ? "Обновить программу" : "Пройти анализ"}
+      </div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">
+        ${products.length
+          ? "Ответь на 8 вопросов заново — обновим рекомендации"
+          : "8 вопросов → персональный протокол добавок под твой организм"}
+      </div>
+    </div>
+    <button class="btn" style="margin-top:10px" onclick="startQuiz()">
+      ${products.length ? "Обновить программу" : "Начать анализ"}
+    </button>
   `;
+}
+
+function startQuiz() {
+  quizAnswers = {}; quizStepIdx = 0; quizSymptoms = new Set();
+  renderQuiz();
 }
 
 function renderQuiz() {
@@ -564,52 +785,41 @@ function renderQuiz() {
   const step = quizActiveSteps[quizStepIdx];
   if (!step) { showSmartResults(); return; }
 
-  const total   = quizActiveSteps.length;
-  const current = quizStepIdx + 1;
-  const pct     = Math.round((quizStepIdx / total) * 100);
+  const total = quizActiveSteps.length, current = quizStepIdx + 1;
+  const pct = Math.round((quizStepIdx / total) * 100);
 
   let body = "";
-
   if (step.type === "grid") {
     body = `<div class="quiz-grid">` +
       step.options.map(o => `
         <div class="quiz-card ${quizAnswers[step.id] === o.id ? 'selected' : ''}"
-             onclick="selectCard('${step.id}', '${o.id}', this)">
-          ${o.text}
-        </div>`).join("") +
-      `</div>`;
+             onclick="selectCard('${step.id}','${o.id}',this)">${o.text}</div>`).join("") + `</div>`;
   } else if (step.type === "multiselect") {
     body = `<div class="quiz-chips">` +
       step.options.map(o => `
         <div class="quiz-chip ${quizSymptoms.has(o.id) ? 'selected' : ''}"
-             onclick="toggleChip('${o.id}', this)">
-          ${o.text}
-        </div>`).join("") +
-      `</div>
-      <button class="btn" onclick="advanceQuiz()">Продолжить</button>`;
+             onclick="toggleChip('${o.id}',this)">${o.text}</div>`).join("") +
+      `</div><button class="btn" onclick="advanceQuiz()">Продолжить</button>`;
   } else if (step.type === "scale") {
     body = `<div class="scale-row">` +
       step.options.map(o => `
         <div class="scale-seg ${quizAnswers[step.id] == o.id ? 'selected' : ''}"
-             onclick="selectScale('${step.id}', ${o.id}, this)">
+             onclick="selectScale('${step.id}',${o.id},this)">
           <div class="scale-num">${o.id}</div>
           <div class="scale-lbl">${o.label}</div>
-        </div>`).join("") +
-      `</div>`;
+        </div>`).join("") + `</div>`;
   }
 
   const backBtn = quizStepIdx > 0
-    ? `<button class="quiz-back-btn" onclick="backQuiz()">← Назад</button>`
-    : `<button class="quiz-back-btn" onclick="renderWelcome()">← На главную</button>`;
+    ? `<button class="back-btn" onclick="backQuiz()">← Назад</button>`
+    : `<button class="back-btn" onclick="loadProgram()">← Назад</button>`;
 
-  document.getElementById("screen-quiz").innerHTML = `
+  document.getElementById("screen-program").innerHTML = `
     <div class="quiz-head">
       <span class="label">Анализ</span>
       <span class="quiz-counter">${String(current).padStart(2,"0")} / ${String(total).padStart(2,"0")}</span>
     </div>
-    <div class="quiz-prog-wrap">
-      <div class="quiz-prog-bar" style="width:${pct}%"></div>
-    </div>
+    <div class="quiz-prog-wrap"><div class="quiz-prog-bar" style="width:${pct}%"></div></div>
     <div class="quiz-q">${step.title}</div>
     ${body}
     ${backBtn}
@@ -622,19 +832,16 @@ function selectCard(stepId, value, el) {
   el.classList.add("selected");
   setTimeout(advanceQuiz, 220);
 }
-
 function toggleChip(id, el) {
   if (quizSymptoms.has(id)) { quizSymptoms.delete(id); el.classList.remove("selected"); }
   else                       { quizSymptoms.add(id);    el.classList.add("selected"); }
 }
-
 function selectScale(stepId, value, el) {
   quizAnswers[stepId] = value;
   el.closest(".scale-row").querySelectorAll(".scale-seg").forEach(s => s.classList.remove("selected"));
   el.classList.add("selected");
   setTimeout(advanceQuiz, 270);
 }
-
 function advanceQuiz() {
   const step = quizActiveSteps[quizStepIdx];
   if (step.type !== "multiselect" && !quizAnswers[step.id]) { toast("Выбери один из вариантов"); return; }
@@ -643,44 +850,31 @@ function advanceQuiz() {
   if (quizStepIdx >= quizActiveSteps.length) showSmartResults();
   else renderQuiz();
 }
-
-function backQuiz() {
-  if (quizStepIdx > 0) { quizStepIdx--; renderQuiz(); }
-}
+function backQuiz() { if (quizStepIdx > 0) { quizStepIdx--; renderQuiz(); } }
 
 async function showSmartResults() {
-  const screen = document.getElementById("screen-quiz");
+  const screen = document.getElementById("screen-program");
   screen.innerHTML = '<div class="spinner"></div>';
 
   const payload = {
-    gender:       quizAnswers.gender       || "female",
-    age:          quizAnswers.age          || "26-35",
-    goal:         quizAnswers.goal         || "energy",
-    symptoms:     [...quizSymptoms],
-    stress:       quizAnswers.stress       || 1,
-    sleep_q:      quizAnswers.sleep_q      || 4,
-    diet:         quizAnswers.diet         || "balanced",
-    women_health: quizAnswers.women_health || null,
+    gender: quizAnswers.gender || "female", age: quizAnswers.age || "26-35",
+    goal: quizAnswers.goal || "energy", symptoms: [...quizSymptoms],
+    stress: quizAnswers.stress || 1, sleep_q: quizAnswers.sleep_q || 4,
+    diet: quizAnswers.diet || "balanced", women_health: quizAnswers.women_health || null,
   };
 
-  const data     = await api("POST", "/api/quiz/smart-result", payload);
-  const products = data.products || [];
-  const analysis = data.analysis || [];
-
-  if (!products.length) {
-    screen.innerHTML = `<div class="empty"><p>Ничего не нашли.<br>Напиши нам напрямую.</p></div>`;
-    return;
-  }
+  const data = await api("POST", "/api/quiz/smart-result", payload);
+  const products = data.products || [], analysis = data.analysis || [];
 
   const analysisHtml = analysis.length ? `
     <div class="analysis-block">
-      <span class="label" style="color:var(--green);margin-bottom:10px">Что мы выявили</span>
+      <span class="label" style="color:var(--green)">Что мы выявили</span>
       <ul class="analysis-list" style="margin-top:10px">${analysis.map(a => `<li>${a}</li>`).join("")}</ul>
     </div>` : "";
 
   const productsHtml = products.map(p => {
     const benefits = (p.benefits || []).map(b => `<li>${b}</li>`).join("");
-    const added    = addedToTracker.has(p.id);
+    const added = addedToTracker.has(p.id);
     return `
       <div class="product-card">
         <div class="product-name">${p.name}</div>
@@ -689,12 +883,10 @@ async function showSmartResults() {
         <div class="product-reason-txt">${p.reason}</div>
         <ul class="product-benefits">${benefits}</ul>
         <div class="product-links">
-          <a class="link-wb"   href="${p.wb_url}"   target="_blank">Wildberries</a>
+          <a class="link-wb" href="${p.wb_url}" target="_blank">Wildberries</a>
           <a class="link-ozon" href="${p.ozon_url}" target="_blank">Ozon</a>
         </div>
-        <button class="btn-course ${added ? 'added' : ''}"
-                id="add-btn-${p.id}"
-                onclick="addToTracker('${p.id}')">
+        <button class="btn-course ${added ? 'added' : ''}" id="add-btn-${p.id}" onclick="addToTracker('${p.id}')">
           ${added ? "Добавлено в курс" : "+ Добавить в курс"}
         </button>
       </div>`;
@@ -707,7 +899,7 @@ async function showSmartResults() {
     </div>
     ${analysisHtml}
     ${productsHtml}
-    <button class="btn outline" onclick="restartQuiz()" style="margin-top:8px">Пройти анализ заново</button>
+    <button class="btn outline" onclick="loadProgram()" style="margin-top:8px">← Вернуться в программу</button>
   `;
 }
 
@@ -720,68 +912,14 @@ async function addToTracker(productId) {
   toast("Добавлено в курс");
 }
 
-function restartQuiz() {
-  quizAnswers  = {};
-  quizStepIdx  = 0;
-  quizSymptoms = new Set();
-  renderWelcome();
-}
-
-renderWelcome();
-
-// ── КУРС (TRACKER) ─────────────────────────────────────────────────────────
-
-async function loadTracker() {
-  const screen = document.getElementById("screen-tracker");
-  screen.innerHTML = '<div class="spinner"></div>';
-  const data = await api("GET", "/api/tracker");
-  const products = data.products || [];
-
-  if (!products.length) {
-    screen.innerHTML = `
-      <div style="margin-bottom:24px">
-        <span class="label" style="margin-bottom:6px">Твой курс</span>
-        <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Курс пуст</div>
-      </div>
-      <div class="empty"><p>Пройди анализ и добавь<br>продукты в свой курс.</p></div>
-      <button class="btn" onclick="showScreen('quiz')">Пройти анализ</button>`;
-    return;
-  }
-
-  const today = new Date().toLocaleDateString("ru", { day: "numeric", month: "long" });
-  let html = `
-    <div style="margin-bottom:24px">
-      <span class="label" style="margin-bottom:6px">Твой курс</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">${today}</div>
-    </div>`;
-
-  for (const p of products) {
-    const s = p.streak;
-    const streakTxt = s > 0 ? `${s} ${s === 1 ? 'день' : s < 5 ? 'дня' : 'дней'} в курсе` : "Начни сегодня";
-    html += `
-      <div class="course-item" id="tracker-${p.product_id}">
-        <button class="course-check ${p.taken_today ? 'done' : ''}"
-                onclick="logIntake('${p.product_id}', this)">
-          ${p.taken_today ? "✓" : ""}
-        </button>
-        <div class="course-info">
-          <div class="course-name">${p.product_name}</div>
-          <div class="course-streak">${streakTxt}</div>
-        </div>
-        <button class="course-del" onclick="removeProduct('${p.product_id}')">×</button>
-      </div>`;
-  }
-  screen.innerHTML = html;
-}
-
 async function logIntake(productId, btn) {
   if (btn.classList.contains("done")) { toast("Уже отмечено сегодня"); return; }
   const data = await api("POST", "/api/tracker/log", { product_id: productId });
   if (data.already_taken) { toast("Уже отмечено сегодня"); return; }
   btn.classList.add("done"); btn.textContent = "✓";
   const s = data.streak;
-  btn.closest(".course-item").querySelector(".course-streak").textContent =
-    `${s} ${s === 1 ? 'день' : s < 5 ? 'дня' : 'дней'} в курсе`;
+  const row = btn.closest(".course-item");
+  if (row) row.querySelector(".course-streak").textContent = `${s} ${s===1?'день':s<5?'дня':'дней'} подряд`;
   toast("Отмечено");
 }
 
@@ -792,39 +930,273 @@ async function removeProduct(productId) {
   toast("Удалено из курса");
 }
 
-// ── ДРУЗЬЯ (REFERRAL) ──────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ДНЕВНИК
+// ══════════════════════════════════════════════════════════════════════════
 
-async function loadReferral() {
-  const screen = document.getElementById("screen-referral");
+let wellnessSel = { energy: 0, sleep_q: 0, mood: 0 };
+const DAYS_RU = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+const CHAT_MESSAGES = [
+  { role:"bot", text:"Привет! Я — AI-нутрициолог Biolar. Пока в разработке, но уже скоро смогу отвечать на любые вопросы о нутриентах, витаминах и добавках." }
+];
+
+async function loadDiary() {
+  const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
-  const data = await api("GET", "/api/referral");
 
-  const nextCount  = data.next_level?.count  || data.levels[data.levels.length - 1].count;
-  const nextReward = data.next_level?.reward || "Максимальный уровень";
-  const progress   = Math.min((data.ref_count / nextCount) * 100, 100);
-  const botUsername = "Biolarapp_bot";
-  const refLink  = `https://t.me/${botUsername}?start=ref_${data.ref_code}`;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Пройди персональный анализ нутриентов")}`;
+  const data = await api("GET", "/api/wellness");
+  const today = data.today;
+  const history = data.history || [];
 
-  const levelsHtml = data.levels.map(l => `
-    <li>
-      <span class="level-badge ${data.ref_count >= l.count ? 'done' : ''}">${l.count} чел.</span>
-      <span style="flex:1">${l.reward}</span>
-      ${data.ref_count >= l.count ? `<span style="color:var(--green);font-weight:700;font-size:13px">✓</span>` : ""}
-    </li>`).join("");
+  // Check-in card
+  let checkinHtml = "";
+  if (today) {
+    checkinHtml = `
+      <div class="checkin-card">
+        <span class="label">Самочувствие сегодня</span>
+        <div class="checkin-done">
+          <div class="checkin-done-scores">
+            <div class="checkin-score-item"><div class="checkin-score-val">${today.energy}</div><div class="checkin-score-lbl">Энергия</div></div>
+            <div class="checkin-score-item"><div class="checkin-score-val">${today.sleep_q}</div><div class="checkin-score-lbl">Сон</div></div>
+            <div class="checkin-score-item"><div class="checkin-score-val">${today.mood}</div><div class="checkin-score-lbl">Настроение</div></div>
+          </div>
+          <button class="checkin-edit-btn" onclick="loadDiaryEdit()">Изменить</button>
+        </div>
+      </div>`;
+  } else {
+    checkinHtml = buildCheckinForm();
+  }
+
+  // Trend chart (last 7 entries)
+  const last7 = [...history].reverse().slice(-7);
+  const trendHtml = buildTrendChart(last7);
+
+  // AI Chat
+  const chatHtml = buildChat();
 
   screen.innerHTML = `
     <div style="margin-bottom:20px">
-      <span class="label" style="margin-bottom:6px">Приглашай друзей</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Получай награды</div>
+      <span class="label" style="margin-bottom:6px">Дневник</span>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Самочувствие</div>
+    </div>
+    ${checkinHtml}
+    <div class="card trend-wrap">
+      <span class="label" style="margin-bottom:4px">Динамика за 2 недели</span>
+      ${trendHtml}
+    </div>
+    <div class="card">
+      <span class="label" style="margin-bottom:12px">AI-нутрициолог</span>
+      <div style="margin-top:12px">
+        ${chatHtml}
+      </div>
+    </div>
+  `;
+
+  // Bind chat
+  bindChat();
+}
+
+function buildCheckinForm() {
+  wellnessSel = { energy: 0, sleep_q: 0, mood: 0 };
+  const makeDots = (key) => [1,2,3,4,5].map(n => `
+    <button class="dot" id="dot-${key}-${n}" onclick="selectDot('${key}',${n})">${n}</button>`).join("");
+  return `
+    <div class="checkin-card">
+      <span class="label">Как ты сегодня?</span>
+      <div class="checkin-title">Отметь своё<br>самочувствие</div>
+      <div class="checkin-row">
+        <div class="checkin-row-label">Энергия</div>
+        <div class="dot-row">${makeDots("energy")}</div>
+      </div>
+      <div class="checkin-row">
+        <div class="checkin-row-label">Сон</div>
+        <div class="dot-row">${makeDots("sleep_q")}</div>
+      </div>
+      <div class="checkin-row" style="margin-bottom:20px">
+        <div class="checkin-row-label">Настроение</div>
+        <div class="dot-row">${makeDots("mood")}</div>
+      </div>
+      <button class="btn" style="background:rgba(247,243,237,0.9);color:var(--green)" onclick="saveWellness()">Сохранить</button>
+    </div>`;
+}
+
+function loadDiaryEdit() {
+  const card = document.querySelector(".checkin-card");
+  if (card) card.outerHTML = buildCheckinForm();
+  // Re-render just the checkin part
+  loadDiary();
+}
+
+function selectDot(key, val) {
+  wellnessSel[key] = val;
+  [1,2,3,4,5].forEach(n => {
+    const el = document.getElementById(`dot-${key}-${n}`);
+    if (el) el.classList.toggle("sel", n === val);
+  });
+}
+
+async function saveWellness() {
+  if (!wellnessSel.energy || !wellnessSel.sleep_q || !wellnessSel.mood) {
+    toast("Отметь все три показателя"); return;
+  }
+  await api("POST", "/api/wellness/log", wellnessSel);
+  toast("Самочувствие сохранено");
+  loadDiary();
+}
+
+function buildTrendChart(entries) {
+  if (!entries.length) {
+    return `<div style="font-size:13px;color:var(--muted);padding:16px 0;text-align:center">Данных пока нет.<br>Начни отмечать самочувствие каждый день.</div>`;
+  }
+  const bars = entries.map(e => {
+    const avg = (e.energy + e.sleep_q + e.mood) / 3;
+    const h   = Math.round((avg / 5) * 56);
+    const d   = new Date(e.date);
+    const day = DAYS_RU[d.getDay()];
+    return `
+      <div class="trend-bar-col">
+        <div class="trend-bar" style="height:${h}px"></div>
+        <div class="trend-day">${day}</div>
+      </div>`;
+  });
+  // Fill to 7 if fewer
+  while (bars.length < 7) bars.unshift(`<div class="trend-bar-col"><div class="trend-bar empty" style="height:4px"></div><div class="trend-day">—</div></div>`);
+  return `<div class="trend-bars">${bars.join("")}</div>`;
+}
+
+function buildChat() {
+  const msgsHtml = CHAT_MESSAGES.map(m => `
+    <div class="msg ${m.role}">
+      <div class="msg-bubble">${m.text}</div>
+    </div>`).join("");
+
+  return `
+    <div class="stub-notice">
+      <span style="font-size:16px;flex-shrink:0">🔧</span>
+      <span>Функция в разработке — скоро AI ответит на любой вопрос о нутриентах</span>
+    </div>
+    <div class="chat-suggestions">
+      <div class="chat-sug" onclick="sendChat(this.textContent)">Можно совмещать D3 и магний?</div>
+      <div class="chat-sug" onclick="sendChat(this.textContent)">У меня ферритин 12, что делать?</div>
+      <div class="chat-sug" onclick="sendChat(this.textContent)">Как принимать железо правильно?</div>
+    </div>
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-msgs">${msgsHtml}</div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" placeholder="Спроси о нутриентах..." type="text">
+        <button class="chat-send" onclick="sendChatFromInput()">→</button>
+      </div>
+    </div>`;
+}
+
+function bindChat() {
+  const inp = document.getElementById("chat-input");
+  if (inp) inp.addEventListener("keydown", e => { if (e.key === "Enter") sendChatFromInput(); });
+}
+
+async function sendChatFromInput() {
+  const inp = document.getElementById("chat-input");
+  if (!inp || !inp.value.trim()) return;
+  await sendChat(inp.value.trim());
+  inp.value = "";
+}
+
+async function sendChat(text) {
+  const msgs = document.getElementById("chat-msgs");
+  if (!msgs) return;
+  msgs.insertAdjacentHTML("beforeend", `<div class="msg user"><div class="msg-bubble">${text}</div></div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  const data = await api("POST", "/api/ai/chat", { message: text });
+  msgs.insertAdjacentHTML("beforeend", `<div class="msg bot"><div class="msg-bubble">${data.message}</div></div>`);
+  msgs.scrollTop = msgs.scrollHeight;
+  CHAT_MESSAGES.push({ role:"user", text }, { role:"bot", text: data.message });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// КЛУБ
+// ══════════════════════════════════════════════════════════════════════════
+
+async function loadClub() {
+  const screen = document.getElementById("screen-club");
+  screen.innerHTML = '<div class="spinner"></div>';
+
+  const [refData, giveData, homeData] = await Promise.all([
+    api("GET", "/api/referral"),
+    api("GET", "/api/giveaway"),
+    api("GET", "/api/home"),
+  ]);
+
+  // Achievements
+  const streak     = homeData.global_streak || 0;
+  const courseDays = homeData.course_days   || 0;
+  const refCount   = refData.ref_count      || 0;
+  const hasProducts = (homeData.products || []).length > 0;
+
+  const ACHIEVEMENTS = [
+    { icon:"🌱", name:"Первый шаг",    desc:"Пройти анализ",         unlocked: hasProducts },
+    { icon:"📅", name:"7 дней",        desc:"7 дней подряд в курсе", unlocked: streak >= 7 },
+    { icon:"🌿", name:"Месяц",         desc:"30 дней завершено",     unlocked: courseDays >= 30 },
+    { icon:"🤝", name:"Советник",      desc:"Пригласить друга",      unlocked: refCount >= 1 },
+    { icon:"💫", name:"Амбассадор",    desc:"5 приглашённых",        unlocked: refCount >= 5 },
+    { icon:"🏆", name:"Преданность",   desc:"60 дней в курсе",       unlocked: courseDays >= 60 },
+  ];
+
+  const achHtml = `
+    <div class="ach-grid">
+      ${ACHIEVEMENTS.map(a => `
+        <div class="ach-card ${a.unlocked ? '' : 'locked'}">
+          <div class="ach-icon">${a.icon}</div>
+          <div class="ach-name">${a.name}</div>
+          <div class="ach-desc">${a.desc}</div>
+        </div>`).join("")}
+    </div>`;
+
+  // Referral
+  const nextCount  = refData.next_level?.count  || refData.levels[refData.levels.length-1].count;
+  const nextReward = refData.next_level?.reward  || "Максимальный уровень";
+  const progress   = Math.min((refCount / nextCount) * 100, 100);
+  const botUsername = "Biolarapp_bot";
+  const refLink  = `https://t.me/${botUsername}?start=ref_${refData.ref_code}`;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Пройди персональный анализ нутриентов")}`;
+
+  const levelsHtml = refData.levels.map(l => `
+    <li>
+      <span class="level-badge ${refCount >= l.count ? 'done' : ''}">${l.count} чел.</span>
+      <span style="flex:1">${l.reward}</span>
+      ${refCount >= l.count ? `<span style="color:var(--green);font-weight:700">✓</span>` : ""}
+    </li>`).join("");
+
+  // Giveaway
+  const giveHtml = giveData.participating
+    ? `<div class="card" style="text-align:center;padding:20px">
+         <div class="serif" style="font-size:20px;color:var(--green)">Ты участвуешь.</div>
+         <div style="font-size:13px;color:var(--muted);margin-top:4px">Итоги в конце месяца. Удачи.</div>
+       </div>`
+    : `<button class="btn gold-btn" onclick="joinGiveaway(this)">Участвовать в розыгрыше</button>`;
+
+  screen.innerHTML = `
+    <div style="margin-bottom:20px">
+      <span class="label" style="margin-bottom:6px">Клуб</span>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Достижения и бонусы</div>
     </div>
 
+    <div class="section-head" style="margin-bottom:12px"><span class="label">Достижения</span></div>
+    ${achHtml}
+
+    <div class="section-head" style="margin-bottom:12px;margin-top:4px"><span class="label">Розыгрыш месяца</span></div>
+    <div class="club-hero">
+      <div class="club-count">${giveData.total_participants}</div>
+      <div class="club-count-label">участников</div>
+    </div>
+    ${giveHtml}
+
+    <div style="height:16px"></div>
+    <div class="section-head" style="margin-bottom:12px"><span class="label">Приглашай друзей</span></div>
     <div class="stat-card">
-      <div class="stat-number">${data.ref_count}</div>
+      <div class="stat-number">${refCount}</div>
       <div class="stat-label">Приглашённых</div>
-      <div class="stat-prog-wrap">
-        <div class="stat-prog-bar" style="width:${progress}%"></div>
-      </div>
+      <div class="stat-prog-wrap"><div class="stat-prog-bar" style="width:${progress}%"></div></div>
       <div class="stat-next">До следующей: ${nextReward}</div>
     </div>
 
@@ -835,65 +1207,28 @@ async function loadReferral() {
 
     <span class="label" style="margin-bottom:8px">Твоя ссылка</span>
     <div class="ref-link-box" style="margin-top:8px;margin-bottom:12px">${refLink}</div>
-
-    <button class="btn" onclick="window.open('${shareUrl}', '_blank')">Поделиться</button>
+    <button class="btn" onclick="window.open('${shareUrl}','_blank')">Поделиться</button>
     <button class="btn outline" onclick="copyRef('${refLink}')">Скопировать ссылку</button>
-  `;
-}
-
-function copyRef(link) {
-  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована"));
-}
-
-// ── КЛУБ (GIVEAWAY) ────────────────────────────────────────────────────────
-
-async function loadGiveaway() {
-  const screen = document.getElementById("screen-giveaway");
-  screen.innerHTML = '<div class="spinner"></div>';
-  const data = await api("GET", "/api/giveaway");
-
-  screen.innerHTML = `
-    <div style="margin-bottom:20px">
-      <span class="label" style="margin-bottom:6px">Клуб</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Розыгрыш месяца</div>
-    </div>
-
-    <div class="club-hero">
-      <div class="club-hero-count">${data.total_participants}</div>
-      <div class="club-hero-label">участников</div>
-    </div>
-
-    <div class="card" style="margin-bottom:16px">
-      <span class="label" style="margin-bottom:14px">Как участвовать</span>
-      <div style="margin-top:14px;font-size:13px;color:var(--muted);line-height:2.1">
-        Подпишись на Telegram-канал<br>
-        Нажми кнопку участия<br>
-        За каждого приглашённого — дополнительный шанс<br>
-        Итоги в конце месяца
-      </div>
-    </div>
-
-    ${data.participating
-      ? `<div class="card" style="text-align:center">
-           <div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div>
-           <div style="font-size:13px;color:var(--muted);margin-top:4px">Удачи.</div>
-         </div>`
-      : `<button class="btn" onclick="joinGiveaway(this)">Участвовать</button>`
-    }
   `;
 }
 
 async function joinGiveaway(btn) {
   btn.disabled = true; btn.textContent = "...";
   const data = await api("POST", "/api/giveaway/join");
-  btn.closest(".screen").querySelector(".club-hero-count").textContent = data.total_participants;
+  document.querySelector(".club-count").textContent = data.total_participants;
   const el = document.createElement("div");
-  el.className = "card";
-  el.style.textAlign = "center";
-  el.innerHTML = `<div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Удачи.</div>`;
+  el.className = "card"; el.style.cssText = "text-align:center;padding:20px";
+  el.innerHTML = `<div class="serif" style="font-size:20px;color:var(--green)">Ты участвуешь.</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Итоги в конце месяца. Удачи.</div>`;
   btn.replaceWith(el);
   toast("Ты в розыгрыше");
 }
+
+function copyRef(link) {
+  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована"));
+}
+
+// ── Старт ──────────────────────────────────────────────────────────────────
+loadHome();
 </script>
 </body>
 </html>

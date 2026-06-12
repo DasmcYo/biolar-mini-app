@@ -3,6 +3,7 @@ import hmac
 import hashlib
 import json
 from contextlib import asynccontextmanager
+from datetime import date as date_cls
 from urllib.parse import unquote
 
 from fastapi import FastAPI, Request, HTTPException
@@ -102,6 +103,14 @@ class SmartQuizIn(BaseModel):
     diet: str = "balanced"
     women_health: str | None = None
 
+class WellnessIn(BaseModel):
+    energy: int
+    sleep_q: int
+    mood: int
+
+class ChatIn(BaseModel):
+    message: str = ""
+
 class TrackerAddIn(BaseModel):
     product_id: str
 
@@ -148,6 +157,60 @@ async def quiz_result(body: QuizAnswerIn):
 @app.post("/api/quiz/smart-result")
 async def quiz_smart_result(body: SmartQuizIn):
     return get_smart_result(body.model_dump())
+
+
+# ── API: дом ─────────────────────────────────────────────────────────────────
+
+@app.get("/api/home")
+async def home_data(request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    products    = await db.get_tracker_products(tg["id"])
+    today_logs  = await db.get_today_logs(tg["id"])
+    wellness    = await db.get_wellness_today(tg["id"], today)
+    course_days = await db.get_course_days(tg["id"])
+    streak      = await db.get_global_streak(tg["id"])
+    user        = await db.get_user(tg["id"])
+    ref_count   = await db.get_referral_count(user["ref_code"]) if user else 0
+    products_out = [{**p, "taken_today": p["product_id"] in today_logs} for p in products]
+    return {
+        "products": products_out,
+        "wellness_today": wellness,
+        "course_days": course_days,
+        "global_streak": streak,
+        "ref_count": ref_count,
+    }
+
+
+# ── API: самочувствие ────────────────────────────────────────────────────────
+
+@app.post("/api/wellness/log")
+async def wellness_log(body: WellnessIn, request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    await db.log_wellness(tg["id"], today, body.energy, body.sleep_q, body.mood)
+    return {"ok": True}
+
+
+@app.get("/api/wellness")
+async def wellness_get(request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    today_log = await db.get_wellness_today(tg["id"], today)
+    history   = await db.get_wellness_history(tg["id"], 14)
+    return {"today": today_log, "history": history}
+
+
+# ── API: ИИ-нутрициолог (заглушка) ───────────────────────────────────────────
+
+@app.post("/api/ai/chat")
+async def ai_chat(body: ChatIn, request: Request):
+    get_tg_user(request)
+    return {
+        "message": "Я пока в разработке — скоро смогу отвечать на любые вопросы о нутриентах. "
+                   "А пока пройди персональный анализ: он уже учитывает твои симптомы, питание и образ жизни.",
+        "stub": True,
+    }
 
 
 # ── API: трекер ───────────────────────────────────────────────────────────────
