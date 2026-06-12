@@ -53,6 +53,14 @@ async def init_db():
                 UNIQUE(user_id, date),
                 FOREIGN KEY (user_id) REFERENCES users(user_id)
             );
+
+            CREATE TABLE IF NOT EXISTS articles (
+                id      INTEGER PRIMARY KEY AUTOINCREMENT,
+                tag     TEXT NOT NULL,
+                title   TEXT NOT NULL,
+                preview TEXT NOT NULL,
+                body    TEXT NOT NULL
+            );
         """)
         await db.commit()
 
@@ -245,6 +253,27 @@ async def get_course_days(user_id: int) -> int:
             (user_id,),
         ) as cur:
             return (await cur.fetchone())[0]
+
+
+async def seed_articles(articles: list[dict]):
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT COUNT(*) FROM articles") as cur:
+            count = (await cur.fetchone())[0]
+        if count == 0:
+            await db.executemany(
+                "INSERT INTO articles (tag, title, preview, body) VALUES (?, ?, ?, ?)",
+                [(a["tag"], a["title"], a["preview"], a["body"]) for a in articles],
+            )
+            await db.commit()
+
+
+async def get_random_articles(n: int = 4) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT id, tag, title, preview, body FROM articles ORDER BY RANDOM() LIMIT ?", (n,)
+        ) as cur:
+            return [dict(r) for r in await cur.fetchall()]
 
 
 async def get_global_streak(user_id: int) -> int:

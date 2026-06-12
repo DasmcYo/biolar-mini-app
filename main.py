@@ -27,6 +27,8 @@ WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.init_db()
+    from articles_data import ARTICLES
+    await db.seed_articles(ARTICLES)
     if WEBHOOK_URL:
         await _set_webhook()
     yield
@@ -199,6 +201,13 @@ async def wellness_get(request: Request):
     today_log = await db.get_wellness_today(tg["id"], today)
     history   = await db.get_wellness_history(tg["id"], 14)
     return {"today": today_log, "history": history}
+
+
+# ── API: статьи ──────────────────────────────────────────────────────────────
+
+@app.get("/api/articles")
+async def articles_random():
+    return {"articles": await db.get_random_articles(4)}
 
 
 # ── API: ИИ-нутрициолог (заглушка) ───────────────────────────────────────────
