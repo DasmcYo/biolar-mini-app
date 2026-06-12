@@ -132,6 +132,63 @@
     background: var(--green); color: #fff; border-color: var(--green);
   }
 
+  /* SMART QUIZ */
+  .quiz-progress-wrap {
+    background: var(--border); border-radius: 99px; height: 6px;
+    margin-bottom: 20px; overflow: hidden;
+  }
+  .quiz-progress-bar {
+    background: var(--green); height: 100%; border-radius: 99px; transition: width .4s;
+  }
+  .quiz-step-label {
+    font-size: 12px; color: var(--muted); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .quiz-title { font-size: 20px; font-weight: 700; margin-bottom: 22px; line-height: 1.3; }
+  .quiz-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .quiz-card {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 16px 12px;
+    text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .quiz-card .card-emoji { font-size: 28px; margin-bottom: 6px; }
+  .quiz-card .card-text  { font-size: 14px; font-weight: 600; }
+  .quiz-card.selected    { border-color: var(--green); background: #edf7f0; }
+  .quiz-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .quiz-chip {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 99px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .quiz-chip.selected { border-color: var(--green); background: #edf7f0; color: var(--green); font-weight: 600; }
+  .scale-wrap { display: flex; gap: 8px; margin-bottom: 24px; }
+  .scale-seg {
+    flex: 1; padding: 14px 4px; text-align: center;
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: var(--radius); cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .scale-seg.selected { border-color: var(--green); background: #edf7f0; }
+  .scale-num   { font-size: 20px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .scale-seg.selected .scale-num { color: var(--green); }
+  .scale-label { font-size: 11px; color: var(--muted); line-height: 1.2; }
+  .analysis-block {
+    background: #edf7f0; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
+  }
+  .analysis-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--green); }
+  .analysis-list  { list-style: none; }
+  .analysis-list li { font-size: 14px; padding: 3px 0; }
+  .analysis-list li::before { content: "▸ "; color: var(--green); }
+  .product-reason {
+    background: #f0f8f4; border-radius: 8px;
+    padding: 10px 12px; margin-bottom: 12px;
+    font-size: 13px; line-height: 1.5;
+    border-left: 3px solid var(--green);
+  }
+
   /* TRACKER */
   .tracker-item {
     background: var(--card); border-radius: var(--radius);
@@ -290,82 +347,218 @@ const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref
 
 api("POST", "/api/user/init", { ref }).catch(() => {});
 
-// ── КВИЗ ──────────────────────────────────────────────────────────────────────
+// ── УМНЫЙ КВИЗ (9 шагов) ─────────────────────────────────────────────────────
 
-let quizGoal   = null;
-let quizDetail = null;
+const QUIZ_BASE_STEPS = [
+  {
+    id: "gender", title: "Укажи свой пол", type: "grid", options: [
+      {id:"female", emoji:"👩", text:"Женщина"},
+      {id:"male",   emoji:"👨", text:"Мужчина"},
+    ]
+  },
+  {
+    id: "age", title: "Сколько тебе лет?", type: "grid", options: [
+      {id:"18-25", emoji:"🌱", text:"18–25"},
+      {id:"26-35", emoji:"🌿", text:"26–35"},
+      {id:"36-45", emoji:"🌳", text:"36–45"},
+      {id:"45+",   emoji:"🍂", text:"45+"},
+    ]
+  },
+  {
+    id: "goal", title: "Какая у тебя основная цель?", type: "grid", options: [
+      {id:"energy",       emoji:"⚡",  text:"Энергия и бодрость"},
+      {id:"sleep",        emoji:"😴",  text:"Улучшить сон"},
+      {id:"immunity",     emoji:"🛡️", text:"Иммунитет"},
+      {id:"brain",        emoji:"🧠",  text:"Мозг и фокус"},
+      {id:"women_health", emoji:"🌸",  text:"Женское здоровье"},
+      {id:"thyroid",      emoji:"🦋",  text:"Щитовидная железа"},
+      {id:"beauty",       emoji:"✨",  text:"Кожа и волосы"},
+      {id:"weight",       emoji:"⚖️", text:"Контроль веса"},
+    ]
+  },
+  {
+    id: "symptoms", title: "Отметь симптомы (если есть)", type: "multiselect", options: [
+      {id:"fatigue",    emoji:"😴", text:"Постоянная усталость"},
+      {id:"anemia",     emoji:"🩸", text:"Анемия / дефицит железа"},
+      {id:"hair_loss",  emoji:"💇", text:"Выпадение волос"},
+      {id:"often_sick", emoji:"🤧", text:"Часто болею"},
+      {id:"low_sun",    emoji:"☀️", text:"Мало бываю на солнце"},
+      {id:"brain_fog",  emoji:"🌫️", text:"Туман в голове"},
+      {id:"anxiety",    emoji:"😰", text:"Тревожность / раздражительность"},
+    ]
+  },
+  {
+    id: "stress", title: "Оцени уровень своего стресса", type: "scale", options: [
+      {id:1, label:"Нет"},
+      {id:2, label:"Умер."},
+      {id:3, label:"Высокий"},
+      {id:4, label:"Хрон."},
+    ]
+  },
+  {
+    id: "sleep_q", title: "Как ты оцениваешь качество своего сна?", type: "scale", options: [
+      {id:1, label:"Плохо"},
+      {id:2, label:"Неплохо"},
+      {id:3, label:"Хорошо"},
+      {id:4, label:"Отлично"},
+    ]
+  },
+  {
+    id: "diet", title: "Как ты питаешься?", type: "grid", options: [
+      {id:"balanced", emoji:"🥗", text:"Сбалансированно"},
+      {id:"low_meat", emoji:"🥦", text:"Редко ем мясо"},
+      {id:"vegan",    emoji:"🌱", text:"Веганство"},
+      {id:"sugary",   emoji:"🍰", text:"Много сладкого"},
+    ]
+  },
+  {
+    id: "women_health", title: "Уточни по женскому здоровью", type: "grid", femaleOnly: true, options: [
+      {id:"normal",    emoji:"🌺", text:"Всё в порядке"},
+      {id:"pms",       emoji:"🌙", text:"ПМС"},
+      {id:"pcos",      emoji:"🔄", text:"СПКЯ"},
+      {id:"thyroid_f", emoji:"🦋", text:"Щитовидная"},
+      {id:"fertility", emoji:"🤰", text:"Фертильность / ЭКО"},
+    ]
+  },
+];
+
+let quizAnswers     = {};
+let quizStepIdx     = 0;
+let quizActiveSteps = [];
+let quizSymptoms    = new Set();
 const addedToTracker = new Set();
 
-async function loadQuiz() {
-  const screen = document.getElementById("screen-quiz");
-  screen.innerHTML = '<div class="spinner"></div>';
-  const q = await api("GET", "/api/quiz/start");
-  renderQuestion(q, null);
+function getActiveSteps() {
+  return QUIZ_BASE_STEPS.filter(s => !(s.femaleOnly && quizAnswers.gender !== "female"));
 }
 
-function renderQuestion(q, backFn) {
-  const screen = document.getElementById("screen-quiz");
-  const html = `
-    ${backFn ? `<button class="quiz-back" onclick="loadQuiz()">← Начать заново</button>` : ""}
-    <div class="header">
-      <h1>🌿 Biolar Organics</h1>
-      <p>Подбираем добавки под твою цель</p>
-    </div>
-    <div class="quiz-question">${q.text}</div>
-    <div class="quiz-options">
-      ${q.options.map(o => `
-        <button class="quiz-option" onclick="onQuizOption('${q.id}', '${o.id}', this)">
-          ${o.text}
-        </button>`).join("")}
-    </div>`;
-  screen.innerHTML = html;
-}
+function renderQuiz() {
+  quizActiveSteps = getActiveSteps();
+  const step    = quizActiveSteps[quizStepIdx];
+  if (!step) { showSmartResults(); return; }
 
-async function onQuizOption(qid, optId, btn) {
-  document.querySelectorAll(".quiz-option").forEach(b => b.classList.remove("selected"));
-  btn.classList.add("selected");
+  const total   = quizActiveSteps.length;
+  const current = quizStepIdx + 1;
+  const pct     = Math.round((quizStepIdx / total) * 100);
 
-  if (qid === "goal") {
-    quizGoal = optId;
-    const follow = await api("POST", "/api/quiz/followup", { goal: optId });
-    if (follow && follow.id) {
-      renderQuestion(follow, true);
-    } else {
-      quizDetail = null;
-      await showQuizResult();
-    }
-  } else {
-    quizDetail = optId;
-    await showQuizResult();
+  let body = "";
+
+  if (step.type === "grid") {
+    body = `<div class="quiz-grid">` +
+      step.options.map(o => `
+        <div class="quiz-card ${quizAnswers[step.id] === o.id ? 'selected' : ''}"
+             data-id="${o.id}"
+             onclick="selectCard('${step.id}', '${o.id}', this)">
+          <div class="card-emoji">${o.emoji}</div>
+          <div class="card-text">${o.text}</div>
+        </div>`).join("") +
+      `</div>`;
+  } else if (step.type === "multiselect") {
+    body = `<div class="quiz-chip-wrap">` +
+      step.options.map(o => `
+        <div class="quiz-chip ${quizSymptoms.has(o.id) ? 'selected' : ''}"
+             onclick="toggleChip('${o.id}', this)">
+          ${o.emoji} ${o.text}
+        </div>`).join("") +
+      `</div>
+      <button class="btn" onclick="advanceQuiz()">Продолжить →</button>`;
+  } else if (step.type === "scale") {
+    body = `<div class="scale-wrap">` +
+      step.options.map(o => `
+        <div class="scale-seg ${quizAnswers[step.id] == o.id ? 'selected' : ''}"
+             onclick="selectScale('${step.id}', ${o.id}, this)">
+          <div class="scale-num">${o.id}</div>
+          <div class="scale-label">${o.label}</div>
+        </div>`).join("") +
+      `</div>`;
   }
+
+  const backBtn = quizStepIdx > 0
+    ? `<button class="btn secondary" style="margin-top:12px" onclick="backQuiz()">← Назад</button>`
+    : "";
+
+  document.getElementById("screen-quiz").innerHTML = `
+    <div class="quiz-step-label">Шаг ${current} из ${total}</div>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-progress-bar" style="width:${pct}%"></div>
+    </div>
+    <div class="quiz-title">${step.title}</div>
+    ${body}
+    ${backBtn}
+  `;
 }
 
-async function showQuizResult() {
+function selectCard(stepId, value, el) {
+  quizAnswers[stepId] = value;
+  el.closest(".quiz-grid").querySelectorAll(".quiz-card").forEach(c => c.classList.remove("selected"));
+  el.classList.add("selected");
+  setTimeout(advanceQuiz, 220);
+}
+
+function toggleChip(id, el) {
+  if (quizSymptoms.has(id)) { quizSymptoms.delete(id); el.classList.remove("selected"); }
+  else                       { quizSymptoms.add(id);    el.classList.add("selected"); }
+}
+
+function selectScale(stepId, value, el) {
+  quizAnswers[stepId] = value;
+  el.closest(".scale-wrap").querySelectorAll(".scale-seg").forEach(s => s.classList.remove("selected"));
+  el.classList.add("selected");
+  setTimeout(advanceQuiz, 270);
+}
+
+function advanceQuiz() {
+  const step = quizActiveSteps[quizStepIdx];
+  if (step.type !== "multiselect" && !quizAnswers[step.id]) { toast("Выбери один из вариантов"); return; }
+  quizStepIdx++;
+  quizActiveSteps = getActiveSteps();
+  if (quizStepIdx >= quizActiveSteps.length) showSmartResults();
+  else renderQuiz();
+}
+
+function backQuiz() {
+  if (quizStepIdx > 0) { quizStepIdx--; renderQuiz(); }
+}
+
+async function showSmartResults() {
   const screen = document.getElementById("screen-quiz");
   screen.innerHTML = '<div class="spinner"></div>';
-  const data = await api("POST", "/api/quiz/result", { goal: quizGoal, detail: quizDetail });
+
+  const payload = {
+    gender:       quizAnswers.gender       || "female",
+    age:          quizAnswers.age          || "26-35",
+    goal:         quizAnswers.goal         || "energy",
+    symptoms:     [...quizSymptoms],
+    stress:       quizAnswers.stress       || 1,
+    sleep_q:      quizAnswers.sleep_q      || 4,
+    diet:         quizAnswers.diet         || "balanced",
+    women_health: quizAnswers.women_health || null,
+  };
+
+  const data     = await api("POST", "/api/quiz/smart-result", payload);
   const products = data.products || [];
+  const analysis = data.analysis || [];
 
   if (!products.length) {
     screen.innerHTML = `<div class="empty-state"><div class="big">🤔</div><p>Ничего не нашли — напиши нам напрямую!</p></div>`;
     return;
   }
 
-  let html = `
-    <button class="quiz-back" onclick="loadQuiz()">← Пройти заново</button>
-    <div class="header">
-      <h1>Твоя программа готова ✅</h1>
-      <p>Добавь продукты в трекер чтобы не забывать принимать</p>
-    </div>`;
+  const analysisHtml = analysis.length ? `
+    <div class="analysis-block">
+      <div class="analysis-title">📋 Что мы выявили</div>
+      <ul class="analysis-list">${analysis.map(a => `<li>${a}</li>`).join("")}</ul>
+    </div>` : "";
 
-  for (const p of products) {
+  const productsHtml = products.map(p => {
     const benefits = (p.benefits || []).map(b => `<li>${b}</li>`).join("");
-    const added = addedToTracker.has(p.id);
-    html += `
+    const added    = addedToTracker.has(p.id);
+    return `
       <div class="product-card">
         <div class="product-emoji">${p.emoji}</div>
         <div class="product-name">${p.name}</div>
         <div class="product-tag">${p.tagline}</div>
+        <div class="product-reason">💡 ${p.reason}</div>
         <ul class="product-benefits">${benefits}</ul>
         <div class="product-links">
           <a class="link-wb"   href="${p.wb_url}"   target="_blank">WB</a>
@@ -373,15 +566,24 @@ async function showQuizResult() {
         </div>
         <button class="btn-add-tracker ${added ? 'added' : ''}"
                 id="add-btn-${p.id}"
-                onclick="addToTracker('${p.id}', '${p.name}')">
+                onclick="addToTracker('${p.id}')">
           ${added ? "✓ Добавлено в трекер" : "+ Добавить в трекер"}
         </button>
       </div>`;
-  }
-  screen.innerHTML = html;
+  }).join("");
+
+  screen.innerHTML = `
+    <button class="quiz-back" onclick="restartQuiz()">← Пройти заново</button>
+    <div class="header">
+      <h1>Твоя программа ✅</h1>
+      <p>Персональный подбор на основе твоих ответов</p>
+    </div>
+    ${analysisHtml}
+    ${productsHtml}
+  `;
 }
 
-async function addToTracker(productId, productName) {
+async function addToTracker(productId) {
   if (addedToTracker.has(productId)) return;
   await api("POST", "/api/tracker/add", { product_id: productId });
   addedToTracker.add(productId);
@@ -390,7 +592,14 @@ async function addToTracker(productId, productName) {
   toast("Добавлено в трекер 🌿");
 }
 
-loadQuiz();
+function restartQuiz() {
+  quizAnswers  = {};
+  quizStepIdx  = 0;
+  quizSymptoms = new Set();
+  renderQuiz();
+}
+
+renderQuiz();
 
 // ── ТРЕКЕР ────────────────────────────────────────────────────────────────────
 

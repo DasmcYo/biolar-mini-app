@@ -13,7 +13,8 @@ from dotenv import load_dotenv
 
 import db
 from products import (
-    PRODUCTS, QUIZ_QUESTIONS, get_quiz_result, get_follow_up_question
+    PRODUCTS, QUIZ_QUESTIONS, get_quiz_result, get_follow_up_question,
+    get_smart_result,
 )
 
 load_dotenv()
@@ -91,6 +92,16 @@ class QuizAnswerIn(BaseModel):
     goal: str
     detail: str | None = None
 
+class SmartQuizIn(BaseModel):
+    gender: str = "female"
+    age: str = "26-35"
+    goal: str = "energy"
+    symptoms: list[str] = []
+    stress: int = 1
+    sleep_q: int = 4
+    diet: str = "balanced"
+    women_health: str | None = None
+
 class TrackerAddIn(BaseModel):
     product_id: str
 
@@ -132,6 +143,11 @@ async def quiz_followup(body: QuizAnswerIn):
 async def quiz_result(body: QuizAnswerIn):
     products = get_quiz_result(body.goal, body.detail)
     return {"products": products}
+
+
+@app.post("/api/quiz/smart-result")
+async def quiz_smart_result(body: SmartQuizIn):
+    return get_smart_result(body.model_dump())
 
 
 # ── API: трекер ───────────────────────────────────────────────────────────────
