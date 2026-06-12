@@ -596,10 +596,38 @@ function restartQuiz() {
   quizAnswers  = {};
   quizStepIdx  = 0;
   quizSymptoms = new Set();
-  renderQuiz();
+  renderWelcome();
 }
 
-renderQuiz();
+function renderWelcome() {
+  const name = user.first_name ? `, ${user.first_name}` : "";
+  document.getElementById("screen-quiz").innerHTML = `
+    <div style="min-height:calc(100vh - 100px);display:flex;flex-direction:column;justify-content:center;padding:8px 0 24px">
+
+      <div style="text-align:center;margin-bottom:32px">
+        <div style="font-size:56px;margin-bottom:16px">🌿</div>
+        <div style="font-size:15px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Biolar Organics</div>
+        <div style="font-size:26px;font-weight:800;line-height:1.25;color:var(--text);margin-bottom:12px">
+          Привет${name}! 👋<br>Ты уверен, что пьёшь<br>то, что нужно именно тебе?
+        </div>
+        <div style="font-size:14px;color:var(--muted);line-height:1.6;max-width:280px;margin:0 auto">
+          Большинство берут добавки наугад.<br>
+          Мы зададим 8 вопросов и подберём программу точно под твой организм.
+        </div>
+      </div>
+
+      <button class="btn" style="font-size:16px;padding:16px" onclick="renderQuiz()">
+        Узнать, что мне нужно →
+      </button>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px">
+        2 минуты · бесплатно · без регистрации
+      </div>
+
+    </div>
+  `;
+}
+
+renderWelcome();
 
 // ── ТРЕКЕР ────────────────────────────────────────────────────────────────────
 
