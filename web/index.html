@@ -3,301 +3,299 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Biolar Organics</title>
+<title>Biolar</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --green:   #3db87a;
-    --green2:  #2ea066;
-    --bg:      #f4f7f4;
-    --card:    #ffffff;
-    --text:    #1a2a1a;
-    --muted:   #7a8f7a;
-    --border:  #e0ece0;
-    --danger:  #e05050;
-    --radius:  14px;
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --card:    #21262d;
+    --accent:  #3ecf8e;
+    --adim:    rgba(62,207,142,0.1);
+    --text:    #e6edf3;
+    --muted:   #7d8590;
+    --border:  rgba(240,246,252,0.1);
+    --danger:  #f85149;
+    --radius:  10px;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
   body {
-    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-family: -apple-system, 'SF Pro Display', 'Segoe UI', Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding-bottom: 80px;
+    padding-bottom: 68px;
   }
 
-  /* NAV */
+  /* ── NAV ── */
   .nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--card);
+    background: var(--surface);
     border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 100;
+    display: flex; z-index: 100;
     padding-bottom: env(safe-area-inset-bottom);
   }
   .nav-btn {
-    flex: 1; display: flex; flex-direction: column; align-items: center;
-    padding: 10px 4px 8px;
-    font-size: 11px; color: var(--muted);
-    background: none; border: none; cursor: pointer;
-    transition: color .15s;
+    flex: 1; padding: 12px 4px 10px;
+    font-size: 10px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase;
+    color: var(--muted); background: none; border: none; cursor: pointer;
+    transition: color .15s; position: relative;
   }
-  .nav-btn .icon { font-size: 22px; margin-bottom: 3px; }
-  .nav-btn.active { color: var(--green); }
+  .nav-btn::before {
+    content: ""; position: absolute; top: 0; left: 20%; right: 20%; height: 1.5px;
+    background: var(--accent); opacity: 0; transition: opacity .15s;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active::before { opacity: 1; }
 
-  /* SCREENS */
-  .screen { display: none; padding: 16px; animation: fadeIn .2s; }
+  /* ── SCREENS ── */
+  .screen { display: none; padding: 20px 16px; animation: fadeIn .18s; }
   .screen.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
-  /* HEADER */
-  .header {
-    background: linear-gradient(135deg, var(--green), var(--green2));
-    color: #fff; border-radius: var(--radius);
-    padding: 20px; margin-bottom: 16px;
+  /* ── LABEL ── */
+  .label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.3px;
+    text-transform: uppercase; color: var(--muted); display: block;
   }
-  .header h1 { font-size: 22px; font-weight: 700; }
-  .header p  { font-size: 14px; opacity: .85; margin-top: 4px; }
 
-  /* CARD */
-  .card {
-    background: var(--card); border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 16px;
-    margin-bottom: 12px;
-  }
-  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
-  .card-sub   { font-size: 13px; color: var(--muted); }
-
-  /* BUTTON */
+  /* ── BUTTONS ── */
   .btn {
-    display: block; width: 100%; padding: 14px;
-    background: var(--green); color: #fff;
+    display: block; width: 100%; padding: 15px;
+    background: var(--accent); color: #0d1117;
     border: none; border-radius: var(--radius);
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    transition: background .15s;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    letter-spacing: .2px; transition: opacity .15s;
   }
-  .btn:active { background: var(--green2); }
+  .btn:active { opacity: .8; }
   .btn.secondary {
-    background: none; color: var(--green);
-    border: 2px solid var(--green);
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
   }
-  .btn.danger { background: var(--danger); }
-  .btn + .btn { margin-top: 10px; }
+  .btn + .btn { margin-top: 8px; }
 
-  /* QUIZ */
-  .quiz-question { font-size: 18px; font-weight: 700; margin-bottom: 20px; line-height: 1.3; }
-  .quiz-options { display: flex; flex-direction: column; gap: 10px; }
-  .quiz-option {
-    background: var(--card); border: 2px solid var(--border);
-    border-radius: var(--radius); padding: 14px 16px;
-    font-size: 15px; cursor: pointer; text-align: left;
-    transition: border-color .15s, background .15s;
-  }
-  .quiz-option:active, .quiz-option.selected {
-    border-color: var(--green); background: #edf7f0;
-  }
-  .quiz-back {
-    display: flex; align-items: center; gap: 6px;
-    color: var(--muted); font-size: 14px;
-    background: none; border: none; cursor: pointer;
-    margin-bottom: 16px; padding: 0;
+  /* ── CARD ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
   }
 
-  /* PRODUCT RESULT CARD */
-  .product-card {
-    background: var(--card); border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 16px;
+  /* ── QUIZ ── */
+  .quiz-meta {
+    display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 12px;
   }
-  .product-emoji { font-size: 28px; margin-bottom: 8px; }
-  .product-name  { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-  .product-tag   { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-  .product-benefits { list-style: none; margin-bottom: 14px; }
-  .product-benefits li { font-size: 13px; padding: 2px 0; }
-  .product-benefits li::before { content: "✓ "; color: var(--green); font-weight: 700; }
-  .product-links { display: flex; gap: 8px; }
-  .product-links a {
-    flex: 1; padding: 10px; text-align: center; border-radius: 10px;
-    font-size: 13px; font-weight: 600; text-decoration: none; color: #fff;
+  .quiz-counter {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    font-variant-numeric: tabular-nums; letter-spacing: .5px;
   }
-  .link-wb   { background: #cb11ab; }
-  .link-ozon { background: #005bff; }
-  .btn-add-tracker {
-    width: 100%; margin-top: 10px; padding: 10px;
-    background: none; border: 2px solid var(--green);
-    border-radius: 10px; color: var(--green);
-    font-size: 13px; font-weight: 600; cursor: pointer;
+  .quiz-prog-wrap {
+    height: 2px; background: var(--border); border-radius: 99px;
+    margin-bottom: 28px; overflow: hidden;
   }
-  .btn-add-tracker.added {
-    background: var(--green); color: #fff; border-color: var(--green);
+  .quiz-prog-bar {
+    height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease;
+  }
+  .quiz-q {
+    font-size: 22px; font-weight: 700; line-height: 1.25;
+    letter-spacing: -.3px; margin-bottom: 24px;
   }
 
-  /* SMART QUIZ */
-  .quiz-progress-wrap {
-    background: var(--border); border-radius: 99px; height: 6px;
-    margin-bottom: 20px; overflow: hidden;
-  }
-  .quiz-progress-bar {
-    background: var(--green); height: 100%; border-radius: 99px; transition: width .4s;
-  }
-  .quiz-step-label {
-    font-size: 12px; color: var(--muted); margin-bottom: 8px;
-    text-transform: uppercase; letter-spacing: .5px;
-  }
-  .quiz-title { font-size: 20px; font-weight: 700; margin-bottom: 22px; line-height: 1.3; }
-  .quiz-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  /* Option cards */
+  .quiz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
   .quiz-card {
-    background: var(--card); border: 2px solid var(--border);
-    border-radius: var(--radius); padding: 16px 12px;
-    text-align: center; cursor: pointer;
-    transition: border-color .15s, background .15s;
+    position: relative;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 18px 14px;
+    font-size: 14px; font-weight: 500; text-align: center;
+    cursor: pointer; color: var(--text); line-height: 1.3;
+    transition: border-color .15s, background .15s, color .15s;
   }
-  .quiz-card .card-emoji { font-size: 28px; margin-bottom: 6px; }
-  .quiz-card .card-text  { font-size: 14px; font-weight: 600; }
-  .quiz-card.selected    { border-color: var(--green); background: #edf7f0; }
-  .quiz-chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .quiz-card.selected {
+    border-color: var(--accent); background: var(--adim); color: var(--accent);
+  }
+  .quiz-card.selected::after {
+    content: "✓"; position: absolute; top: 8px; right: 10px;
+    font-size: 10px; color: var(--accent); font-weight: 700;
+  }
+
+  /* Multi-select chips */
+  .quiz-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
   .quiz-chip {
-    background: var(--card); border: 2px solid var(--border);
-    border-radius: 99px; padding: 8px 14px; font-size: 14px; cursor: pointer;
-    transition: border-color .15s, background .15s;
-    display: flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 99px; padding: 9px 16px;
+    font-size: 13px; font-weight: 500; color: var(--text);
+    cursor: pointer; transition: border-color .15s, background .15s, color .15s;
   }
-  .quiz-chip.selected { border-color: var(--green); background: #edf7f0; color: var(--green); font-weight: 600; }
-  .scale-wrap { display: flex; gap: 8px; margin-bottom: 24px; }
+  .quiz-chip.selected { border-color: var(--accent); background: var(--adim); color: var(--accent); }
+
+  /* Scale */
+  .scale-row { display: flex; gap: 6px; margin-bottom: 24px; }
   .scale-seg {
-    flex: 1; padding: 14px 4px; text-align: center;
-    background: var(--card); border: 2px solid var(--border);
+    flex: 1; padding: 12px 4px; text-align: center;
+    background: var(--card); border: 1.5px solid var(--border);
     border-radius: var(--radius); cursor: pointer;
     transition: border-color .15s, background .15s;
   }
-  .scale-seg.selected { border-color: var(--green); background: #edf7f0; }
-  .scale-num   { font-size: 20px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
-  .scale-seg.selected .scale-num { color: var(--green); }
-  .scale-label { font-size: 11px; color: var(--muted); line-height: 1.2; }
-  .analysis-block {
-    background: #edf7f0; border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
-  }
-  .analysis-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--green); }
-  .analysis-list  { list-style: none; }
-  .analysis-list li { font-size: 14px; padding: 3px 0; }
-  .analysis-list li::before { content: "▸ "; color: var(--green); }
-  .product-reason {
-    background: #f0f8f4; border-radius: 8px;
-    padding: 10px 12px; margin-bottom: 12px;
-    font-size: 13px; line-height: 1.5;
-    border-left: 3px solid var(--green);
+  .scale-seg.selected { border-color: var(--accent); background: var(--adim); }
+  .scale-num { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .scale-seg.selected .scale-num { color: var(--accent); }
+  .scale-lbl { font-size: 10px; color: var(--muted); line-height: 1.2; }
+
+  .quiz-back-btn {
+    display: inline-flex; align-items: center;
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: 13px; padding: 0; margin-top: 16px;
   }
 
-  /* TRACKER */
+  /* ── RESULTS ── */
+  .analysis-block {
+    border: 1px solid var(--border); border-left: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 14px 16px;
+    background: var(--adim); margin-bottom: 20px;
+  }
+  .analysis-list { list-style: none; margin-top: 10px; }
+  .analysis-list li {
+    font-size: 13px; color: var(--text); padding: 3px 0;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .analysis-list li::before {
+    content: ""; display: inline-block; width: 4px; height: 4px;
+    background: var(--accent); border-radius: 50%;
+    flex-shrink: 0; margin-top: 7px;
+  }
+
+  .product-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 10px;
+  }
+  .product-name { font-size: 16px; font-weight: 700; letter-spacing: -.2px; margin-bottom: 4px; }
+  .product-tag  { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .product-reason-lbl {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  .product-reason-txt {
+    font-size: 13px; line-height: 1.55;
+    padding-left: 12px; border-left: 2px solid var(--accent); margin-bottom: 16px;
+    color: var(--text);
+  }
+  .product-benefits { list-style: none; margin-bottom: 16px; }
+  .product-benefits li {
+    font-size: 13px; color: var(--muted); padding: 3px 0;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .product-benefits li::before {
+    content: ""; display: inline-block; width: 3px; height: 3px;
+    background: var(--muted); border-radius: 50%;
+    flex-shrink: 0; margin-top: 8px;
+  }
+  .product-links { display: flex; gap: 8px; margin-bottom: 10px; }
+  .product-links a {
+    flex: 1; padding: 10px; text-align: center; border-radius: 8px;
+    font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .3px;
+  }
+  .link-wb   { background: rgba(203,17,171,.1);  color: #d060c0; border: 1px solid rgba(203,17,171,.2); }
+  .link-ozon { background: rgba(0,91,255,.1);    color: #6090ff; border: 1px solid rgba(0,91,255,.2); }
+  .btn-tracker {
+    width: 100%; padding: 11px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 8px; color: var(--muted);
+    font-size: 12px; font-weight: 700; cursor: pointer; letter-spacing: .3px;
+    transition: border-color .15s, color .15s;
+  }
+  .btn-tracker.added { border-color: var(--accent); color: var(--accent); }
+
+  /* ── TRACKER ── */
   .tracker-item {
-    background: var(--card); border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 14px;
-    margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px;
+    margin-bottom: 8px; display: flex; align-items: center; gap: 14px;
   }
   .tracker-check {
-    width: 40px; height: 40px; border-radius: 50%;
-    border: 2px solid var(--border); background: none;
-    font-size: 18px; cursor: pointer; flex-shrink: 0;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--border); background: none;
+    font-size: 14px; font-weight: 700; cursor: pointer; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    transition: all .15s;
+    color: transparent; transition: all .15s;
   }
-  .tracker-check.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .tracker-check.done { background: var(--accent); border-color: var(--accent); color: #0d1117; }
   .tracker-info { flex: 1; }
   .tracker-name   { font-size: 14px; font-weight: 600; }
-  .tracker-streak { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tracker-streak { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: .2px; }
   .tracker-del {
     background: none; border: none; color: var(--muted);
-    font-size: 18px; cursor: pointer; padding: 4px;
+    font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; opacity: .4;
   }
-  .streak-fire { color: #ff6b00; }
-  .empty-state {
-    text-align: center; padding: 40px 20px; color: var(--muted);
-  }
-  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
-  .empty-state p { font-size: 14px; line-height: 1.5; }
+  .tracker-del:active { opacity: 1; }
 
-  /* REFERRAL */
-  .ref-progress {
-    background: var(--card); border-radius: var(--radius);
-    border: 1px solid var(--border); padding: 16px; margin-bottom: 12px;
+  /* ── REFERRAL ── */
+  .ref-big { font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 2px; }
+  .ref-bar-wrap {
+    height: 2px; background: var(--border); border-radius: 99px; margin: 14px 0 6px; overflow: hidden;
   }
-  .ref-count { font-size: 36px; font-weight: 700; color: var(--green); }
-  .ref-label { font-size: 13px; color: var(--muted); margin-top: 2px; }
-  .ref-bar-wrap { background: var(--border); border-radius: 99px; height: 8px; margin: 14px 0 8px; overflow: hidden; }
-  .ref-bar { background: var(--green); height: 100%; border-radius: 99px; transition: width .4s; }
-  .ref-next { font-size: 13px; color: var(--muted); }
+  .ref-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width .5s; }
   .levels { list-style: none; }
   .levels li {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+    font-size: 13px;
   }
   .levels li:last-child { border: none; }
   .level-badge {
-    background: #edf7f0; color: var(--green);
-    border-radius: 6px; padding: 3px 8px; font-size: 12px; font-weight: 700;
-    white-space: nowrap;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px 8px; white-space: nowrap; min-width: 52px; text-align: center;
   }
-  .level-badge.done { background: var(--green); color: #fff; }
+  .level-badge.done { border-color: var(--accent); color: var(--accent); }
+  .ref-link-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-size: 12px; color: var(--muted);
+    word-break: break-all; line-height: 1.6; margin-bottom: 10px;
+  }
 
-  /* GIVEAWAY */
-  .giveaway-hero {
-    background: linear-gradient(135deg, #ff6b00, #ff9f00);
-    color: #fff; border-radius: var(--radius); padding: 24px;
-    text-align: center; margin-bottom: 16px;
-  }
-  .giveaway-hero .big { font-size: 52px; margin-bottom: 8px; }
-  .giveaway-hero h2 { font-size: 20px; font-weight: 700; }
-  .giveaway-hero p  { font-size: 14px; opacity: .9; margin-top: 6px; }
-  .participants-count {
-    font-size: 32px; font-weight: 700; color: var(--green); text-align: center; margin: 12px 0 4px;
-  }
-  .participants-label { text-align: center; font-size: 13px; color: var(--muted); }
+  /* ── GIVEAWAY ── */
+  .give-count { font-size: 52px; font-weight: 800; letter-spacing: -2px; margin-bottom: 2px; }
 
-  /* SPINNER */
-  .spinner {
-    display: flex; justify-content: center; align-items: center; padding: 40px;
-  }
+  /* ── EMPTY ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty p { font-size: 14px; line-height: 1.7; }
+
+  /* ── SPINNER ── */
+  .spinner { display: flex; justify-content: center; padding: 60px; }
   .spinner::after {
-    content: ""; width: 32px; height: 32px;
-    border: 3px solid var(--border); border-top-color: var(--green);
+    content: ""; width: 24px; height: 24px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
     border-radius: 50%; animation: spin .7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* TOAST */
+  /* ── TOAST ── */
   .toast {
-    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-    background: #222; color: #fff; padding: 10px 20px;
-    border-radius: 99px; font-size: 14px; z-index: 200;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
-    white-space: nowrap;
+    position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%);
+    background: var(--card); color: var(--text);
+    border: 1px solid var(--border);
+    padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 500;
+    z-index: 200; opacity: 0; pointer-events: none;
+    transition: opacity .2s; white-space: nowrap;
   }
   .toast.show { opacity: 1; }
 </style>
 </head>
 <body>
 
-<!-- SCREENS -->
 <div id="screen-quiz"     class="screen active"></div>
 <div id="screen-tracker"  class="screen"></div>
 <div id="screen-referral" class="screen"></div>
 <div id="screen-giveaway" class="screen"></div>
 
-<!-- NAV -->
 <nav class="nav">
-  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">
-    <span class="icon">🌿</span>Квиз
-  </button>
-  <button class="nav-btn" onclick="showScreen('tracker')"  id="nav-tracker">
-    <span class="icon">📅</span>Трекер
-  </button>
-  <button class="nav-btn" onclick="showScreen('referral')" id="nav-referral">
-    <span class="icon">🔗</span>Друзья
-  </button>
-  <button class="nav-btn" onclick="showScreen('giveaway')" id="nav-giveaway">
-    <span class="icon">🎁</span>Розыгрыш
-  </button>
+  <button class="nav-btn active" onclick="showScreen('quiz')"     id="nav-quiz">Квиз</button>
+  <button class="nav-btn"        onclick="showScreen('tracker')"  id="nav-tracker">Трекер</button>
+  <button class="nav-btn"        onclick="showScreen('referral')" id="nav-referral">Друзья</button>
+  <button class="nav-btn"        onclick="showScreen('giveaway')" id="nav-giveaway">Розыгрыш</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -310,15 +308,12 @@ tg.expand();
 const initData = tg.initData || "";
 const user     = tg.initDataUnsafe?.user || {};
 
-// ── Утилиты ───────────────────────────────────────────────────────────────────
+// ── Utils ──────────────────────────────────────────────────────────────────
 
 function api(method, path, body) {
   return fetch(path, {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Telegram-Init-Data": initData,
-    },
+    headers: { "Content-Type": "application/json", "X-Telegram-Init-Data": initData },
     body: body ? JSON.stringify(body) : undefined,
   }).then(r => r.json());
 }
@@ -340,55 +335,52 @@ function showScreen(name) {
   if (name === "giveaway") loadGiveaway();
 }
 
-// ── Инициализация пользователя ────────────────────────────────────────────────
-
 const urlParams = new URLSearchParams(location.search);
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
-
 api("POST", "/api/user/init", { ref }).catch(() => {});
 
-// ── УМНЫЙ КВИЗ (9 шагов) ─────────────────────────────────────────────────────
+// ── QUIZ ───────────────────────────────────────────────────────────────────
 
 const QUIZ_BASE_STEPS = [
   {
     id: "gender", title: "Укажи свой пол", type: "grid", options: [
-      {id:"female", emoji:"👩", text:"Женщина"},
-      {id:"male",   emoji:"👨", text:"Мужчина"},
+      {id:"female", text:"Женщина"},
+      {id:"male",   text:"Мужчина"},
     ]
   },
   {
     id: "age", title: "Сколько тебе лет?", type: "grid", options: [
-      {id:"18-25", emoji:"🌱", text:"18–25"},
-      {id:"26-35", emoji:"🌿", text:"26–35"},
-      {id:"36-45", emoji:"🌳", text:"36–45"},
-      {id:"45+",   emoji:"🍂", text:"45+"},
+      {id:"18-25", text:"18–25"},
+      {id:"26-35", text:"26–35"},
+      {id:"36-45", text:"36–45"},
+      {id:"45+",   text:"45+"},
     ]
   },
   {
-    id: "goal", title: "Какая у тебя основная цель?", type: "grid", options: [
-      {id:"energy",       emoji:"⚡",  text:"Энергия и бодрость"},
-      {id:"sleep",        emoji:"😴",  text:"Улучшить сон"},
-      {id:"immunity",     emoji:"🛡️", text:"Иммунитет"},
-      {id:"brain",        emoji:"🧠",  text:"Мозг и фокус"},
-      {id:"women_health", emoji:"🌸",  text:"Женское здоровье"},
-      {id:"thyroid",      emoji:"🦋",  text:"Щитовидная железа"},
-      {id:"beauty",       emoji:"✨",  text:"Кожа и волосы"},
-      {id:"weight",       emoji:"⚖️", text:"Контроль веса"},
+    id: "goal", title: "Какая основная цель?", type: "grid", options: [
+      {id:"energy",       text:"Энергия и бодрость"},
+      {id:"sleep",        text:"Улучшить сон"},
+      {id:"immunity",     text:"Иммунитет"},
+      {id:"brain",        text:"Мозг и фокус"},
+      {id:"women_health", text:"Женское здоровье"},
+      {id:"thyroid",      text:"Щитовидная железа"},
+      {id:"beauty",       text:"Кожа и волосы"},
+      {id:"weight",       text:"Контроль веса"},
     ]
   },
   {
-    id: "symptoms", title: "Отметь симптомы (если есть)", type: "multiselect", options: [
-      {id:"fatigue",    emoji:"😴", text:"Постоянная усталость"},
-      {id:"anemia",     emoji:"🩸", text:"Анемия / дефицит железа"},
-      {id:"hair_loss",  emoji:"💇", text:"Выпадение волос"},
-      {id:"often_sick", emoji:"🤧", text:"Часто болею"},
-      {id:"low_sun",    emoji:"☀️", text:"Мало бываю на солнце"},
-      {id:"brain_fog",  emoji:"🌫️", text:"Туман в голове"},
-      {id:"anxiety",    emoji:"😰", text:"Тревожность / раздражительность"},
+    id: "symptoms", title: "Отметь симптомы, если есть", type: "multiselect", options: [
+      {id:"fatigue",    text:"Постоянная усталость"},
+      {id:"anemia",     text:"Анемия / дефицит железа"},
+      {id:"hair_loss",  text:"Выпадение волос"},
+      {id:"often_sick", text:"Часто болею"},
+      {id:"low_sun",    text:"Мало бываю на солнце"},
+      {id:"brain_fog",  text:"Туман в голове"},
+      {id:"anxiety",    text:"Тревожность / раздражительность"},
     ]
   },
   {
-    id: "stress", title: "Оцени уровень своего стресса", type: "scale", options: [
+    id: "stress", title: "Уровень стресса", type: "scale", options: [
       {id:1, label:"Нет"},
       {id:2, label:"Умер."},
       {id:3, label:"Высокий"},
@@ -396,7 +388,7 @@ const QUIZ_BASE_STEPS = [
     ]
   },
   {
-    id: "sleep_q", title: "Как ты оцениваешь качество своего сна?", type: "scale", options: [
+    id: "sleep_q", title: "Качество сна", type: "scale", options: [
       {id:1, label:"Плохо"},
       {id:2, label:"Неплохо"},
       {id:3, label:"Хорошо"},
@@ -404,20 +396,20 @@ const QUIZ_BASE_STEPS = [
     ]
   },
   {
-    id: "diet", title: "Как ты питаешься?", type: "grid", options: [
-      {id:"balanced", emoji:"🥗", text:"Сбалансированно"},
-      {id:"low_meat", emoji:"🥦", text:"Редко ем мясо"},
-      {id:"vegan",    emoji:"🌱", text:"Веганство"},
-      {id:"sugary",   emoji:"🍰", text:"Много сладкого"},
+    id: "diet", title: "Как питаешься?", type: "grid", options: [
+      {id:"balanced", text:"Сбалансированно"},
+      {id:"low_meat", text:"Редко ем мясо"},
+      {id:"vegan",    text:"Веганство"},
+      {id:"sugary",   text:"Много сладкого"},
     ]
   },
   {
     id: "women_health", title: "Уточни по женскому здоровью", type: "grid", femaleOnly: true, options: [
-      {id:"normal",    emoji:"🌺", text:"Всё в порядке"},
-      {id:"pms",       emoji:"🌙", text:"ПМС"},
-      {id:"pcos",      emoji:"🔄", text:"СПКЯ"},
-      {id:"thyroid_f", emoji:"🦋", text:"Щитовидная"},
-      {id:"fertility", emoji:"🤰", text:"Фертильность / ЭКО"},
+      {id:"normal",    text:"Всё в порядке"},
+      {id:"pms",       text:"ПМС"},
+      {id:"pcos",      text:"СПКЯ"},
+      {id:"thyroid_f", text:"Щитовидная железа"},
+      {id:"fertility", text:"Фертильность / ЭКО"},
     ]
   },
 ];
@@ -432,14 +424,37 @@ function getActiveSteps() {
   return QUIZ_BASE_STEPS.filter(s => !(s.femaleOnly && quizAnswers.gender !== "female"));
 }
 
+function renderWelcome() {
+  const name = user.first_name ? `, ${user.first_name}` : "";
+  document.getElementById("screen-quiz").innerHTML = `
+    <div style="min-height:calc(100vh - 90px);display:flex;flex-direction:column;justify-content:center">
+      <span class="label" style="margin-bottom:24px">Biolar Organics</span>
+      <div style="font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.15;margin-bottom:16px">
+        Привет${name}.<br>Ты уверен,<br>что пьёшь то,<br>что нужно<br>именно тебе?
+      </div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:40px">
+        Большинство берут добавки наугад.<br>
+        Ответь на несколько вопросов — подберём<br>
+        программу точно под твой организм.
+      </div>
+      <button class="btn" onclick="renderQuiz()">Начать подбор</button>
+      <div style="text-align:center;font-size:10px;color:var(--muted);margin-top:12px;letter-spacing:.5px">
+        2 МИНУТЫ · БЕСПЛАТНО
+      </div>
+    </div>
+  `;
+}
+
 function renderQuiz() {
   quizActiveSteps = getActiveSteps();
-  const step    = quizActiveSteps[quizStepIdx];
+  const step = quizActiveSteps[quizStepIdx];
   if (!step) { showSmartResults(); return; }
 
   const total   = quizActiveSteps.length;
   const current = quizStepIdx + 1;
   const pct     = Math.round((quizStepIdx / total) * 100);
+  const cStr    = String(current).padStart(2, "0");
+  const tStr    = String(total).padStart(2, "0");
 
   let body = "";
 
@@ -447,42 +462,43 @@ function renderQuiz() {
     body = `<div class="quiz-grid">` +
       step.options.map(o => `
         <div class="quiz-card ${quizAnswers[step.id] === o.id ? 'selected' : ''}"
-             data-id="${o.id}"
              onclick="selectCard('${step.id}', '${o.id}', this)">
-          <div class="card-emoji">${o.emoji}</div>
-          <div class="card-text">${o.text}</div>
+          ${o.text}
         </div>`).join("") +
       `</div>`;
   } else if (step.type === "multiselect") {
-    body = `<div class="quiz-chip-wrap">` +
+    body = `<div class="quiz-chips">` +
       step.options.map(o => `
         <div class="quiz-chip ${quizSymptoms.has(o.id) ? 'selected' : ''}"
              onclick="toggleChip('${o.id}', this)">
-          ${o.emoji} ${o.text}
+          ${o.text}
         </div>`).join("") +
       `</div>
-      <button class="btn" onclick="advanceQuiz()">Продолжить →</button>`;
+      <button class="btn" onclick="advanceQuiz()">Продолжить</button>`;
   } else if (step.type === "scale") {
-    body = `<div class="scale-wrap">` +
+    body = `<div class="scale-row">` +
       step.options.map(o => `
         <div class="scale-seg ${quizAnswers[step.id] == o.id ? 'selected' : ''}"
              onclick="selectScale('${step.id}', ${o.id}, this)">
           <div class="scale-num">${o.id}</div>
-          <div class="scale-label">${o.label}</div>
+          <div class="scale-lbl">${o.label}</div>
         </div>`).join("") +
       `</div>`;
   }
 
   const backBtn = quizStepIdx > 0
-    ? `<button class="btn secondary" style="margin-top:12px" onclick="backQuiz()">← Назад</button>`
-    : "";
+    ? `<button class="quiz-back-btn" onclick="backQuiz()">← Назад</button>`
+    : `<button class="quiz-back-btn" onclick="renderWelcome()">← На главную</button>`;
 
   document.getElementById("screen-quiz").innerHTML = `
-    <div class="quiz-step-label">Шаг ${current} из ${total}</div>
-    <div class="quiz-progress-wrap">
-      <div class="quiz-progress-bar" style="width:${pct}%"></div>
+    <div class="quiz-meta">
+      <span class="label">Шаг</span>
+      <span class="quiz-counter">${cStr} / ${tStr}</span>
     </div>
-    <div class="quiz-title">${step.title}</div>
+    <div class="quiz-prog-wrap">
+      <div class="quiz-prog-bar" style="width:${pct}%"></div>
+    </div>
+    <div class="quiz-q">${step.title}</div>
     ${body}
     ${backBtn}
   `;
@@ -502,7 +518,7 @@ function toggleChip(id, el) {
 
 function selectScale(stepId, value, el) {
   quizAnswers[stepId] = value;
-  el.closest(".scale-wrap").querySelectorAll(".scale-seg").forEach(s => s.classList.remove("selected"));
+  el.closest(".scale-row").querySelectorAll(".scale-seg").forEach(s => s.classList.remove("selected"));
   el.classList.add("selected");
   setTimeout(advanceQuiz, 270);
 }
@@ -540,13 +556,13 @@ async function showSmartResults() {
   const analysis = data.analysis || [];
 
   if (!products.length) {
-    screen.innerHTML = `<div class="empty-state"><div class="big">🤔</div><p>Ничего не нашли — напиши нам напрямую!</p></div>`;
+    screen.innerHTML = `<div class="empty"><p>Ничего не нашли.<br>Напиши нам напрямую.</p></div>`;
     return;
   }
 
   const analysisHtml = analysis.length ? `
     <div class="analysis-block">
-      <div class="analysis-title">📋 Что мы выявили</div>
+      <span class="label" style="color:var(--accent)">Что мы выявили</span>
       <ul class="analysis-list">${analysis.map(a => `<li>${a}</li>`).join("")}</ul>
     </div>` : "";
 
@@ -555,31 +571,31 @@ async function showSmartResults() {
     const added    = addedToTracker.has(p.id);
     return `
       <div class="product-card">
-        <div class="product-emoji">${p.emoji}</div>
         <div class="product-name">${p.name}</div>
         <div class="product-tag">${p.tagline}</div>
-        <div class="product-reason">💡 ${p.reason}</div>
+        <div class="product-reason-lbl">Почему тебе это нужно</div>
+        <div class="product-reason-txt">${p.reason}</div>
         <ul class="product-benefits">${benefits}</ul>
         <div class="product-links">
-          <a class="link-wb"   href="${p.wb_url}"   target="_blank">WB</a>
+          <a class="link-wb"   href="${p.wb_url}"   target="_blank">Wildberries</a>
           <a class="link-ozon" href="${p.ozon_url}" target="_blank">Ozon</a>
         </div>
-        <button class="btn-add-tracker ${added ? 'added' : ''}"
+        <button class="btn-tracker ${added ? 'added' : ''}"
                 id="add-btn-${p.id}"
                 onclick="addToTracker('${p.id}')">
-          ${added ? "✓ Добавлено в трекер" : "+ Добавить в трекер"}
+          ${added ? "Добавлено в трекер" : "+ Добавить в трекер"}
         </button>
       </div>`;
   }).join("");
 
   screen.innerHTML = `
-    <button class="quiz-back" onclick="restartQuiz()">← Пройти заново</button>
-    <div class="header">
-      <h1>Твоя программа ✅</h1>
-      <p>Персональный подбор на основе твоих ответов</p>
+    <div style="margin-bottom:24px">
+      <span class="label" style="margin-bottom:6px">Твоя программа</span>
+      <div style="font-size:24px;font-weight:800;letter-spacing:-.3px;margin-top:4px">Персональный подбор</div>
     </div>
     ${analysisHtml}
     ${productsHtml}
+    <button class="btn secondary" onclick="restartQuiz()" style="margin-top:8px">Пройти заново</button>
   `;
 }
 
@@ -588,8 +604,8 @@ async function addToTracker(productId) {
   await api("POST", "/api/tracker/add", { product_id: productId });
   addedToTracker.add(productId);
   const btn = document.getElementById("add-btn-" + productId);
-  if (btn) { btn.textContent = "✓ Добавлено в трекер"; btn.classList.add("added"); }
-  toast("Добавлено в трекер 🌿");
+  if (btn) { btn.textContent = "Добавлено в трекер"; btn.classList.add("added"); }
+  toast("Добавлено в трекер");
 }
 
 function restartQuiz() {
@@ -599,37 +615,9 @@ function restartQuiz() {
   renderWelcome();
 }
 
-function renderWelcome() {
-  const name = user.first_name ? `, ${user.first_name}` : "";
-  document.getElementById("screen-quiz").innerHTML = `
-    <div style="min-height:calc(100vh - 100px);display:flex;flex-direction:column;justify-content:center;padding:8px 0 24px">
-
-      <div style="text-align:center;margin-bottom:32px">
-        <div style="font-size:56px;margin-bottom:16px">🌿</div>
-        <div style="font-size:15px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px">Biolar Organics</div>
-        <div style="font-size:26px;font-weight:800;line-height:1.25;color:var(--text);margin-bottom:12px">
-          Привет${name}! 👋<br>Ты уверен, что пьёшь<br>то, что нужно именно тебе?
-        </div>
-        <div style="font-size:14px;color:var(--muted);line-height:1.6;max-width:280px;margin:0 auto">
-          Большинство берут добавки наугад.<br>
-          Мы зададим 8 вопросов и подберём программу точно под твой организм.
-        </div>
-      </div>
-
-      <button class="btn" style="font-size:16px;padding:16px" onclick="renderQuiz()">
-        Узнать, что мне нужно →
-      </button>
-      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px">
-        2 минуты · бесплатно · без регистрации
-      </div>
-
-    </div>
-  `;
-}
-
 renderWelcome();
 
-// ── ТРЕКЕР ────────────────────────────────────────────────────────────────────
+// ── TRACKER ────────────────────────────────────────────────────────────────
 
 async function loadTracker() {
   const screen = document.getElementById("screen-tracker");
@@ -639,9 +627,9 @@ async function loadTracker() {
 
   if (!products.length) {
     screen.innerHTML = `
-      <div class="empty-state">
-        <div class="big">📅</div>
-        <p>Пока ничего нет.<br>Пройди квиз и добавь продукты в трекер.</p>
+      <span class="label" style="margin-bottom:20px">Трекер</span>
+      <div class="empty">
+        <p>Пока ничего нет.<br>Пройди квиз и добавь продукты.</p>
       </div>
       <button class="btn secondary" onclick="showScreen('quiz')">Пройти квиз</button>`;
     return;
@@ -649,14 +637,12 @@ async function loadTracker() {
 
   const today = new Date().toLocaleDateString("ru", { day: "numeric", month: "long" });
   let html = `
-    <div class="header">
-      <h1>📅 Трекер</h1>
-      <p>Сегодня, ${today}</p>
-    </div>`;
+    <span class="label" style="margin-bottom:4px">Трекер</span>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">${today}</div>`;
 
   for (const p of products) {
-    const fire = p.streak >= 7 ? " 🔥" : p.streak >= 3 ? " ✨" : "";
-    const streakText = p.streak > 0 ? `${p.streak} дн. подряд${fire}` : "Начни сегодня";
+    const s = p.streak;
+    const streakTxt = s > 0 ? `${s} ${s === 1 ? 'день' : 'дней'} подряд` : "Начни сегодня";
     html += `
       <div class="tracker-item" id="tracker-${p.product_id}">
         <button class="tracker-check ${p.taken_today ? 'done' : ''}"
@@ -665,7 +651,7 @@ async function loadTracker() {
         </button>
         <div class="tracker-info">
           <div class="tracker-name">${p.product_name}</div>
-          <div class="tracker-streak">${streakText}</div>
+          <div class="tracker-streak">${streakTxt}</div>
         </div>
         <button class="tracker-del" onclick="removeProduct('${p.product_id}')">×</button>
       </div>`;
@@ -674,29 +660,24 @@ async function loadTracker() {
 }
 
 async function logIntake(productId, btn) {
-  if (btn.classList.contains("done")) { toast("Уже отмечено на сегодня ✓"); return; }
+  if (btn.classList.contains("done")) { toast("Уже отмечено сегодня"); return; }
   const data = await api("POST", "/api/tracker/log", { product_id: productId });
-  if (data.already_taken) { toast("Уже отмечено на сегодня ✓"); return; }
-
-  btn.classList.add("done");
-  btn.textContent = "✓";
-  const item = btn.closest(".tracker-item");
-  const streakEl = item.querySelector(".tracker-streak");
+  if (data.already_taken) { toast("Уже отмечено сегодня"); return; }
+  btn.classList.add("done"); btn.textContent = "✓";
   const s = data.streak;
-  const fire = s >= 7 ? " 🔥" : s >= 3 ? " ✨" : "";
-  streakEl.textContent = `${s} дн. подряд${fire}`;
-  if (s > 0 && s % 7 === 0) toast(`${s} дней подряд! 🔥`);
-  else toast("Отмечено ✓");
+  btn.closest(".tracker-item").querySelector(".tracker-streak").textContent =
+    `${s} ${s === 1 ? 'день' : 'дней'} подряд`;
+  toast("Отмечено");
 }
 
 async function removeProduct(productId) {
   await api("DELETE", `/api/tracker/${productId}`);
   const el = document.getElementById("tracker-" + productId);
   if (el) el.remove();
-  toast("Удалено из трекера");
+  toast("Удалено");
 }
 
-// ── РЕФЕРАЛКА ─────────────────────────────────────────────────────────────────
+// ── REFERRAL ───────────────────────────────────────────────────────────────
 
 async function loadReferral() {
   const screen = document.getElementById("screen-referral");
@@ -704,104 +685,92 @@ async function loadReferral() {
   const data = await api("GET", "/api/referral");
 
   const nextCount  = data.next_level?.count  || data.levels[data.levels.length - 1].count;
-  const nextReward = data.next_level?.reward || "Максимальный уровень достигнут! 🎉";
+  const nextReward = data.next_level?.reward || "Максимальный уровень";
   const progress   = Math.min((data.ref_count / nextCount) * 100, 100);
-
   const botUsername = "Biolarapp_bot";
-  const refLink = `https://t.me/${botUsername}?start=ref_${data.ref_code}`;
-  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Подбери добавки под свою цель 🌿")}`;
+  const refLink  = `https://t.me/${botUsername}?start=ref_${data.ref_code}`;
+  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Подбери добавки под свою цель")}`;
 
   const levelsHtml = data.levels.map(l => `
     <li>
       <span class="level-badge ${data.ref_count >= l.count ? 'done' : ''}">${l.count} чел.</span>
-      ${l.reward}
-      ${data.ref_count >= l.count ? "✅" : ""}
+      <span style="flex:1;color:var(--text)">${l.reward}</span>
+      ${data.ref_count >= l.count ? `<span style="color:var(--accent);font-size:12px;font-weight:700">✓</span>` : ""}
     </li>`).join("");
 
   screen.innerHTML = `
-    <div class="header">
-      <h1>🔗 Приглашай друзей</h1>
-      <p>Получай скидки за каждого приглашённого</p>
-    </div>
+    <span class="label" style="margin-bottom:4px">Приглашай друзей</span>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Получай скидки за каждого</div>
 
-    <div class="ref-progress">
-      <div class="ref-count">${data.ref_count}</div>
-      <div class="ref-label">приглашённых друзей</div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="ref-big">${data.ref_count}</div>
+      <span class="label">Приглашённых</span>
       <div class="ref-bar-wrap">
         <div class="ref-bar" style="width:${progress}%"></div>
       </div>
-      <div class="ref-next">До следующей награды: <strong>${nextReward}</strong></div>
+      <div style="font-size:12px;color:var(--muted)">До следующей: ${nextReward}</div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Уровни наград</div>
-      <ul class="levels">${levelsHtml}</ul>
+    <div class="card" style="margin-bottom:20px">
+      <span class="label" style="margin-bottom:12px">Уровни наград</span>
+      <ul class="levels" style="margin-top:12px">${levelsHtml}</ul>
     </div>
 
-    <button class="btn" onclick="window.open('${shareUrl}', '_blank')">
-      📤 Поделиться ссылкой
-    </button>
-    <button class="btn secondary" onclick="copyRef('${refLink}')">
-      📋 Скопировать ссылку
-    </button>`;
+    <span class="label" style="margin-bottom:8px">Твоя ссылка</span>
+    <div class="ref-link-box" style="margin-top:8px">${refLink}</div>
+
+    <button class="btn" onclick="window.open('${shareUrl}', '_blank')" style="margin-top:4px">Поделиться</button>
+    <button class="btn secondary" onclick="copyRef('${refLink}')">Скопировать ссылку</button>
+  `;
 }
 
 function copyRef(link) {
-  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована!"));
+  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована"));
 }
 
-// ── РОЗЫГРЫШ ──────────────────────────────────────────────────────────────────
+// ── GIVEAWAY ───────────────────────────────────────────────────────────────
 
 async function loadGiveaway() {
   const screen = document.getElementById("screen-giveaway");
   screen.innerHTML = '<div class="spinner"></div>';
   const data = await api("GET", "/api/giveaway");
 
-  const botUsername = "Biolarapp_bot";
-  const refLink = `https://t.me/${botUsername}?start=ref_YOUR_CODE`;
-
   screen.innerHTML = `
-    <div class="giveaway-hero">
-      <div class="big">🎁</div>
-      <h2>Розыгрыш месяца</h2>
-      <p>Разыгрываем набор продуктов Biolar Organics</p>
+    <span class="label" style="margin-bottom:4px">Розыгрыш</span>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:24px">Каждый месяц разыгрываем набор продуктов</div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="give-count">${data.total_participants}</div>
+      <span class="label">Участников</span>
     </div>
 
-    <div class="card">
-      <div class="participants-count">${data.total_participants}</div>
-      <div class="participants-label">участников уже в игре</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Как участвовать</div>
-      <div class="card-sub" style="margin-top:8px;line-height:1.7">
-        ✅ Подпишись на наш Telegram-канал<br>
-        ✅ Нажми кнопку ниже<br>
-        🎯 За каждого приглашённого друга — +1 шанс на победу<br>
-        📅 Итоги подводим в конце месяца
+    <div class="card" style="margin-bottom:20px">
+      <span class="label" style="margin-bottom:12px">Как участвовать</span>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);line-height:2">
+        Подпишись на Telegram-канал<br>
+        Нажми кнопку участия<br>
+        За каждого приглашённого — дополнительный шанс<br>
+        Итоги в конце месяца
       </div>
     </div>
 
     ${data.participating
-      ? `<div class="card" style="text-align:center;color:var(--green);font-weight:700">
-           ✅ Ты уже участвуешь! Удачи 🍀
-         </div>`
-      : `<button class="btn" onclick="joinGiveaway(this)">🎉 Участвовать в розыгрыше</button>`
-    }`;
+      ? `<div class="card" style="text-align:center;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.2px">Ты участвуешь. Удачи.</div>`
+      : `<button class="btn" onclick="joinGiveaway(this)">Участвовать</button>`
+    }
+  `;
 }
 
 async function joinGiveaway(btn) {
-  btn.disabled = true;
-  btn.textContent = "...";
+  btn.disabled = true; btn.textContent = "...";
   const data = await api("POST", "/api/giveaway/join");
-  const count = data.total_participants;
-  btn.closest(".screen").querySelector(".participants-count").textContent = count;
+  btn.closest(".screen").querySelector(".give-count").textContent = data.total_participants;
   btn.replaceWith(Object.assign(document.createElement("div"), {
     className: "card",
-    style: "text-align:center;color:var(--green);font-weight:700",
-    textContent: "✅ Ты в игре! Удачи 🍀",
+    style: "text-align:center;color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.2px",
+    textContent: "Ты участвуешь. Удачи.",
   }));
-  toast("Ты участвуешь в розыгрыше! 🎉");
+  toast("Ты в розыгрыше");
 }
 </script>
 </body>
