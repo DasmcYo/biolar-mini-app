@@ -20,8 +20,56 @@ from products import (
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+
+# ── Club constants ────────────────────────────────────────────────────────────
+
+SPIN_PRIZES = [
+    {"idx": 0, "label": "+25 баллов",   "points": 25,  "promo": None,       "weight": 28},
+    {"idx": 1, "label": "+50 баллов",   "points": 50,  "promo": None,       "weight": 24},
+    {"idx": 2, "label": "+100 баллов",  "points": 100, "promo": None,       "weight": 18},
+    {"idx": 3, "label": "Промо −10%",   "points": 50,  "promo": "BIOLAR10", "weight": 12},
+    {"idx": 4, "label": "+50 баллов",   "points": 50,  "promo": None,       "weight": 10},
+    {"idx": 5, "label": "+200 баллов",  "points": 200, "promo": None,       "weight": 5},
+    {"idx": 6, "label": "+25 баллов",   "points": 25,  "promo": None,       "weight": 2},
+    {"idx": 7, "label": "Джекпот!",     "points": 500, "promo": None,       "weight": 1},
+]
+
+CHALLENGES = [
+    {"id": "first_product", "title": "Первый шаг",       "desc": "Добавь продукт в курс",         "reward": 100,  "total": 1},
+    {"id": "week_streak",   "title": "Неделя подряд",    "desc": "7 дней подряд принимай курс",   "reward": 200,  "total": 7},
+    {"id": "month_streak",  "title": "Месяц подряд",     "desc": "30 дней подряд принимай курс",  "reward": 500,  "total": 30},
+    {"id": "diary_30",      "title": "Дневник: 30 дней", "desc": "Заполни дневник самочувствия",  "reward": 300,  "total": 30},
+    {"id": "ref_3",         "title": "Посол бренда",     "desc": "Пригласи 3 друзей",             "reward": 400,  "total": 3},
+    {"id": "spin_10",       "title": "Везунчик",         "desc": "Покрути колесо удачи 10 раз",   "reward": 250,  "total": 10},
+]
+
+LEVELS = [
+    {"name": "Bronze",   "idx": 0, "min": 0,    "max": 499,  "color_from": "#b87333", "color_to": "#d4943f"},
+    {"name": "Silver",   "idx": 1, "min": 500,  "max": 1999, "color_from": "#8888a0", "color_to": "#a8a8c0"},
+    {"name": "Gold",     "idx": 2, "min": 2000, "max": 4999, "color_from": "#c4965a", "color_to": "#e8b060"},
+    {"name": "Platinum", "idx": 3, "min": 5000, "max": None, "color_from": "#5080a0", "color_to": "#8090b8"},
+]
+
+
+def get_level_info(total_points: int) -> dict:
+    for i, lvl in enumerate(LEVELS):
+        if lvl["max"] is None or total_points <= lvl["max"]:
+            next_lvl = LEVELS[i + 1] if i + 1 < len(LEVELS) else None
+            if next_lvl:
+                pct = min(100, round((total_points - lvl["min"]) / (next_lvl["min"] - lvl["min"]) * 100))
+            else:
+                pct = 100
+            return {
+                "name": lvl["name"], "idx": lvl["idx"],
+                "color_from": lvl["color_from"], "color_to": lvl["color_to"],
+                "next": next_lvl["name"] if next_lvl else None,
+                "next_threshold": next_lvl["min"] if next_lvl else None,
+                "progress_pct": pct,
+            }
+    return {"name": "Platinum", "idx": 3, "color_from": "#5080a0", "color_to": "#8090b8",
+            "next": None, "next_threshold": None, "progress_pct": 100}
 
 
 @asynccontextmanager
@@ -191,6 +239,7 @@ async def wellness_log(body: WellnessIn, request: Request):
     tg = get_tg_user(request)
     today = date_cls.today().isoformat()
     await db.log_wellness(tg["id"], today, body.energy, body.sleep_q, body.mood)
+    await db.award_points(tg["id"], 10)
     return {"ok": True}
 
 
@@ -251,6 +300,8 @@ async def tracker_log(body: TrackerLogIn, request: Request):
     tg = get_tg_user(request)
     ok = await db.log_intake(tg["id"], body.product_id)
     streak = await db.get_streak(tg["id"], body.product_id)
+    if ok:
+        await db.award_points(tg["id"], 20)
     return {"ok": ok, "streak": streak, "already_taken": not ok}
 
 
@@ -301,6 +352,105 @@ async def giveaway_join(request: Request):
     ok = await db.join_giveaway(tg["id"])
     count = await db.get_giveaway_count()
     return {"ok": ok, "already_joined": not ok, "total_participants": count}
+
+
+# ── API: Клуб ────────────────────────────────────────────────────────────────
+
+class ChallengeClaimIn(BaseModel):
+    challenge_id: str
+
+@app.get("/api/club/data")
+async def club_data(request: Request):
+    tg = get_tg_user(request)
+    user = await db.get_user(tg["id"])
+    if not user:
+        raise HTTPException(status_code=404)
+
+    pts_data    = await db.get_user_points(tg["id"])
+    total_pts   = pts_data["total_points"]
+    spin_count  = pts_data["spin_count"]
+    spin_avail  = await db.can_spin(tg["id"])
+    level       = get_level_info(total_pts)
+    leaderboard = await db.get_leaderboard(10)
+    claimed     = set(await db.get_claimed_challenges(tg["id"]))
+    ref_count   = await db.get_referral_count(user["ref_code"])
+    streak      = await db.get_global_streak(tg["id"])
+    course_days = await db.get_course_days(tg["id"])
+    wellness_tot = await db.get_wellness_total(tg["id"])
+    products    = await db.get_tracker_products(tg["id"])
+    giveaway_cnt = await db.get_giveaway_count()
+    is_giveaway = await db.is_in_giveaway(tg["id"])
+
+    def challenge_progress(cid: str) -> tuple[int, int]:
+        if cid == "first_product": return (1 if products else 0, 1)
+        if cid == "week_streak":   return (min(streak, 7), 7)
+        if cid == "month_streak":  return (min(streak, 30), 30)
+        if cid == "diary_30":      return (min(wellness_tot, 30), 30)
+        if cid == "ref_3":         return (min(ref_count, 3), 3)
+        if cid == "spin_10":       return (min(spin_count, 10), 10)
+        return (0, 1)
+
+    challenges_out = []
+    for c in CHALLENGES:
+        prog, tot = challenge_progress(c["id"])
+        challenges_out.append({
+            **c,
+            "progress": prog,
+            "met": prog >= tot,
+            "claimed": c["id"] in claimed,
+        })
+
+    return {
+        "total_points": total_pts,
+        "level": level,
+        "can_spin": spin_avail,
+        "spin_count": spin_count,
+        "challenges": challenges_out,
+        "leaderboard": leaderboard,
+        "ref_code": user["ref_code"],
+        "ref_count": ref_count,
+        "giveaway_total": giveaway_cnt,
+        "giveaway_participating": is_giveaway,
+        "achievements_data": {
+            "streak": streak,
+            "course_days": course_days,
+            "ref_count": ref_count,
+            "has_products": bool(products),
+        },
+    }
+
+
+@app.post("/api/club/spin")
+async def club_spin(request: Request):
+    import random as _random
+    tg = get_tg_user(request)
+    if not await db.can_spin(tg["id"]):
+        return {"already_spun": True}
+    weights = [p["weight"] for p in SPIN_PRIZES]
+    prize = _random.choices(SPIN_PRIZES, weights=weights, k=1)[0]
+    ok = await db.do_spin(tg["id"], prize["points"])
+    if not ok:
+        return {"already_spun": True}
+    new_total = (await db.get_user_points(tg["id"]))["total_points"]
+    return {
+        "already_spun": False,
+        "segment": prize["idx"],
+        "prize": {"label": prize["label"], "points": prize["points"], "promo": prize["promo"]},
+        "new_total": new_total,
+    }
+
+
+@app.post("/api/club/challenge/claim")
+async def challenge_claim(body: ChallengeClaimIn, request: Request):
+    tg = get_tg_user(request)
+    c = next((x for x in CHALLENGES if x["id"] == body.challenge_id), None)
+    if not c:
+        raise HTTPException(status_code=400, detail="Unknown challenge")
+    ok = await db.claim_challenge(tg["id"], body.challenge_id)
+    if not ok:
+        return {"ok": False, "already_claimed": True}
+    new_total = await db.award_points(tg["id"], c["reward"])
+    return {"ok": True, "reward": c["reward"], "new_total": new_total}
 
 
 # ── Static: Mini App ──────────────────────────────────────────────────────────

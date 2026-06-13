@@ -61,6 +61,21 @@ async def init_db():
                 preview TEXT NOT NULL,
                 body    TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS user_points (
+                user_id      INTEGER PRIMARY KEY,
+                total_points INTEGER DEFAULT 0,
+                last_spin_date TEXT,
+                spin_count   INTEGER DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS claimed_challenges (
+                user_id      INTEGER NOT NULL,
+                challenge_id TEXT NOT NULL,
+                claimed_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, challenge_id)
+            );
         """)
         await db.commit()
 
@@ -252,6 +267,101 @@ async def get_course_days(user_id: int) -> int:
             "SELECT COUNT(DISTINCT logged_at) FROM tracker_logs WHERE user_id=?",
             (user_id,),
         ) as cur:
+            return (await cur.fetchone())[0]
+
+
+async def award_points(user_id: int, points: int) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            """INSERT INTO user_points (user_id, total_points) VALUES (?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET total_points = total_points + excluded.total_points""",
+            (user_id, points),
+        )
+        await db.commit()
+        async with db.execute("SELECT total_points FROM user_points WHERE user_id = ?", (user_id,)) as cur:
+            row = await cur.fetchone()
+            return row[0] if row else points
+
+
+async def get_user_points(user_id: int) -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT total_points, last_spin_date, spin_count FROM user_points WHERE user_id = ?",
+            (user_id,),
+        ) as cur:
+            row = await cur.fetchone()
+    return {"total_points": row[0], "last_spin_date": row[1], "spin_count": row[2]} if row else \
+           {"total_points": 0, "last_spin_date": None, "spin_count": 0}
+
+
+async def can_spin(user_id: int) -> bool:
+    from datetime import date
+    today = date.today().isoformat()
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT last_spin_date FROM user_points WHERE user_id = ?", (user_id,)) as cur:
+            row = await cur.fetchone()
+    return row is None or row[0] != today
+
+
+async def do_spin(user_id: int, points: int) -> bool:
+    from datetime import date
+    today = date.today().isoformat()
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT last_spin_date FROM user_points WHERE user_id = ?", (user_id,)) as cur:
+            row = await cur.fetchone()
+        if row and row[0] == today:
+            return False
+        await db.execute(
+            """INSERT INTO user_points (user_id, total_points, last_spin_date, spin_count) VALUES (?,?,?,1)
+               ON CONFLICT(user_id) DO UPDATE SET
+               total_points   = total_points + ?,
+               last_spin_date = ?,
+               spin_count     = spin_count + 1""",
+            (user_id, points, today, points, today),
+        )
+        await db.commit()
+    return True
+
+
+async def get_leaderboard(limit: int = 10) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            """SELECT u.first_name, u.username, up.total_points
+               FROM user_points up
+               JOIN users u ON u.user_id = up.user_id
+               WHERE up.total_points > 0
+               ORDER BY up.total_points DESC LIMIT ?""",
+            (limit,),
+        ) as cur:
+            rows = [dict(r) for r in await cur.fetchall()]
+    return [{"rank": i + 1, **r} for i, r in enumerate(rows)]
+
+
+async def get_claimed_challenges(user_id: int) -> list[str]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT challenge_id FROM claimed_challenges WHERE user_id = ?", (user_id,)
+        ) as cur:
+            return [r[0] for r in await cur.fetchall()]
+
+
+async def claim_challenge(user_id: int, challenge_id: str) -> bool:
+    async with aiosqlite.connect(DB_PATH) as db:
+        try:
+            await db.execute(
+                "INSERT INTO claimed_challenges (user_id, challenge_id) VALUES (?,?)",
+                (user_id, challenge_id),
+            )
+            await db.commit()
+            return True
+        except aiosqlite.IntegrityError:
+            return False
+
+
+async def get_wellness_total(user_id: int) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute("SELECT COUNT(*) FROM wellness_logs WHERE user_id=?", (user_id,)) as cur:
             return (await cur.fetchone())[0]
 
 
