@@ -614,12 +614,14 @@
 <div id="screen-home"    class="screen active"></div>
 <div id="screen-program" class="screen"></div>
 <div id="screen-diary"   class="screen"></div>
+<div id="screen-ai"      class="screen"></div>
 <div id="screen-club"    class="screen"></div>
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showScreen('home')"    id="nav-home">Главная</button>
-  <button class="nav-btn"        onclick="showScreen('program')" id="nav-program">Программа</button>
+  <button class="nav-btn"        onclick="showScreen('program')" id="nav-program">Курс</button>
   <button class="nav-btn"        onclick="showScreen('diary')"   id="nav-diary">Дневник</button>
+  <button class="nav-btn"        onclick="showScreen('ai')"      id="nav-ai">AI Нутри</button>
   <button class="nav-btn"        onclick="showScreen('club')"    id="nav-club">Клуб</button>
 </nav>
 
@@ -669,6 +671,7 @@ function showScreen(name) {
   if (name === "home")    loadHome();
   if (name === "program") loadProgram();
   if (name === "diary")   loadDiary();
+  if (name === "ai")      loadAI();
   if (name === "club")    loadClub();
 }
 
@@ -1103,9 +1106,6 @@ async function loadDiary() {
   const last7 = [...history].reverse().slice(-7);
   const trendHtml = buildTrendChart(last7);
 
-  // AI Chat
-  const chatHtml = buildChat();
-
   screen.innerHTML = `
     <div style="margin-bottom:20px">
       <span class="label" style="margin-bottom:6px">Дневник</span>
@@ -1116,16 +1116,16 @@ async function loadDiary() {
       <span class="label" style="margin-bottom:4px">Динамика за 2 недели</span>
       ${trendHtml}
     </div>
-    <div class="card">
-      <span class="label" style="margin-bottom:12px">AI-нутрициолог</span>
-      <div style="margin-top:12px">
-        ${chatHtml}
+    <div class="card" style="cursor:pointer;padding:18px" onclick="showScreen('ai')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✦</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:3px">AI-нутрициолог</div>
+          <div style="font-size:12px;color:var(--muted)">Задай вопрос о витаминах и добавках →</div>
+        </div>
       </div>
     </div>
   `;
-
-  // Bind chat
-  bindChat();
 }
 
 function buildCheckinForm() {
@@ -1246,6 +1246,105 @@ async function sendChat(text) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// AI НУТРИЦИОЛОГ
+// ══════════════════════════════════════════════════════════════════════════
+
+const AI_MESSAGES = [
+  { role:"bot", text:"Привет! Я AI-нутрициолог Biolar. Скоро смогу отвечать на любые вопросы о витаминах, минералах и добавках. Пока в разработке — но уже принимаю вопросы." }
+];
+let aiLoaded = false;
+
+const AI_SUGGESTIONS = [
+  "Можно совмещать D3 и магний?",
+  "У меня ферритин 12, что делать?",
+  "Как правильно принимать железо?",
+  "Какие витамины нужны зимой?",
+  "Когда лучше пить омега-3?",
+  "Чем отличается цитрат от оксида магния?",
+];
+
+function loadAI() {
+  const screen = document.getElementById("screen-ai");
+  if (aiLoaded) return; // не перерисовывать — чат уже там
+  aiLoaded = true;
+
+  const msgsHtml = AI_MESSAGES.map(m => `
+    <div class="msg ${m.role}">
+      <div class="msg-bubble">${m.text}</div>
+    </div>`).join("");
+
+  const suggestHtml = AI_SUGGESTIONS.map(s =>
+    `<div class="chat-sug" onclick="sendAI(this.textContent)">${s}</div>`
+  ).join("");
+
+  screen.innerHTML = `
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✦</div>
+      <div>
+        <div class="serif" style="font-size:22px;letter-spacing:-.2px;line-height:1.1">AI-нутрициолог</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Biolar · В разработке</div>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#fdf9f0,#f7f3ed);border:1px solid rgba(196,150,90,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+      <span style="font-size:15px;flex-shrink:0">🔧</span>
+      <span style="font-size:12px;color:var(--muted);line-height:1.6">Пока заглушка — скоро подключим настоящий AI. Вопросы уже принимаем, ответы фиксируем.</span>
+    </div>
+
+    <div id="ai-msgs" style="min-height:120px;margin-bottom:12px">${msgsHtml}</div>
+
+    <div style="margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Частые вопросы</div>
+      <div class="chat-suggestions" id="ai-sugs">${suggestHtml}</div>
+    </div>
+
+    <div class="chat-input-row" style="position:sticky;bottom:calc(68px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:8px 0">
+      <input class="chat-input" id="ai-input" placeholder="Спроси о нутриентах..." type="text">
+      <button class="chat-send" onclick="sendAIFromInput()">→</button>
+    </div>
+  `;
+
+  const inp = document.getElementById("ai-input");
+  if (inp) inp.addEventListener("keydown", e => { if (e.key === "Enter") sendAIFromInput(); });
+}
+
+async function sendAIFromInput() {
+  const inp = document.getElementById("ai-input");
+  if (!inp || !inp.value.trim()) return;
+  const text = inp.value.trim();
+  inp.value = "";
+  await sendAI(text);
+}
+
+async function sendAI(text) {
+  const msgs = document.getElementById("ai-msgs");
+  if (!msgs) return;
+
+  // Показать вопрос пользователя
+  msgs.insertAdjacentHTML("beforeend",
+    `<div class="msg user"><div class="msg-bubble">${text}</div></div>`
+  );
+  msgs.scrollIntoView({ behavior: "smooth", block: "end" });
+
+  // Показать индикатор набора
+  const typingId = "ai-typing-" + Date.now();
+  msgs.insertAdjacentHTML("beforeend",
+    `<div class="msg bot" id="${typingId}"><div class="msg-bubble" style="color:var(--muted)">...</div></div>`
+  );
+
+  const data = await api("POST", "/api/ai/chat", { message: text });
+
+  // Заменить точки на ответ
+  const typingEl = document.getElementById(typingId);
+  if (typingEl) typingEl.querySelector(".msg-bubble").textContent = data.message;
+
+  AI_MESSAGES.push({ role:"user", text }, { role:"bot", text: data.message });
+
+  // Скрыть саджесты после первого вопроса
+  const sugsEl = document.getElementById("ai-sugs");
+  if (sugsEl) sugsEl.style.display = "none";
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // КЛУБ
 // ══════════════════════════════════════════════════════════════════════════
