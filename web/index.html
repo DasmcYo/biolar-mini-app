@@ -335,50 +335,62 @@
 
   /* ══ ДНЕВНИК ════════════════════════════════════════════════════════════════ */
 
-  /* Check-in */
+  /* ── Check-in (charge) ── */
   .checkin-card {
     background: linear-gradient(135deg, var(--green) 0%, var(--green2) 100%);
-    border-radius: 18px; padding: 22px; margin-bottom: 16px;
+    border-radius: 18px; padding: 22px; margin-bottom: 12px;
     box-shadow: 0 6px 24px rgba(44,74,46,0.18);
   }
   .checkin-card .label { color: rgba(247,243,237,0.55); margin-bottom: 8px; }
-  .checkin-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: #f7f3ed; margin-bottom: 20px; line-height: 1.2; }
-  .checkin-row { margin-bottom: 18px; }
-  .checkin-row-label { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: rgba(247,243,237,0.6); margin-bottom: 8px; }
-  .dot-row { display: flex; gap: 8px; }
-  .dot {
-    flex: 1; height: 42px; border-radius: 10px;
-    background: rgba(247,243,237,0.12); border: none; cursor: pointer;
-    font-size: 15px; font-weight: 700; color: rgba(247,243,237,0.5);
-    transition: all .15s;
-  }
-  .dot.sel { background: rgba(247,243,237,0.9); color: var(--green); }
-  .checkin-done {
-    text-align: center; padding: 20px 0;
-  }
-  .checkin-done-scores { display: flex; gap: 16px; justify-content: center; margin-bottom: 12px; }
-  .checkin-score-item { text-align: center; }
-  .checkin-score-val {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 36px; color: #f7f3ed; line-height: 1;
-  }
-  .checkin-score-lbl { font-size: 10px; color: rgba(247,243,237,0.55); font-weight: 700; letter-spacing: .8px; text-transform: uppercase; margin-top: 4px; }
-  .checkin-edit-btn {
-    font-size: 11px; color: rgba(247,243,237,0.6); background: none; border: none;
-    cursor: pointer; letter-spacing: .5px; text-transform: uppercase; font-weight: 700;
-  }
+  .charge-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 24px; color: #f7f3ed; line-height: 1.2; margin-bottom: 6px; }
+  .charge-sub { font-size: 12px; color: rgba(247,243,237,0.52); margin-bottom: 26px; line-height: 1.55; }
+  .charge-dots { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-bottom: 18px; }
+  .charge-dot { border-radius: 50%; background: rgba(247,243,237,0.13); cursor: pointer; transition: all .18s; flex-shrink: 0; }
+  .charge-dot.d1 { width: 26px; height: 26px; }
+  .charge-dot.d2 { width: 34px; height: 34px; }
+  .charge-dot.d3 { width: 42px; height: 42px; }
+  .charge-dot.d4 { width: 50px; height: 50px; }
+  .charge-dot.d5 { width: 58px; height: 58px; }
+  .charge-dot.lit { background: rgba(247,243,237,0.65); }
+  .charge-dot.lit.d4 { background: rgba(247,243,237,0.82); }
+  .charge-dot.lit.d5 { background: #f7f3ed; box-shadow: 0 0 16px rgba(247,243,237,0.32); }
+  .charge-lbl { font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: rgba(247,243,237,0.48); text-align: center; margin-bottom: 18px; min-height: 14px; transition: opacity .2s; }
+  .charge-done-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+  .charge-done-text { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; color: #f7f3ed; }
+  .checkin-edit-btn { font-size: 11px; color: rgba(247,243,237,0.55); background: none; border: none; cursor: pointer; letter-spacing: .5px; text-transform: uppercase; font-weight: 700; margin-top: 14px; display: block; }
 
-  /* Trend chart */
-  .trend-wrap { margin-bottom: 20px; }
-  .trend-bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin-top: 12px; margin-bottom: 8px; }
-  .trend-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .trend-bar {
-    width: 100%; border-radius: 4px 4px 0 0;
-    background: linear-gradient(180deg, var(--green2), var(--green));
-    min-height: 4px; transition: height .4s;
-  }
-  .trend-bar.empty { background: rgba(44,74,46,0.12); }
-  .trend-day { font-size: 9px; font-weight: 700; letter-spacing: .5px; color: var(--muted); text-transform: uppercase; }
+  /* ── Supplement timeline ── */
+  .suppl-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+  .suppl-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .suppl-day-lbl { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+  .suppl-phasebar { position: relative; height: 6px; border-radius: 99px; overflow: hidden; background: rgba(44,74,46,0.08); margin-bottom: 6px; }
+  .suppl-dates { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 10px; }
+  .suppl-status { font-size: 12px; color: var(--text); line-height: 1.55; padding: 10px 12px; background: rgba(44,74,46,0.05); border-radius: 8px; border-left: 2px solid var(--green2); }
+  .suppl-badge { font-size: 10px; font-weight: 700; border-radius: 99px; padding: 4px 10px; }
+
+  /* ── Insight card ── */
+  .insight-card { background: linear-gradient(135deg, #1e3a20 0%, var(--green) 100%); border-radius: var(--radius); padding: 20px; margin-bottom: 10px; color: #f7f3ed; }
+  .insight-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(247,243,237,0.45); margin-bottom: 8px; }
+  .insight-heading { font-family: 'DM Serif Display', Georgia, serif; font-size: 22px; line-height: 1.25; margin-bottom: 4px; }
+  .insight-sub { font-size: 12px; color: rgba(247,243,237,0.6); line-height: 1.55; margin-bottom: 14px; }
+  .insight-nums { display: flex; align-items: center; gap: 16px; }
+  .insight-num-block { text-align: center; }
+  .insight-num-val { font-family: 'DM Serif Display', Georgia, serif; font-size: 36px; line-height: 1; }
+  .insight-num-lbl { font-size: 9px; color: rgba(247,243,237,0.45); font-weight: 700; letter-spacing: .6px; text-transform: uppercase; margin-top: 4px; }
+  .insight-arr { font-size: 20px; color: rgba(247,243,237,0.3); }
+  .insight-note { font-size: 11px; color: rgba(247,243,237,0.55); margin-top: 12px; line-height: 1.55; }
+
+  /* ── Trend 30 days ── */
+  .trend30-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 12px; }
+  .trend30-bars { display: flex; align-items: flex-end; gap: 3px; height: 64px; min-width: max-content; padding-bottom: 2px; }
+  .tb { width: 9px; border-radius: 3px 3px 0 0; flex-shrink: 0; min-height: 3px; }
+  .tb.empty { background: rgba(44,74,46,0.09); height: 3px; }
+  .tb.c1 { background: #cfe0cf; }
+  .tb.c2 { background: #a4c7a4; }
+  .tb.c3 { background: #70ad70; }
+  .tb.c4 { background: #469146; }
+  .tb.c5 { background: var(--green); }
+  .trend30-footer { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); font-weight: 700; margin-top: 6px; letter-spacing: .3px; }
 
   /* AI chat */
   .chat-wrap { display: flex; flex-direction: column; height: 360px; }
@@ -1069,7 +1081,8 @@ async function removeProduct(productId) {
 // ДНЕВНИК
 // ══════════════════════════════════════════════════════════════════════════
 
-let wellnessSel = { energy: 0, sleep_q: 0, mood: 0 };
+let chargeVal = 0;
+let diaryForceEdit = false;
 const DAYS_RU = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
 const CHAT_MESSAGES = [
   { role:"bot", text:"Привет! Я — AI-нутрициолог Biolar. Пока в разработке, но уже скоро смогу отвечать на любые вопросы о нутриентах, витаминах и добавках." }
@@ -1079,42 +1092,48 @@ async function loadDiary() {
   const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const data = await api("GET", "/api/wellness");
-  const today = data.today;
-  const history = data.history || [];
+  const [wellData, homeData] = await Promise.all([
+    api("GET", "/api/wellness"),
+    api("GET", "/api/home"),
+  ]);
+  const today   = wellData.today;
+  const history = wellData.history || [];
+  const products = homeData.products || [];
 
-  // Check-in card
-  let checkinHtml = "";
-  if (today) {
-    checkinHtml = `
-      <div class="checkin-card">
-        <span class="label">Самочувствие сегодня</span>
-        <div class="checkin-done">
-          <div class="checkin-done-scores">
-            <div class="checkin-score-item"><div class="checkin-score-val">${today.energy}</div><div class="checkin-score-lbl">Энергия</div></div>
-            <div class="checkin-score-item"><div class="checkin-score-val">${today.sleep_q}</div><div class="checkin-score-lbl">Сон</div></div>
-            <div class="checkin-score-item"><div class="checkin-score-val">${today.mood}</div><div class="checkin-score-lbl">Настроение</div></div>
-          </div>
-          <button class="checkin-edit-btn" onclick="loadDiaryEdit()">Изменить</button>
-        </div>
-      </div>`;
-  } else {
-    checkinHtml = buildCheckinForm();
+  // Course start = earliest started_at across active products
+  let courseStart = null;
+  let daysInCourse = 0;
+  if (products.length) {
+    const starts = products.map(p => p.started_at).filter(Boolean).sort();
+    courseStart = starts[0] || null;
+    if (courseStart) {
+      daysInCourse = Math.floor((Date.now() - new Date(courseStart).getTime()) / 86400000);
+      if (daysInCourse < 0) daysInCourse = 0;
+    }
   }
 
-  // Trend chart (last 7 entries)
-  const last7 = [...history].reverse().slice(-7);
-  const trendHtml = buildTrendChart(last7);
+  const checkinHtml = (today && !diaryForceEdit) ? buildCheckinDone(today) : buildCheckinFormHtml();
+  diaryForceEdit = false;
+
+  const supplHtml   = products.length ? buildSupplTimeline(products[0], daysInCourse) : "";
+  const insightHtml = buildInsight(history, daysInCourse);
+  const trendHtml   = buildTrend30(history, courseStart);
 
   screen.innerHTML = `
     <div style="margin-bottom:20px">
       <span class="label" style="margin-bottom:6px">Дневник</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Самочувствие</div>
+      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Твой заряд</div>
     </div>
     ${checkinHtml}
-    <div class="card trend-wrap">
-      <span class="label" style="margin-bottom:4px">Динамика за 2 недели</span>
-      ${trendHtml}
+    ${supplHtml}
+    ${insightHtml}
+    <div class="card" style="margin-bottom:10px">
+      <span class="label">30 дней</span>
+      <div class="trend30-outer">${trendHtml}</div>
+      <div class="trend30-footer" style="margin-top:6px">
+        <span>${history.length ? history[history.length-1].date.slice(5) : '—'}</span>
+        <span>сегодня</span>
+      </div>
     </div>
     <div class="card" style="cursor:pointer;padding:18px" onclick="showScreen('ai')">
       <div style="display:flex;align-items:center;gap:12px">
@@ -1128,72 +1147,157 @@ async function loadDiary() {
   `;
 }
 
-function buildCheckinForm() {
-  wellnessSel = { energy: 0, sleep_q: 0, mood: 0 };
-  const makeDots = (key) => [1,2,3,4,5].map(n => `
-    <button class="dot" id="dot-${key}-${n}" onclick="selectDot('${key}',${n})">${n}</button>`).join("");
+function buildCheckinFormHtml(initVal) {
+  chargeVal = initVal || 0;
+  const LABELS = ["", "Разряжен", "Устал", "Норм", "Хорошо", "Заряжен!"];
+  const dots = [1,2,3,4,5].map(n =>
+    `<div class="charge-dot d${n}${n <= chargeVal ? ' lit' : ''}" id="cd${n}" onclick="selectCharge(${n})"></div>`
+  ).join("");
   return `
     <div class="checkin-card">
-      <span class="label">Как ты сегодня?</span>
-      <div class="checkin-title">Отметь своё<br>самочувствие</div>
-      <div class="checkin-row">
-        <div class="checkin-row-label">Энергия</div>
-        <div class="dot-row">${makeDots("energy")}</div>
+      <span class="label">Сегодня</span>
+      <div class="charge-title">Как твой<br>заряд сегодня?</div>
+      <div class="charge-sub">Фиксируй каждый день — через месяц увидишь динамику курса</div>
+      <div class="charge-dots">${dots}</div>
+      <div class="charge-lbl" id="chargeLbl">${chargeVal ? LABELS[chargeVal] : 'Выбери уровень заряда'}</div>
+      <button class="btn" style="background:rgba(247,243,237,0.9);color:var(--green)" onclick="saveCharge()">Зафиксировать</button>
+    </div>`;
+}
+
+function buildCheckinDone(today) {
+  const charge = Math.round((today.energy + today.sleep_q + today.mood) / 3);
+  const LABELS = ["", "Разряжен", "Устал", "Норм", "Хорошо", "Заряжен!"];
+  const dots = [1,2,3,4,5].map(n =>
+    `<div class="charge-dot d${n}${n <= charge ? ' lit' : ''}"></div>`
+  ).join("");
+  return `
+    <div class="checkin-card">
+      <span class="label">Сегодня зафиксировано</span>
+      <div class="charge-done-row">
+        <div class="charge-dots" style="margin-bottom:0;align-items:center">${dots}</div>
+        <div class="charge-done-text">${LABELS[charge] || '—'}</div>
       </div>
-      <div class="checkin-row">
-        <div class="checkin-row-label">Сон</div>
-        <div class="dot-row">${makeDots("sleep_q")}</div>
-      </div>
-      <div class="checkin-row" style="margin-bottom:20px">
-        <div class="checkin-row-label">Настроение</div>
-        <div class="dot-row">${makeDots("mood")}</div>
-      </div>
-      <button class="btn" style="background:rgba(247,243,237,0.9);color:var(--green)" onclick="saveWellness()">Сохранить</button>
+      <button class="checkin-edit-btn" onclick="loadDiaryEdit()">Изменить</button>
     </div>`;
 }
 
 function loadDiaryEdit() {
-  const card = document.querySelector(".checkin-card");
-  if (card) card.outerHTML = buildCheckinForm();
-  // Re-render just the checkin part
+  diaryForceEdit = true;
   loadDiary();
 }
 
-function selectDot(key, val) {
-  wellnessSel[key] = val;
-  [1,2,3,4,5].forEach(n => {
-    const el = document.getElementById(`dot-${key}-${n}`);
-    if (el) el.classList.toggle("sel", n === val);
-  });
+function selectCharge(n) {
+  chargeVal = n;
+  const LABELS = ["", "Разряжен", "Устал", "Норм", "Хорошо", "Заряжен!"];
+  for (let i = 1; i <= 5; i++) {
+    const el = document.getElementById("cd" + i);
+    if (el) { if (i <= n) el.classList.add("lit"); else el.classList.remove("lit"); }
+  }
+  const lbl = document.getElementById("chargeLbl");
+  if (lbl) lbl.textContent = LABELS[n];
 }
 
-async function saveWellness() {
-  if (!wellnessSel.energy || !wellnessSel.sleep_q || !wellnessSel.mood) {
-    toast("Отметь все три показателя"); return;
-  }
-  await api("POST", "/api/wellness/log", wellnessSel);
-  toast("Самочувствие сохранено");
+async function saveCharge() {
+  if (!chargeVal) { toast("Выбери уровень заряда"); return; }
+  await api("POST", "/api/wellness/log", { energy: chargeVal, sleep_q: chargeVal, mood: chargeVal });
+  toast("Заряд зафиксирован +10 баллов");
   loadDiary();
 }
 
-function buildTrendChart(entries) {
-  if (!entries.length) {
-    return `<div style="font-size:13px;color:var(--muted);padding:16px 0;text-align:center">Данных пока нет.<br>Начни отмечать самочувствие каждый день.</div>`;
-  }
-  const bars = entries.map(e => {
-    const avg = (e.energy + e.sleep_q + e.mood) / 3;
-    const h   = Math.round((avg / 5) * 56);
-    const d   = new Date(e.date);
-    const day = DAYS_RU[d.getDay()];
+function buildSupplTimeline(product, days) {
+  const totalDays = 30;
+  const pct = Math.min((days / totalDays) * 100, 100);
+  const dotPct = Math.min(pct, 97);
+
+  const STATUSES = [
+    { max: 7,        label: "Накопление", color: "var(--muted)",   border: "var(--border)",              text: "Добавка начала накапливаться. Первые изменения — через 2-3 недели, это нормально." },
+    { max: 14,       label: "Накопление", color: "var(--muted)",   border: "var(--border)",              text: "Уровни в организме постепенно растут. Продолжай принимать каждый день." },
+    { max: 21,       label: "Скоро",      color: "var(--gold)",    border: "rgba(196,150,90,0.3)",       text: "Ты приближаешься к зоне эффекта. Многие замечают первые изменения на 3-4 неделе." },
+    { max: 30,       label: "В эффекте",  color: "var(--green)",   border: "rgba(44,74,46,0.2)",         text: "Ты в активной зоне действия добавки. Следи за динамикой своего заряда." },
+    { max: Infinity, label: "Полный курс",color: "var(--green)",   border: "rgba(44,74,46,0.2)",         text: "Полный курс пройден. Сравни свой заряд в начале и сейчас — видна разница?" },
+  ];
+  const s = STATUSES.find(x => days <= x.max) || STATUSES[STATUSES.length - 1];
+
+  return `
+    <div class="suppl-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div class="suppl-name">${product.product_name}</div>
+          <div class="suppl-day-lbl">День ${days} курса</div>
+        </div>
+        <div class="suppl-badge" style="color:${s.color};border:1px solid ${s.border}">${s.label}</div>
+      </div>
+      <div class="suppl-phasebar">
+        <div style="position:absolute;left:0;top:0;height:100%;width:47%;background:#d0cabc"></div>
+        <div style="position:absolute;left:47%;top:0;height:100%;width:23%;background:var(--gold2,#e8c87a)"></div>
+        <div style="position:absolute;left:70%;top:0;height:100%;width:30%;background:var(--green2)"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${pct}%;background:rgba(0,0,0,0.18)"></div>
+        <div style="position:absolute;left:${dotPct}%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#fff;border-radius:50%;border:2px solid rgba(44,74,46,0.6);box-shadow:0 1px 4px rgba(0,0,0,0.2)"></div>
+      </div>
+      <div class="suppl-dates">
+        <span>Старт</span><span>Нед.2</span><span>Нед.3</span><span>30 дн.</span>
+      </div>
+      <div class="suppl-status">${s.text}</div>
+    </div>`;
+}
+
+function buildInsight(history, daysInCourse) {
+  const getCharge = e => Math.round((e.energy + e.sleep_q + e.mood) / 3);
+  if (history.length < 7) {
+    const left = Math.max(0, 7 - history.length);
     return `
-      <div class="trend-bar-col">
-        <div class="trend-bar" style="height:${h}px"></div>
-        <div class="trend-day">${day}</div>
+      <div class="card" style="text-align:center;padding:20px;margin-bottom:10px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Пока нет данных для инсайта</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.6">Ещё ${left} ${left===1?'день':left<5?'дня':'дней'} — и появится твой первый<br>персональный прогресс-инсайт</div>
       </div>`;
+  }
+  const chron   = [...history].reverse();
+  const w1      = chron.slice(0, 7).map(getCharge);
+  const wLast   = chron.slice(-7).map(getCharge);
+  const avg1    = (w1.reduce((a,b) => a+b, 0) / w1.length).toFixed(1);
+  const avgNow  = (wLast.reduce((a,b) => a+b, 0) / wLast.length).toFixed(1);
+  const diff    = (parseFloat(avgNow) - parseFloat(avg1)).toFixed(1);
+  const up      = parseFloat(diff) > 0.2;
+  const flat    = Math.abs(parseFloat(diff)) <= 0.2;
+
+  return `
+    <div class="insight-card">
+      <div class="insight-eyebrow">Прогресс · ${daysInCourse} дней курса</div>
+      <div class="insight-heading">${up ? 'Заряд растёт' : flat ? 'Стабильный заряд' : 'Продолжаем курс'}</div>
+      <div class="insight-sub">${up
+        ? `За ${daysInCourse} дней средний заряд вырос на ${diff} п.`
+        : flat
+          ? 'Твой уровень стабилен — накопительный эффект продолжается'
+          : 'Добавки работают накопительно — первый эффект появится на 3-4 неделе'
+      }</div>
+      <div class="insight-nums">
+        <div class="insight-num-block">
+          <div class="insight-num-val">${avg1}</div>
+          <div class="insight-num-lbl">Начало</div>
+        </div>
+        <div class="insight-arr">→</div>
+        <div class="insight-num-block">
+          <div class="insight-num-val">${avgNow}</div>
+          <div class="insight-num-lbl">Сейчас</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildTrend30(history, courseStart) {
+  if (!history.length) {
+    return `<div style="font-size:13px;color:var(--muted);text-align:center;padding:20px 0;line-height:1.7">Начни фиксировать заряд каждый день —<br>здесь появится твой тренд</div>`;
+  }
+  const getCharge = e => Math.round((e.energy + e.sleep_q + e.mood) / 3);
+  const chron = [...history].reverse(); // oldest → newest
+
+  const bars = chron.map(e => {
+    const c = getCharge(e);
+    const h = Math.round((c / 5) * 58) + 4;
+    return `<div class="tb c${c}" style="height:${h}px" title="${e.date}: ${c}/5"></div>`;
   });
-  // Fill to 7 if fewer
-  while (bars.length < 7) bars.unshift(`<div class="trend-bar-col"><div class="trend-bar empty" style="height:4px"></div><div class="trend-day">—</div></div>`);
-  return `<div class="trend-bars">${bars.join("")}</div>`;
+
+  return `<div class="trend30-bars">${bars.join("")}</div>`;
 }
 
 function buildChat() {

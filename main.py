@@ -248,7 +248,7 @@ async def wellness_get(request: Request):
     tg = get_tg_user(request)
     today = date_cls.today().isoformat()
     today_log = await db.get_wellness_today(tg["id"], today)
-    history   = await db.get_wellness_history(tg["id"], 14)
+    history   = await db.get_wellness_history(tg["id"], 30)
     return {"today": today_log, "history": history}
 
 
