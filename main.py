@@ -358,12 +358,15 @@ async def food_analyze(body: FoodAnalyzeIn, request: Request):
         ) as resp:
             data = await resp.json()
 
+    print("FOOD GROQ RAW:", json.dumps(data, ensure_ascii=False)[:600])
+
     if "error" in data:
         print("FOOD AI ERROR:", data["error"])
-        raise HTTPException(status_code=500, detail="Не удалось распознать блюдо")
+        raise HTTPException(status_code=500, detail=str(data["error"].get("message", "AI error")))
 
     try:
         text = data["choices"][0]["message"]["content"]
+        print("FOOD AI TEXT:", text)
         match = re.search(r'\{.*?\}', text, re.DOTALL)
         result = json.loads(match.group() if match else text)
         return {
@@ -374,7 +377,7 @@ async def food_analyze(body: FoodAnalyzeIn, request: Request):
             "carbs":    round(float(result.get("carbs", 0)), 1),
         }
     except Exception as e:
-        print("FOOD PARSE ERROR:", e)
+        print("FOOD PARSE ERROR:", e, "| text:", text if "text" in dir() else "N/A")
         raise HTTPException(status_code=500, detail="Не удалось распознать блюдо")
 
 

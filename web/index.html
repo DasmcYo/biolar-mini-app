@@ -1539,7 +1539,8 @@ async function onFoodPhoto(input) {
     foodPending = data;
     if (resultDiv) resultDiv.innerHTML = buildFoodResult(data);
   } catch (e) {
-    if (resultDiv) resultDiv.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">Не удалось распознать — попробуй другое фото</div>`;
+    const msg = e?.message || String(e);
+    if (resultDiv) resultDiv.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:8px 0">Ошибка: ${msg}</div>`;
   }
 }
 
