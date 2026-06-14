@@ -50,6 +50,12 @@ async def ask_gemini(user_id: int, message: str, system_prompt: str) -> str:
         async with session.post(url, json=payload) as resp:
             data = await resp.json()
 
+    print("GEMINI RESPONSE:", json.dumps(data, ensure_ascii=False)[:500])
+
+    if "error" in data:
+        print("GEMINI ERROR:", data["error"])
+        return f"Ошибка API: {data['error'].get('message', 'неизвестно')}"
+
     try:
         reply = data["candidates"][0]["content"]["parts"][0]["text"]
     except (KeyError, IndexError):
