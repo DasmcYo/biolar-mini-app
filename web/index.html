@@ -478,6 +478,53 @@
     display: flex; gap: 10px; align-items: flex-start;
   }
 
+  /* ══ ВОДА ═══════════════════════════════════════════════════════════════════ */
+
+  .water-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; }
+  .water-btn { width:44px; height:44px; border-radius:50%; background:var(--card); border:1px solid var(--border);
+               color:var(--text); font-size:22px; line-height:1; cursor:pointer; }
+  .water-center { text-align:center; }
+  .water-num { font-size:36px; font-weight:800; color:var(--green); line-height:1; }
+  .water-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+  .water-dots { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; justify-content:center; }
+  .water-dot { width:28px; height:28px; border-radius:50%; background:rgba(44,74,46,.12); transition:.2s; }
+  .water-dot.filled { background:var(--green); }
+
+  /* ══ ЦЕЛИ КБЖУ ══════════════════════════════════════════════════════════════ */
+
+  .goals-block { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .goals-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .goals-title { font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .goals-edit-btn { font-size:11px; color:var(--green); background:none; border:none; cursor:pointer; padding:0; }
+  .goal-row { margin-bottom:10px; }
+  .goal-row-labels { display:flex; justify-content:space-between; margin-bottom:4px; }
+  .goal-row-name { font-size:12px; color:var(--muted); }
+  .goal-row-val  { font-size:12px; font-weight:600; color:var(--text); }
+  .goal-bar-wrap { height:6px; background:rgba(44,74,46,.12); border-radius:3px; overflow:hidden; }
+  .goal-bar-fill { height:100%; background:var(--green); border-radius:3px; transition:width .4s; }
+
+  /* ══ SHARE PROGRESS ══════════════════════════════════════════════════════════ */
+
+  .share-progress-card {
+    background:linear-gradient(135deg,var(--green),var(--green2));
+    border-radius:16px; padding:20px; margin-bottom:12px; color:#fff;
+  }
+  .share-prog-brand { font-size:13px; opacity:.7; margin-bottom:12px; }
+  .share-prog-stats { display:flex; align-items:center; gap:8px; }
+  .share-prog-item { flex:1; text-align:center; }
+  .share-prog-num { font-size:28px; font-weight:800; line-height:1; }
+  .share-prog-lbl { font-size:11px; opacity:.7; margin-top:2px; }
+  .share-prog-divider { width:1px; height:40px; background:rgba(255,255,255,.3); }
+
+  /* ══ TOGGLE ══════════════════════════════════════════════════════════════════ */
+
+  .toggle-wrap { position:relative; width:44px; height:26px; cursor:pointer; }
+  .toggle-track { width:44px; height:26px; border-radius:13px; background:rgba(44,74,46,.2); transition:.2s; }
+  .toggle-track.on { background:var(--green); }
+  .toggle-thumb { position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%;
+                  background:#fff; transition:.2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .toggle-thumb.on { transform:translateX(18px); }
+
   /* ══ КЛУБ ═══════════════════════════════════════════════════════════════════ */
 
   /* Level hero */
@@ -1144,10 +1191,12 @@ async function loadDiary() {
   const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const [wellData, homeData, foodData] = await Promise.all([
+  const [wellData, homeData, foodData, waterData, goalsData] = await Promise.all([
     api("GET", "/api/wellness"),
     api("GET", "/api/home"),
     api("GET", "/api/diary/food"),
+    api("GET", "/api/diary/water"),
+    api("GET", "/api/diary/goals"),
   ]);
   const today   = wellData.today;
   const history = wellData.history || [];
@@ -1168,10 +1217,13 @@ async function loadDiary() {
   const checkinHtml = (today && !diaryForceEdit) ? buildCheckinDone(today) : buildCheckinFormHtml();
   diaryForceEdit = false;
 
-  const supplHtml   = products.length ? buildSupplTimeline(products[0], daysInCourse) : "";
-  const insightHtml = buildInsight(history, daysInCourse);
-  const trendHtml   = buildTrend30(history, courseStart);
-  const foodLogs    = foodData.logs || [];
+  const supplHtml      = products.length ? buildSupplTimeline(products[0], daysInCourse) : "";
+  const insightHtml    = buildInsight(history, daysInCourse);
+  const comparisonHtml = buildComparison(history, daysInCourse);
+  const trendHtml      = buildTrend30(history, courseStart);
+  const foodLogs       = foodData.logs || [];
+  const waterGlasses   = waterData.glasses || 0;
+  const goals          = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
 
   screen.innerHTML = `
     <div style="margin-bottom:20px">
@@ -1181,6 +1233,7 @@ async function loadDiary() {
     ${checkinHtml}
     ${supplHtml}
     ${insightHtml}
+    ${comparisonHtml}
     <div class="card" style="margin-bottom:10px">
       <span class="label">30 дней</span>
       <div class="trend30-outer">${trendHtml}</div>
@@ -1189,7 +1242,8 @@ async function loadDiary() {
         <span>сегодня</span>
       </div>
     </div>
-    ${buildFoodSection(foodLogs)}
+    ${buildFoodSection(foodLogs, goals)}
+    ${buildWaterTracker(waterGlasses)}
     <div class="card" style="margin-bottom:10px">
       <div class="cal-nav">
         <button class="cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
@@ -1642,7 +1696,7 @@ function calChangeMonth(dir) {
 
 let foodPending = null;
 
-function buildFoodSection(logs) {
+function buildFoodSection(logs, goals) {
   const logsHtml = logs.map(l => `
     <div class="food-log-item">
       <div>
@@ -1653,17 +1707,53 @@ function buildFoodSection(logs) {
     </div>`).join("");
 
   let totalHtml = "";
-  if (logs.length >= 2) {
-    const t = logs.reduce((a, l) => ({
-      cal: a.cal + l.calories, p: a.p + l.protein,
-      f: a.f + l.fat, c: a.c + l.carbs,
-    }), { cal: 0, p: 0, f: 0, c: 0 });
+  let goalsHtml = "";
+
+  const t = logs.reduce((a, l) => ({
+    cal: a.cal + l.calories, p: a.p + l.protein,
+    f: a.f + l.fat, c: a.c + l.carbs,
+  }), { cal: 0, p: 0, f: 0, c: 0 });
+
+  if (logs.length > 0) {
     totalHtml = `
       <div class="food-total">
         <div class="food-total-item"><div class="food-total-val">${Math.round(t.cal)}</div><div class="food-total-lbl">ккал</div></div>
         <div class="food-total-item"><div class="food-total-val">${t.p.toFixed(1)}г</div><div class="food-total-lbl">белки</div></div>
         <div class="food-total-item"><div class="food-total-val">${t.f.toFixed(1)}г</div><div class="food-total-lbl">жиры</div></div>
         <div class="food-total-item"><div class="food-total-val">${t.c.toFixed(1)}г</div><div class="food-total-lbl">углев.</div></div>
+      </div>`;
+
+    if (goals) {
+      const pct = v => Math.min(100, Math.round(v));
+      goalsHtml = `
+        <div class="goals-block">
+          <div class="goals-header">
+            <span class="goals-title">Цели на день</span>
+            <button class="goals-edit-btn" onclick="openGoalsModal(${goals.calories},${goals.protein},${goals.fat},${goals.carbs})">Изменить</button>
+          </div>
+          ${[
+            { label: 'Калории', val: Math.round(t.cal), goal: goals.calories, unit: 'ккал' },
+            { label: 'Белки',   val: t.p.toFixed(1),   goal: goals.protein,  unit: 'г' },
+            { label: 'Жиры',    val: t.f.toFixed(1),   goal: goals.fat,      unit: 'г' },
+            { label: 'Углеводы',val: t.c.toFixed(1),   goal: goals.carbs,    unit: 'г' },
+          ].map(r => `
+            <div class="goal-row">
+              <div class="goal-row-labels">
+                <span class="goal-row-name">${r.label}</span>
+                <span class="goal-row-val">${r.val} / ${r.goal} ${r.unit}</span>
+              </div>
+              <div class="goal-bar-wrap"><div class="goal-bar-fill" style="width:${pct((r.val/r.goal)*100)}%"></div></div>
+            </div>`).join('')}
+        </div>`;
+    }
+  } else if (goals) {
+    goalsHtml = `
+      <div class="goals-block" style="margin-top:4px">
+        <div class="goals-header">
+          <span class="goals-title">Цели на день</span>
+          <button class="goals-edit-btn" onclick="openGoalsModal(${goals.calories},${goals.protein},${goals.fat},${goals.carbs})">Изменить</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted)">Норма: ${goals.calories} ккал · Б${goals.protein}г · Ж${goals.fat}г · У${goals.carbs}г</div>
       </div>`;
   }
 
@@ -1674,6 +1764,7 @@ function buildFoodSection(logs) {
              style="display:none" onchange="onFoodPhoto(this)">
       ${logsHtml}
       ${totalHtml}
+      ${goalsHtml}
       <div id="food-preview-wrap" style="display:none;margin-top:12px">
         <img id="food-preview-img" class="food-preview">
       </div>
@@ -1681,6 +1772,10 @@ function buildFoodSection(logs) {
       <button class="food-cam-btn" onclick="document.getElementById('food-input').click()">
         📷 Сфотографировать еду
       </button>
+      <button class="btn outline" style="margin-top:8px;width:100%;font-size:13px" onclick="runWeekAnalysis()">
+        ✦ Анализ питания за неделю
+      </button>
+      <div id="week-analysis-result" style="margin-top:10px"></div>
     </div>`;
 }
 
@@ -1767,6 +1862,170 @@ async function compressImage(file, maxWidth = 800) {
     };
     reader.readAsDataURL(file);
   });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ВОДА
+// ══════════════════════════════════════════════════════════════════════════
+
+let waterGlassesCurrent = 0;
+const WATER_GOAL = 8;
+
+function buildWaterTracker(glasses) {
+  waterGlassesCurrent = glasses;
+  const dots = Array.from({length: WATER_GOAL}, (_, i) =>
+    `<div class="water-dot ${i < glasses ? 'filled' : ''}"></div>`
+  ).join('');
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <span class="label">Вода</span>
+      <div class="water-row">
+        <button class="water-btn" onclick="adjustWater(-1)">−</button>
+        <div class="water-center">
+          <div class="water-num" id="water-num">${glasses}</div>
+          <div class="water-sub">из ${WATER_GOAL} стаканов</div>
+        </div>
+        <button class="water-btn" onclick="adjustWater(1)">+</button>
+      </div>
+      <div class="water-dots" id="water-dots">${dots}</div>
+    </div>`;
+}
+
+async function adjustWater(delta) {
+  waterGlassesCurrent = Math.max(0, Math.min(WATER_GOAL, waterGlassesCurrent + delta));
+  const numEl  = document.getElementById("water-num");
+  const dotsEl = document.getElementById("water-dots");
+  if (numEl)  numEl.textContent = waterGlassesCurrent;
+  if (dotsEl) dotsEl.innerHTML  = Array.from({length: WATER_GOAL}, (_, i) =>
+    `<div class="water-dot ${i < waterGlassesCurrent ? 'filled' : ''}"></div>`
+  ).join('');
+  try {
+    await api("POST", "/api/diary/water/set", { glasses: waterGlassesCurrent });
+  } catch(e) { console.error("water save error:", e); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ЦЕЛИ КБЖУ
+// ══════════════════════════════════════════════════════════════════════════
+
+function openGoalsModal(cal, p, f, c) {
+  const existing = document.getElementById("goals-modal");
+  if (existing) existing.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "goals-modal";
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:flex;align-items:flex-end";
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;margin:0 auto">
+      <div class="serif" style="font-size:20px;margin-bottom:16px">Цели на день</div>
+      ${[
+        {id:'g-cal', label:'Калории (ккал)', val: cal, step: 50, min: 500 },
+        {id:'g-p',   label:'Белки (г)',      val: p,   step: 5,  min: 10  },
+        {id:'g-f',   label:'Жиры (г)',       val: f,   step: 5,  min: 10  },
+        {id:'g-c',   label:'Углеводы (г)',   val: c,   step: 10, min: 20  },
+      ].map(r => `
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${r.label}</div>
+          <input id="${r.id}" type="number" value="${r.val}" step="${r.step}" min="${r.min}"
+                 style="width:100%;padding:10px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;box-sizing:border-box">
+        </div>`).join('')}
+      <div style="display:flex;gap:10px;margin-top:4px">
+        <button class="btn" style="flex:1" onclick="saveGoals()">Сохранить</button>
+        <button class="btn" style="flex:0 0 auto;background:var(--card);color:var(--text);border:1px solid var(--border)"
+                onclick="document.getElementById('goals-modal').remove()">Отмена</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+}
+
+async function saveGoals() {
+  const cal = parseInt(document.getElementById("g-cal")?.value) || 2000;
+  const p   = parseFloat(document.getElementById("g-p")?.value)  || 80;
+  const f   = parseFloat(document.getElementById("g-f")?.value)  || 70;
+  const c   = parseFloat(document.getElementById("g-c")?.value)  || 250;
+  try {
+    await api("POST", "/api/diary/goals", { calories: cal, protein: p, fat: f, carbs: c });
+    document.getElementById("goals-modal")?.remove();
+    toast("Цели сохранены");
+    await loadDiary();
+  } catch(e) { toast("Ошибка: " + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// AI-АНАЛИЗ НЕДЕЛИ
+// ══════════════════════════════════════════════════════════════════════════
+
+async function runWeekAnalysis() {
+  const btn = document.querySelector('[onclick="runWeekAnalysis()"]');
+  const res = document.getElementById("week-analysis-result");
+  if (!res) return;
+  if (btn) btn.disabled = true;
+  res.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:8px 0">Анализирую рацион за неделю...</div>`;
+  try {
+    const data = await api("GET", "/api/diary/food/week-analysis");
+    res.innerHTML = `
+      <div style="font-size:13px;line-height:1.7;color:var(--text);padding:10px 0;border-top:1px solid var(--border);margin-top:4px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px">AI-анализ</div>
+        ${data.analysis}
+      </div>`;
+  } catch(e) {
+    res.innerHTML = `<div style="font-size:12px;color:var(--muted)">Ошибка: ${e.message}</div>`;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// СРАВНЕНИЕ ДО/ПОСЛЕ
+// ══════════════════════════════════════════════════════════════════════════
+
+function buildComparison(history, daysInCourse) {
+  if (!history.length || daysInCourse < 7) return "";
+
+  const getCharge = e => Math.round((e.energy + e.sleep_q + e.mood) / 3);
+  const chron = [...history].reverse();
+
+  const first7 = chron.slice(0, 7);
+  const last7  = chron.slice(-7);
+
+  const avgFirst = first7.reduce((s, e) => s + getCharge(e), 0) / first7.length;
+  const avgLast  = last7.reduce((s,  e) => s + getCharge(e), 0) / last7.length;
+  const delta    = avgLast - avgFirst;
+  const deltaStr = delta >= 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1);
+  const deltaColor = delta >= 0 ? "var(--green)" : "#e07070";
+
+  const bar = (val) => {
+    const pct = Math.round((val / 5) * 100);
+    return `<div style="background:var(--card);border-radius:6px;height:8px;margin-top:6px">
+      <div style="background:var(--green);border-radius:6px;height:8px;width:${pct}%"></div></div>`;
+  };
+
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <span class="label">До и после</span>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-top:12px">
+        <div style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">НАЧАЛО</div>
+          <div style="font-size:32px;font-weight:700;color:var(--text)">${avgFirst.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted)">заряд</div>
+          ${bar(avgFirst)}
+        </div>
+        <div style="text-align:center;padding:0 4px">
+          <div style="font-size:22px;font-weight:800;color:${deltaColor}">${deltaStr}</div>
+          <div style="font-size:10px;color:var(--muted)">балла</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">СЕЙЧАС</div>
+          <div style="font-size:32px;font-weight:700;color:${deltaColor}">${avgLast.toFixed(1)}</div>
+          <div style="font-size:11px;color:var(--muted)">заряд</div>
+          ${bar(avgLast)}
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">
+        ${delta >= 0.5 ? '🚀 Виден прогресс — курс работает!' : delta >= 0 ? 'Стабильно — продолжай' : 'Есть куда расти — следи за сном и едой'}
+      </div>
+    </div>`;
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1977,6 +2236,50 @@ async function loadClub() {
     <button class="btn" onclick="window.open('${shareUrl}','_blank')">Поделиться ссылкой</button>
     <button class="btn outline" style="margin-top:8px" onclick="copyRef('${refLink}')">Скопировать</button>`;
 
+  // ── Share progress card ───────────────────────────────────────────────
+  const streak      = data.achievements_data?.streak || 0;
+  const course_days = data.achievements_data?.course_days || 0;
+  const avgWell = data._avg_charge || "";
+  const shareText = encodeURIComponent(
+    `🌿 Я на курсе Biolar Organics уже ${course_days} дней!\n` +
+    `Стрик: ${streak} дней подряд.\n` +
+    `Пройди персональный анализ нутриентов 👇`
+  );
+  const shareFull = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${shareText}`;
+
+  const shareCardHtml = `
+    <div class="section-head" style="margin-top:4px"><span class="label">Мой прогресс</span></div>
+    <div class="share-progress-card">
+      <div class="share-prog-brand">🌿 Biolar Organics</div>
+      <div class="share-prog-stats">
+        <div class="share-prog-item"><div class="share-prog-num">${course_days}</div><div class="share-prog-lbl">дней курса</div></div>
+        <div class="share-prog-divider"></div>
+        <div class="share-prog-item"><div class="share-prog-num">${streak}</div><div class="share-prog-lbl">стрик</div></div>
+        <div class="share-prog-divider"></div>
+        <div class="share-prog-item"><div class="share-prog-num">${level.name}</div><div class="share-prog-lbl">уровень</div></div>
+      </div>
+    </div>
+    <button class="btn" style="margin-bottom:8px" onclick="window.open('${shareFull}','_blank')">📤 Поделиться прогрессом</button>`;
+
+  // ── Reminder settings ──────────────────────────────────────────────────
+  const reminderHtml = `
+    <div class="section-head" style="margin-top:4px"><span class="label">Напоминание</span></div>
+    <div class="card" id="reminder-card" style="margin-bottom:14px">
+      <div style="font-size:13px;margin-bottom:12px;color:var(--muted)">Напоминать принять добавки каждый день</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <input type="time" id="rem-time" value="09:00"
+               style="padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <div class="toggle-wrap" onclick="toggleReminder(this)">
+            <div class="toggle-track" id="rem-track"></div>
+            <div class="toggle-thumb" id="rem-thumb"></div>
+          </div>
+          <span id="rem-lbl" style="font-size:13px;color:var(--muted)">Выкл</span>
+        </label>
+        <button class="btn" style="padding:8px 18px;font-size:13px" onclick="saveReminder()">Сохранить</button>
+      </div>
+    </div>`;
+
   // ── Render all ────────────────────────────────────────────────────────
   screen.innerHTML = `
     <div style="margin-bottom:16px">
@@ -1984,6 +2287,7 @@ async function loadClub() {
       <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Твой профиль</div>
     </div>
     ${lvlHtml}
+    ${shareCardHtml}
     ${spinHtml}
     ${challengesHtml}
     ${lbHtml}
@@ -1991,9 +2295,55 @@ async function loadClub() {
     ${giveHtml}
     <div style="height:8px"></div>
     ${refHtml}
+    ${reminderHtml}
     <div style="height:8px"></div>
   `;
+
+  loadReminderSettings();
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// НАПОМИНАНИЯ
+// ══════════════════════════════════════════════════════════════════════════
+
+async function loadReminderSettings() {
+  try {
+    const data = await api("GET", "/api/settings/reminder");
+    const timeEl  = document.getElementById("rem-time");
+    const trackEl = document.getElementById("rem-track");
+    const thumbEl = document.getElementById("rem-thumb");
+    const lblEl   = document.getElementById("rem-lbl");
+    if (timeEl && data.reminder_time) timeEl.value = data.reminder_time;
+    if (data.enabled) {
+      trackEl?.classList.add("on");
+      thumbEl?.classList.add("on");
+      if (lblEl) lblEl.textContent = "Вкл";
+    }
+  } catch(e) { console.error("loadReminderSettings:", e); }
+}
+
+function toggleReminder(wrap) {
+  const track = document.getElementById("rem-track");
+  const thumb = document.getElementById("rem-thumb");
+  const lbl   = document.getElementById("rem-lbl");
+  const on = !track?.classList.contains("on");
+  track?.classList.toggle("on", on);
+  thumb?.classList.toggle("on", on);
+  if (lbl) lbl.textContent = on ? "Вкл" : "Выкл";
+}
+
+async function saveReminder() {
+  const time    = document.getElementById("rem-time")?.value || null;
+  const enabled = document.getElementById("rem-track")?.classList.contains("on") || false;
+  try {
+    await api("POST", "/api/settings/reminder", { reminder_time: time, enabled });
+    toast(enabled ? `Напоминание в ${time} включено` : "Напоминание выключено");
+  } catch(e) { toast("Ошибка: " + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// SPIN
+// ══════════════════════════════════════════════════════════════════════════
 
 async function doSpin() {
   if (wheelSpinning) return;

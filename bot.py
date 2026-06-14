@@ -44,6 +44,9 @@ def ref_keyboard(ref_code: str, bot_username: str) -> InlineKeyboardMarkup:
 
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
+    import db
+    await db.save_chat_id(message.from_user.id, message.chat.id)
+
     args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else ""
     ref = args.replace("ref_", "") if args.startswith("ref_") else None
 

@@ -88,6 +88,32 @@ async def init_db():
                 carbs     REAL DEFAULT 0,
                 logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS water_logs (
+                user_id INTEGER NOT NULL,
+                date    TEXT NOT NULL,
+                glasses INTEGER DEFAULT 0,
+                PRIMARY KEY (user_id, date)
+            );
+
+            CREATE TABLE IF NOT EXISTS user_goals (
+                user_id  INTEGER PRIMARY KEY,
+                calories INTEGER DEFAULT 2000,
+                protein  REAL DEFAULT 80.0,
+                fat      REAL DEFAULT 70.0,
+                carbs    REAL DEFAULT 250.0
+            );
+
+            CREATE TABLE IF NOT EXISTS user_reminders (
+                user_id       INTEGER PRIMARY KEY,
+                reminder_time TEXT DEFAULT NULL,
+                enabled       INTEGER DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS user_chat_ids (
+                user_id INTEGER PRIMARY KEY,
+                chat_id INTEGER NOT NULL
+            );
         """)
         await db.commit()
 
@@ -455,3 +481,114 @@ async def get_food_month(user_id: int, month: str) -> dict:
         ) as cur:
             rows = await cur.fetchall()
     return {r[0]: {"calories": r[1] or 0, "count": r[2]} for r in rows}
+
+
+async def get_food_week(user_id: int) -> list[dict]:
+    from datetime import date, timedelta
+    today = date.today()
+    result = []
+    for i in range(7):
+        d = (today - timedelta(days=i)).isoformat()
+        logs = await get_food_logs(user_id, d)
+        if logs:
+            result.append({"date": d, "logs": logs})
+    return result
+
+
+# ── Water ──────────────────────────────────────────────────────────────────────
+
+async def get_water(user_id: int, date: str) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT glasses FROM water_logs WHERE user_id=? AND date=?", (user_id, date)
+        ) as cur:
+            row = await cur.fetchone()
+    return row[0] if row else 0
+
+
+async def set_water(user_id: int, date: str, glasses: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO water_logs (user_id, date, glasses) VALUES (?,?,?) "
+            "ON CONFLICT(user_id, date) DO UPDATE SET glasses=excluded.glasses",
+            (user_id, date, glasses),
+        )
+        await db.commit()
+
+
+# ── Goals ──────────────────────────────────────────────────────────────────────
+
+async def get_goals(user_id: int) -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT calories, protein, fat, carbs FROM user_goals WHERE user_id=?", (user_id,)
+        ) as cur:
+            row = await cur.fetchone()
+    return dict(row) if row else {"calories": 2000, "protein": 80.0, "fat": 70.0, "carbs": 250.0}
+
+
+async def set_goals(user_id: int, calories: int, protein: float, fat: float, carbs: float):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO user_goals (user_id, calories, protein, fat, carbs) VALUES (?,?,?,?,?) "
+            "ON CONFLICT(user_id) DO UPDATE SET calories=excluded.calories, protein=excluded.protein, "
+            "fat=excluded.fat, carbs=excluded.carbs",
+            (user_id, calories, protein, fat, carbs),
+        )
+        await db.commit()
+
+
+# ── Reminders ─────────────────────────────────────────────────────────────────
+
+async def get_reminder(user_id: int) -> dict:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT reminder_time, enabled FROM user_reminders WHERE user_id=?", (user_id,)
+        ) as cur:
+            row = await cur.fetchone()
+    return {"reminder_time": row[0], "enabled": bool(row[1])} if row else {"reminder_time": None, "enabled": False}
+
+
+async def set_reminder(user_id: int, reminder_time: str | None, enabled: bool):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO user_reminders (user_id, reminder_time, enabled) VALUES (?,?,?) "
+            "ON CONFLICT(user_id) DO UPDATE SET reminder_time=excluded.reminder_time, enabled=excluded.enabled",
+            (user_id, reminder_time, int(enabled)),
+        )
+        await db.commit()
+
+
+async def get_users_with_reminders(current_time: str) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT r.user_id, c.chat_id FROM user_reminders r "
+            "JOIN user_chat_ids c ON c.user_id = r.user_id "
+            "WHERE r.enabled=1 AND r.reminder_time=?",
+            (current_time,),
+        ) as cur:
+            rows = await cur.fetchall()
+    return [{"user_id": r[0], "chat_id": r[1]} for r in rows]
+
+
+# ── Chat IDs (for bot notifications) ─────────────────────────────────────────
+
+async def save_chat_id(user_id: int, chat_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "INSERT INTO user_chat_ids (user_id, chat_id) VALUES (?,?) "
+            "ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id",
+            (user_id, chat_id),
+        )
+        await db.commit()
+
+
+async def get_users_for_weekly_summary() -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT u.user_id, u.first_name, c.chat_id FROM users u "
+            "JOIN user_chat_ids c ON c.user_id = u.user_id",
+        ) as cur:
+            rows = await cur.fetchall()
+    return [{"user_id": r[0], "first_name": r[1], "chat_id": r[2]} for r in rows]

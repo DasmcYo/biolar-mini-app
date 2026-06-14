@@ -4,8 +4,10 @@ import hmac
 import hashlib
 import json
 from contextlib import asynccontextmanager
-from datetime import date as date_cls
+from datetime import date as date_cls, timedelta, datetime
 from urllib.parse import unquote
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse, FileResponse
@@ -125,6 +127,9 @@ def get_level_info(total_points: int) -> dict:
             "next": None, "next_threshold": None, "progress_pct": 100}
 
 
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await db.init_db()
@@ -132,7 +137,11 @@ async def lifespan(app: FastAPI):
     await db.seed_articles(ARTICLES)
     if WEBHOOK_URL:
         await _set_webhook()
+    scheduler.add_job(send_daily_reminders, "interval", minutes=1)
+    scheduler.add_job(send_weekly_summaries, "cron", day_of_week="sun", hour=18, minute=0)
+    scheduler.start()
     yield
+    scheduler.shutdown()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -409,6 +418,177 @@ async def food_delete(body: FoodDeleteIn, request: Request):
     tg = get_tg_user(request)
     await db.delete_food_log(tg["id"], body.log_id)
     return {"ok": True}
+
+
+# ── API: вода ─────────────────────────────────────────────────────────────────
+
+class WaterSetIn(BaseModel):
+    glasses: int
+
+@app.get("/api/diary/water")
+async def water_get(request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    return {"glasses": await db.get_water(tg["id"], today)}
+
+@app.post("/api/diary/water/set")
+async def water_set(body: WaterSetIn, request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    g = max(0, min(body.glasses, 20))
+    await db.set_water(tg["id"], today, g)
+    return {"ok": True, "glasses": g}
+
+
+# ── API: цели КБЖУ ────────────────────────────────────────────────────────────
+
+class GoalsIn(BaseModel):
+    calories: int = 2000
+    protein: float = 80.0
+    fat: float = 70.0
+    carbs: float = 250.0
+
+@app.get("/api/diary/goals")
+async def goals_get(request: Request):
+    tg = get_tg_user(request)
+    return await db.get_goals(tg["id"])
+
+@app.post("/api/diary/goals")
+async def goals_set(body: GoalsIn, request: Request):
+    tg = get_tg_user(request)
+    await db.set_goals(tg["id"], body.calories, body.protein, body.fat, body.carbs)
+    return {"ok": True}
+
+
+# ── API: анализ питания за неделю ─────────────────────────────────────────────
+
+@app.get("/api/diary/food/week-analysis")
+async def food_week_analysis(request: Request):
+    tg = get_tg_user(request)
+    if not GROQ_KEY:
+        raise HTTPException(status_code=503, detail="AI not configured")
+    week = await db.get_food_week(tg["id"])
+    if not week:
+        return {"analysis": "За последние 7 дней нет записей о питании. Сфотографируй блюда через камеру — и я дам анализ."}
+
+    lines = []
+    for day in reversed(week):
+        total_cal = sum(l["calories"] for l in day["logs"])
+        total_p   = sum(l["protein"]  for l in day["logs"])
+        total_f   = sum(l["fat"]      for l in day["logs"])
+        total_c   = sum(l["carbs"]    for l in day["logs"])
+        foods = ", ".join(l["food_name"] for l in day["logs"])
+        lines.append(f"{day['date']}: {foods} — {total_cal} ккал, Б{total_p:.0f}/Ж{total_f:.0f}/У{total_c:.0f}г")
+
+    analysis = await ask_groq(
+        tg["id"],
+        f"Мой рацион за последние 7 дней:\n" + "\n".join(lines) +
+        "\n\nДай анализ питания: что хорошо, что стоит улучшить, 1-2 конкретных совета. 5-7 предложений, конкретно и без воды.",
+        "Ты AI-нутрициолог Biolar. Анализируй честно и конкретно."
+    )
+    return {"analysis": analysis}
+
+
+# ── API: напоминания ──────────────────────────────────────────────────────────
+
+class ReminderIn(BaseModel):
+    reminder_time: str | None = None
+    enabled: bool = True
+
+@app.get("/api/settings/reminder")
+async def reminder_get(request: Request):
+    tg = get_tg_user(request)
+    return await db.get_reminder(tg["id"])
+
+@app.post("/api/settings/reminder")
+async def reminder_set(body: ReminderIn, request: Request):
+    tg = get_tg_user(request)
+    await db.set_reminder(tg["id"], body.reminder_time, body.enabled)
+    return {"ok": True}
+
+
+# ── Планировщик ───────────────────────────────────────────────────────────────
+
+async def _send_tg_message(chat_id: int, text: str):
+    payload = {
+        "chat_id": chat_id, "text": text, "parse_mode": "Markdown",
+        "reply_markup": {"inline_keyboard": [[{
+            "text": "🌿 Открыть Biolar", "web_app": {"url": WEBHOOK_URL}
+        }]]} if WEBHOOK_URL else {},
+    }
+    async with aiohttp.ClientSession() as session:
+        await session.post(f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage", json=payload)
+
+
+async def call_groq_once(message: str, system_prompt: str) -> str:
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": message},
+        ],
+        "max_tokens": 400, "temperature": 0.7,
+    }
+    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                "https://api.groq.com/openai/v1/chat/completions", json=payload, headers=headers
+            ) as resp:
+                data = await resp.json()
+        return data["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"call_groq_once error: {e}")
+        return ""
+
+
+async def send_daily_reminders():
+    if not BOT_TOKEN or not WEBHOOK_URL:
+        return
+    now = datetime.now().strftime("%H:%M")
+    users = await db.get_users_with_reminders(now)
+    for u in users:
+        try:
+            await _send_tg_message(
+                u["chat_id"],
+                "⏰ *Напоминание Biolar*\n\nВремя принять добавки и отметить в приложении 🌿"
+            )
+        except Exception as e:
+            print(f"Reminder send error uid={u['user_id']}: {e}")
+
+
+async def send_weekly_summaries():
+    if not BOT_TOKEN or not GROQ_KEY:
+        return
+    users = await db.get_users_for_weekly_summary()
+    for u in users:
+        try:
+            history = await db.get_wellness_history(u["user_id"], days=7)
+            if not history:
+                continue
+            streak = await db.get_global_streak(u["user_id"])
+            avg_charge = sum(round((h["energy"] + h["sleep_q"] + h["mood"]) / 3, 1) for h in history) / len(history)
+            week_food = await db.get_food_week(u["user_id"])
+            food_line = ""
+            if week_food:
+                avg_cal = sum(sum(l["calories"] for l in d["logs"]) for d in week_food) / len(week_food)
+                food_line = f"Питание: {len(week_food)}/7 дней, средние ккал {avg_cal:.0f}."
+
+            summary = await call_groq_once(
+                f"Итоги недели пользователя:\n"
+                f"Средний заряд: {avg_charge:.1f}/5, стрик: {streak} дней. {food_line}\n"
+                "Напиши итог недели (3-4 предложения): что хорошо, один совет на следующую неделю. Тепло и мотивирующе.",
+                "Ты AI-нутрициолог Biolar. Пиши кратко и поддерживающе."
+            )
+            if not summary:
+                continue
+            name = u["first_name"] or "друг"
+            await _send_tg_message(
+                u["chat_id"],
+                f"🌿 *Итоги недели, {name}!*\n\n{summary}\n\nПродолжай — ты молодец 💪"
+            )
+        except Exception as e:
+            print(f"Weekly summary error uid={u['user_id']}: {e}")
 
 
 # ── API: статьи ──────────────────────────────────────────────────────────────
