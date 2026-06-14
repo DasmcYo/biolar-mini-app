@@ -24,46 +24,53 @@ load_dotenv()
 
 BOT_TOKEN    = os.getenv("BOT_TOKEN", "")
 WEBHOOK_URL  = os.getenv("WEBHOOK_URL", "")
-GEMINI_KEY   = os.getenv("GEMINI_API_KEY", "")
+GROQ_KEY = os.getenv("GROQ_API_KEY", "")
 
-# per-user chat history: { user_id: [ {role, parts}, ... ] }
+# per-user chat history: { user_id: [ {role, content}, ... ] }
 AI_SESSIONS: dict[int, list] = {}
 
 
-async def ask_gemini(user_id: int, message: str, system_prompt: str) -> str:
+async def ask_groq(user_id: int, message: str, system_prompt: str) -> str:
     history = AI_SESSIONS.get(user_id, [])
 
-    contents = history + [{"role": "user", "parts": [{"text": message}]}]
-
-    payload = {
-        "system_instruction": {"parts": [{"text": system_prompt}]},
-        "contents": contents,
-        "generationConfig": {"maxOutputTokens": 800, "temperature": 0.7},
-    }
-
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={GEMINI_KEY}"
+    messages = (
+        [{"role": "system", "content": system_prompt}]
+        + history
+        + [{"role": "user", "content": message}]
     )
 
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": messages,
+        "max_tokens": 800,
+        "temperature": 0.7,
+    }
+
+    headers = {
+        "Authorization": f"Bearer {GROQ_KEY}",
+        "Content-Type": "application/json",
+    }
+
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=payload) as resp:
+        async with session.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload, headers=headers
+        ) as resp:
             data = await resp.json()
 
-    print("GEMINI RESPONSE:", json.dumps(data, ensure_ascii=False)[:500])
-
     if "error" in data:
-        print("GEMINI ERROR:", data["error"])
-        return f"Ошибка API: {data['error'].get('message', 'неизвестно')}"
+        print("GROQ ERROR:", data["error"])
+        return "Не смог получить ответ, попробуй ещё раз."
 
     try:
-        reply = data["candidates"][0]["content"]["parts"][0]["text"]
+        reply = data["choices"][0]["message"]["content"]
     except (KeyError, IndexError):
-        reply = "Не смог получить ответ, попробуй ещё раз."
+        print("GROQ UNEXPECTED:", json.dumps(data, ensure_ascii=False)[:300])
+        return "Не смог получить ответ, попробуй ещё раз."
 
     # сохраняем историю (не больше 10 обменов = 20 сообщений)
-    history.append({"role": "user",  "parts": [{"text": message}]})
-    history.append({"role": "model", "parts": [{"text": reply}]})
+    history.append({"role": "user",      "content": message})
+    history.append({"role": "assistant", "content": reply})
     AI_SESSIONS[user_id] = history[-20:]
 
     return reply
@@ -313,7 +320,7 @@ async def ai_chat(body: ChatIn, request: Request):
     if not body.message.strip():
         raise HTTPException(status_code=400, detail="Empty message")
 
-    if not GEMINI_KEY:
+    if not GROQ_KEY:
         return {"message": "AI-нутрициолог скоро будет доступен."}
 
     # контекст пользователя для персонализации
@@ -337,7 +344,7 @@ async def ai_chat(body: ChatIn, request: Request):
 
 Если вопрос не по нутриции — мягко верни к теме здоровья и добавок."""
 
-    reply = await ask_gemini(tg["id"], body.message, system)
+    reply = await ask_groq(tg["id"], body.message, system)
     return {"message": reply}
 
 
