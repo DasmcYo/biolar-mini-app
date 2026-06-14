@@ -1212,7 +1212,7 @@ async function loadDiary() {
       </div>
     </div>
   `;
-  initCalendar();
+  await initCalendar();
 }
 
 function buildCheckinFormHtml(initVal) {
@@ -1522,12 +1522,12 @@ const MONTHS_RU = ['Январь','Февраль','Март','Апрель','М
 let calMonth = null; // "2026-06"
 let calSel   = null; // "2026-06-14"
 
-function initCalendar() {
+async function initCalendar() {
   if (!calMonth) {
     const now = new Date();
     calMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   }
-  loadCalendar();
+  await loadCalendar();
 }
 
 async function loadCalendar() {
@@ -1538,8 +1538,13 @@ async function loadCalendar() {
   const [y, m] = calMonth.split('-').map(Number);
   lbl.textContent = `${MONTHS_RU[m-1]} ${y}`;
 
-  const data = await api("GET", `/api/diary/food/month?month=${calMonth}`);
-  renderCalGrid(y, m, data.days || {});
+  try {
+    const data = await api("GET", `/api/diary/food/month?month=${calMonth}`);
+    renderCalGrid(y, m, data.days || {});
+  } catch(e) {
+    console.error("Calendar load error:", e);
+    if (wrap) wrap.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:8px 0">Ошибка: ${e.message}</div>`;
+  }
 }
 
 function renderCalGrid(year, mon, days) {
@@ -1722,12 +1727,12 @@ async function saveFoodLog() {
   await api("POST", "/api/diary/food/save", foodPending);
   foodPending = null;
   toast("Сохранено");
-  loadDiary();
+  await loadDiary();
 }
 
 async function deleteFoodLog(id) {
   await api("POST", "/api/diary/food/delete", { log_id: id });
-  loadDiary();
+  await loadDiary();
 }
 
 async function compressImage(file, maxWidth = 800) {
