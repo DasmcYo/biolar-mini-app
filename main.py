@@ -382,10 +382,18 @@ async def food_analyze(body: FoodAnalyzeIn, request: Request):
 
 
 @app.get("/api/diary/food")
-async def food_get(request: Request):
+async def food_get(request: Request, date: str = None):
     tg = get_tg_user(request)
-    today = date_cls.today().isoformat()
-    return {"logs": await db.get_food_logs(tg["id"], today)}
+    d = date if date else date_cls.today().isoformat()
+    return {"logs": await db.get_food_logs(tg["id"], d)}
+
+
+@app.get("/api/diary/food/month")
+async def food_month(request: Request, month: str = None):
+    tg = get_tg_user(request)
+    m = month if month else date_cls.today().strftime("%Y-%m")
+    days = await db.get_food_month(tg["id"], m)
+    return {"days": days}
 
 
 @app.post("/api/diary/food/save")

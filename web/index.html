@@ -404,6 +404,29 @@
   .food-total-val { font-size: 14px; font-weight: 700; color: var(--text); }
   .food-total-lbl { font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-top: 2px; }
 
+  /* ── Food Calendar ── */
+  .cal-nav { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .cal-nav-btn { background:none; border:none; cursor:pointer; color:var(--green); font-size:20px; font-weight:700; padding:4px 10px; line-height:1; }
+  .cal-month-lbl { font-size:14px; font-weight:700; }
+  .cal-wd-row { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; margin-bottom:3px; }
+  .cal-wd { text-align:center; font-size:9px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+  .cal-cell { aspect-ratio:1; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; cursor:pointer; transition:transform .15s; color:var(--text); }
+  .cal-cell.empty { background:none !important; cursor:default; }
+  .cal-cell.c0 { background:rgba(44,74,46,0.07); color:var(--muted); }
+  .cal-cell.c1 { background:#d4e8d4; }
+  .cal-cell.c2 { background:#a4c7a4; }
+  .cal-cell.c3 { background:#70ad70; color:#fff; }
+  .cal-cell.c4 { background:#46914a; color:#fff; }
+  .cal-cell.c5 { background:var(--green); color:#f7f3ed; }
+  .cal-cell.is-today { box-shadow:0 0 0 2px var(--gold); }
+  .cal-cell.is-sel { transform:scale(1.12); box-shadow:0 0 0 2px var(--green); }
+  .cal-legend { display:flex; align-items:center; gap:5px; margin-top:10px; }
+  .cal-leg-lbl { font-size:9px; color:var(--muted); font-weight:700; }
+  .cal-leg-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+  .cal-day-detail { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .cal-day-title { font-size:13px; font-weight:700; margin-bottom:8px; color:var(--green); }
+
   /* ── Trend 30 days ── */
   .trend30-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 12px; }
   .trend30-bars { display: flex; align-items: flex-end; gap: 3px; height: 64px; min-width: max-content; padding-bottom: 2px; }
@@ -1162,6 +1185,23 @@ async function loadDiary() {
       </div>
     </div>
     ${buildFoodSection(foodLogs)}
+    <div class="card" style="margin-bottom:10px">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
+        <span class="cal-month-lbl" id="cal-month-lbl"></span>
+        <button class="cal-nav-btn" onclick="calChangeMonth(1)">›</button>
+      </div>
+      <div class="cal-wd-row">
+        ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div class="cal-wd">${d}</div>`).join('')}
+      </div>
+      <div id="cal-grid-wrap"></div>
+      <div class="cal-legend">
+        <span class="cal-leg-lbl">Меньше</span>
+        ${['c0','c1','c2','c3','c4','c5'].map(c=>`<div class="cal-leg-dot ${c}"></div>`).join('')}
+        <span class="cal-leg-lbl">Больше</span>
+      </div>
+      <div id="cal-day-detail"></div>
+    </div>
     <div class="card" style="cursor:pointer;padding:18px" onclick="showScreen('ai')">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✦</div>
@@ -1172,6 +1212,7 @@ async function loadDiary() {
       </div>
     </div>
   `;
+  initCalendar();
 }
 
 function buildCheckinFormHtml(initVal) {
@@ -1469,6 +1510,120 @@ async function sendAI(text) {
   // Скрыть саджесты после первого вопроса
   const sugsEl = document.getElementById("ai-sugs");
   if (sugsEl) sugsEl.style.display = "none";
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// КАЛЕНДАРЬ ПИТАНИЯ
+// ══════════════════════════════════════════════════════════════════════════
+
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                   'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+let calMonth = null; // "2026-06"
+let calSel   = null; // "2026-06-14"
+
+function initCalendar() {
+  if (!calMonth) {
+    const now = new Date();
+    calMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }
+  loadCalendar();
+}
+
+async function loadCalendar() {
+  const lbl = document.getElementById("cal-month-lbl");
+  const wrap = document.getElementById("cal-grid-wrap");
+  if (!lbl || !wrap) return;
+
+  const [y, m] = calMonth.split('-').map(Number);
+  lbl.textContent = `${MONTHS_RU[m-1]} ${y}`;
+
+  const data = await api("GET", `/api/diary/food/month?month=${calMonth}`);
+  renderCalGrid(y, m, data.days || {});
+}
+
+function renderCalGrid(year, mon, days) {
+  const wrap = document.getElementById("cal-grid-wrap");
+  if (!wrap) return;
+
+  const daysInMonth = new Date(year, mon, 0).getDate();
+  const firstDow    = (new Date(year, mon - 1, 1).getDay() + 6) % 7; // Mon=0
+  const today       = new Date().toISOString().slice(0, 10);
+
+  const calColor = cal => {
+    if (!cal) return 'c0';
+    if (cal < 500)  return 'c1';
+    if (cal < 1000) return 'c2';
+    if (cal < 1500) return 'c3';
+    if (cal < 2000) return 'c4';
+    return 'c5';
+  };
+
+  let cells = Array(firstDow).fill('<div class="cal-cell empty"></div>');
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds  = `${year}-${String(mon).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const cal = days[ds]?.calories || 0;
+    const cls = [
+      'cal-cell', calColor(cal),
+      ds === today  ? 'is-today' : '',
+      ds === calSel ? 'is-sel'   : '',
+    ].filter(Boolean).join(' ');
+    cells.push(`<div class="${cls}" data-date="${ds}" onclick="selectCalDay('${ds}')">${d}</div>`);
+  }
+
+  wrap.innerHTML = `<div class="cal-grid">${cells.join('')}</div>`;
+}
+
+async function selectCalDay(ds) {
+  calSel = ds;
+  // обновить визуальный выбор
+  document.querySelectorAll('.cal-cell[data-date]').forEach(el => {
+    el.classList.toggle('is-sel', el.dataset.date === ds);
+  });
+
+  const detail = document.getElementById("cal-day-detail");
+  if (!detail) return;
+  detail.innerHTML = `<div style="padding:10px 0;color:var(--muted);font-size:12px">Загружаю...</div>`;
+
+  const data = await api("GET", `/api/diary/food?date=${ds}`);
+  const logs = data.logs || [];
+  const d    = new Date(ds + 'T12:00:00');
+  const lbl  = d.toLocaleDateString('ru-RU', { day:'numeric', month:'long' });
+
+  if (!logs.length) {
+    detail.innerHTML = `<div class="cal-day-detail"><div class="cal-day-title">${lbl}</div><div style="font-size:12px;color:var(--muted)">Нет записей</div></div>`;
+    return;
+  }
+
+  const t = logs.reduce((a,l) => ({cal:a.cal+l.calories,p:a.p+l.protein,f:a.f+l.fat,c:a.c+l.carbs}),{cal:0,p:0,f:0,c:0});
+  const items = logs.map(l => `
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600">${l.food_name}</div>
+      <div style="font-size:12px;color:var(--muted);flex-shrink:0;margin-left:8px">${l.calories} ккал</div>
+    </div>`).join('');
+
+  detail.innerHTML = `
+    <div class="cal-day-detail">
+      <div class="cal-day-title">${lbl}</div>
+      ${items}
+      <div class="food-total" style="margin-top:10px">
+        <div class="food-total-item"><div class="food-total-val">${Math.round(t.cal)}</div><div class="food-total-lbl">ккал</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.p.toFixed(1)}г</div><div class="food-total-lbl">белки</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.f.toFixed(1)}г</div><div class="food-total-lbl">жиры</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.c.toFixed(1)}г</div><div class="food-total-lbl">углев.</div></div>
+      </div>
+    </div>`;
+}
+
+function calChangeMonth(dir) {
+  const [y, m] = calMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + dir, 1);
+  const nm = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  if (nm > new Date().toISOString().slice(0,7)) return; // не в будущее
+  calMonth = nm;
+  calSel = null;
+  document.getElementById("cal-day-detail").innerHTML = "";
+  loadCalendar();
 }
 
 // ══════════════════════════════════════════════════════════════════════════

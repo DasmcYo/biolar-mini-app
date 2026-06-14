@@ -443,3 +443,15 @@ async def delete_food_log(user_id: int, log_id: int):
             "DELETE FROM food_logs WHERE id=? AND user_id=?", (log_id, user_id)
         )
         await db.commit()
+
+
+async def get_food_month(user_id: int, month: str) -> dict:
+    """month = '2026-06', returns {date: {calories, count}}"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT date, SUM(calories) as cal, COUNT(*) as cnt "
+            "FROM food_logs WHERE user_id=? AND date LIKE ? GROUP BY date",
+            (user_id, f"{month}%"),
+        ) as cur:
+            rows = await cur.fetchall()
+    return {r[0]: {"calories": r[1] or 0, "count": r[2]} for r in rows}
