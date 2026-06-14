@@ -328,7 +328,7 @@ async def food_analyze(body: FoodAnalyzeIn, request: Request):
         raise HTTPException(status_code=503, detail="AI not configured")
 
     payload = {
-        "model": "llama-3.2-90b-vision-preview",
+        "model": "meta-llama/llama-4-scout-17b-16e-instruct",
         "messages": [{
             "role": "user",
             "content": [
