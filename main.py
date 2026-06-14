@@ -18,10 +18,49 @@ from products import (
     get_smart_result,
 )
 
+import aiohttp
+
 load_dotenv()
 
-BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+BOT_TOKEN    = os.getenv("BOT_TOKEN", "")
+WEBHOOK_URL  = os.getenv("WEBHOOK_URL", "")
+GEMINI_KEY   = os.getenv("GEMINI_API_KEY", "")
+
+# per-user chat history: { user_id: [ {role, parts}, ... ] }
+AI_SESSIONS: dict[int, list] = {}
+
+
+async def ask_gemini(user_id: int, message: str, system_prompt: str) -> str:
+    history = AI_SESSIONS.get(user_id, [])
+
+    contents = history + [{"role": "user", "parts": [{"text": message}]}]
+
+    payload = {
+        "system_instruction": {"parts": [{"text": system_prompt}]},
+        "contents": contents,
+        "generationConfig": {"maxOutputTokens": 800, "temperature": 0.7},
+    }
+
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"gemini-2.0-flash:generateContent?key={GEMINI_KEY}"
+    )
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload) as resp:
+            data = await resp.json()
+
+    try:
+        reply = data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError):
+        reply = "Не смог получить ответ, попробуй ещё раз."
+
+    # сохраняем историю (не больше 10 обменов = 20 сообщений)
+    history.append({"role": "user",  "parts": [{"text": message}]})
+    history.append({"role": "model", "parts": [{"text": reply}]})
+    AI_SESSIONS[user_id] = history[-20:]
+
+    return reply
 
 # ── Club constants ────────────────────────────────────────────────────────────
 
@@ -263,12 +302,37 @@ async def articles_random():
 
 @app.post("/api/ai/chat")
 async def ai_chat(body: ChatIn, request: Request):
-    get_tg_user(request)
-    return {
-        "message": "Я пока в разработке — скоро смогу отвечать на любые вопросы о нутриентах. "
-                   "А пока пройди персональный анализ: он уже учитывает твои симптомы, питание и образ жизни.",
-        "stub": True,
-    }
+    tg = get_tg_user(request)
+
+    if not body.message.strip():
+        raise HTTPException(status_code=400, detail="Empty message")
+
+    if not GEMINI_KEY:
+        return {"message": "AI-нутрициолог скоро будет доступен."}
+
+    # контекст пользователя для персонализации
+    products  = await db.get_tracker_products(tg["id"])
+    history   = await db.get_wellness_history(tg["id"], 7)
+    course_days = await db.get_course_days(tg["id"])
+
+    prod_names = ", ".join(p["product_name"] for p in products) if products else "ничего не добавлено"
+
+    avg_charge = ""
+    if history:
+        charges = [round((e["energy"] + e["sleep_q"] + e["mood"]) / 3, 1) for e in history]
+        avg_charge = f"{sum(charges)/len(charges):.1f}/5"
+
+    system = f"""Ты персональный нутрициолог Biolar Organics. Отвечай по-русски, коротко и по делу — 2-4 предложения максимум. Не ставь диагнозы, не заменяй врача.
+
+Данные пользователя:
+- Принимает сейчас: {prod_names}
+- Дней в курсе: {course_days}
+{f"- Средний заряд за неделю: {avg_charge}" if avg_charge else ""}
+
+Если вопрос не по нутриции — мягко верни к теме здоровья и добавок."""
+
+    reply = await ask_gemini(tg["id"], body.message, system)
+    return {"message": reply}
 
 
 # ── API: трекер ───────────────────────────────────────────────────────────────
