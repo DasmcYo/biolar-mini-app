@@ -2237,9 +2237,6 @@ async function loadClub() {
     <button class="btn outline" style="margin-top:8px" onclick="copyRef('${refLink}')">Скопировать</button>`;
 
   // ── Share progress card ───────────────────────────────────────────────
-  const streak      = data.achievements_data?.streak || 0;
-  const course_days = data.achievements_data?.course_days || 0;
-  const avgWell = data._avg_charge || "";
   const shareText = encodeURIComponent(
     `🌿 Я на курсе Biolar Organics уже ${course_days} дней!\n` +
     `Стрик: ${streak} дней подряд.\n` +
