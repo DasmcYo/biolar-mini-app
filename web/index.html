@@ -1354,7 +1354,7 @@ async function sendChat(text) {
 // ══════════════════════════════════════════════════════════════════════════
 
 const AI_MESSAGES = [
-  { role:"bot", text:"Привет! Я AI-нутрициолог Biolar. Скоро смогу отвечать на любые вопросы о витаминах, минералах и добавках. Пока в разработке — но уже принимаю вопросы." }
+  { role:"bot", text:"Привет! Я AI-нутрициолог Biolar. Задай любой вопрос о витаминах, минералах и добавках — отвечу честно и по делу." }
 ];
 let aiLoaded = false;
 
@@ -1386,13 +1386,8 @@ function loadAI() {
       <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✦</div>
       <div>
         <div class="serif" style="font-size:22px;letter-spacing:-.2px;line-height:1.1">AI-нутрициолог</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Biolar · В разработке</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Biolar · на базе Llama 3.3</div>
       </div>
-    </div>
-
-    <div style="background:linear-gradient(135deg,#fdf9f0,#f7f3ed);border:1px solid rgba(196,150,90,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
-      <span style="font-size:15px;flex-shrink:0">🔧</span>
-      <span style="font-size:12px;color:var(--muted);line-height:1.6">Пока заглушка — скоро подключим настоящий AI. Вопросы уже принимаем, ответы фиксируем.</span>
     </div>
 
     <div id="ai-msgs" style="min-height:120px;margin-bottom:12px">${msgsHtml}</div>
