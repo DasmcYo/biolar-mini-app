@@ -76,6 +76,18 @@ async def init_db():
                 claimed_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 PRIMARY KEY (user_id, challenge_id)
             );
+
+            CREATE TABLE IF NOT EXISTS food_logs (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id   INTEGER NOT NULL,
+                date      TEXT NOT NULL,
+                food_name TEXT NOT NULL,
+                calories  INTEGER DEFAULT 0,
+                protein   REAL DEFAULT 0,
+                fat       REAL DEFAULT 0,
+                carbs     REAL DEFAULT 0,
+                logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         """)
         await db.commit()
 
@@ -400,3 +412,34 @@ async def get_global_streak(user_id: int) -> int:
         streak += 1
         day -= __import__("datetime").timedelta(days=1)
     return streak
+
+
+async def log_food(user_id: int, date: str, food_name: str,
+                   calories: int, protein: float, fat: float, carbs: float) -> int:
+    async with aiosqlite.connect(DB_PATH) as db:
+        cur = await db.execute(
+            "INSERT INTO food_logs (user_id, date, food_name, calories, protein, fat, carbs) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, date, food_name, calories, protein, fat, carbs),
+        )
+        await db.commit()
+        return cur.lastrowid
+
+
+async def get_food_logs(user_id: int, date: str) -> list[dict]:
+    async with aiosqlite.connect(DB_PATH) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT id, food_name, calories, protein, fat, carbs FROM food_logs "
+            "WHERE user_id=? AND date=? ORDER BY logged_at",
+            (user_id, date),
+        ) as cur:
+            return [dict(r) for r in await cur.fetchall()]
+
+
+async def delete_food_log(user_id: int, log_id: int):
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute(
+            "DELETE FROM food_logs WHERE id=? AND user_id=?", (log_id, user_id)
+        )
+        await db.commit()

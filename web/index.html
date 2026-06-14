@@ -380,6 +380,30 @@
   .insight-arr { font-size: 20px; color: rgba(247,243,237,0.3); }
   .insight-note { font-size: 11px; color: rgba(247,243,237,0.55); margin-top: 12px; line-height: 1.55; }
 
+  /* ── Food log ── */
+  .food-cam-btn {
+    width: 100%; padding: 14px; border-radius: var(--radius);
+    border: 1.5px dashed rgba(44,74,46,0.25); background: none;
+    cursor: pointer; color: var(--green); font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 10px;
+  }
+  .food-cam-btn:active { background: rgba(44,74,46,0.04); }
+  .food-preview { width: 100%; border-radius: 12px; max-height: 200px; object-fit: cover; margin-bottom: 12px; }
+  .kbju-row { display: flex; gap: 6px; margin-bottom: 12px; }
+  .kbju-item { flex: 1; text-align: center; background: rgba(44,74,46,0.06); border-radius: 8px; padding: 8px 4px; }
+  .kbju-val { font-size: 15px; font-weight: 700; color: var(--green); line-height: 1.2; }
+  .kbju-lbl { font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-top: 2px; }
+  .food-log-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .food-log-item:last-of-type { border-bottom: none; }
+  .food-log-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .food-log-sub { font-size: 11px; color: var(--muted); }
+  .food-del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px 8px; }
+  .food-total { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); margin-top: 4px; }
+  .food-total-item { flex: 1; text-align: center; }
+  .food-total-val { font-size: 14px; font-weight: 700; color: var(--text); }
+  .food-total-lbl { font-size: 9px; color: var(--muted); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-top: 2px; }
+
   /* ── Trend 30 days ── */
   .trend30-outer { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 12px; }
   .trend30-bars { display: flex; align-items: flex-end; gap: 3px; height: 64px; min-width: max-content; padding-bottom: 2px; }
@@ -1092,9 +1116,10 @@ async function loadDiary() {
   const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const [wellData, homeData] = await Promise.all([
+  const [wellData, homeData, foodData] = await Promise.all([
     api("GET", "/api/wellness"),
     api("GET", "/api/home"),
+    api("GET", "/api/diary/food"),
   ]);
   const today   = wellData.today;
   const history = wellData.history || [];
@@ -1118,6 +1143,7 @@ async function loadDiary() {
   const supplHtml   = products.length ? buildSupplTimeline(products[0], daysInCourse) : "";
   const insightHtml = buildInsight(history, daysInCourse);
   const trendHtml   = buildTrend30(history, courseStart);
+  const foodLogs    = foodData.logs || [];
 
   screen.innerHTML = `
     <div style="margin-bottom:20px">
@@ -1135,6 +1161,7 @@ async function loadDiary() {
         <span>сегодня</span>
       </div>
     </div>
+    ${buildFoodSection(foodLogs)}
     <div class="card" style="cursor:pointer;padding:18px" onclick="showScreen('ai')">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✦</div>
@@ -1442,6 +1469,128 @@ async function sendAI(text) {
   // Скрыть саджесты после первого вопроса
   const sugsEl = document.getElementById("ai-sugs");
   if (sugsEl) sugsEl.style.display = "none";
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ПИТАНИЕ / КБЖУ
+// ══════════════════════════════════════════════════════════════════════════
+
+let foodPending = null;
+
+function buildFoodSection(logs) {
+  const logsHtml = logs.map(l => `
+    <div class="food-log-item">
+      <div>
+        <div class="food-log-name">${l.food_name}</div>
+        <div class="food-log-sub">${l.calories} ккал · Б ${l.protein}г · Ж ${l.fat}г · У ${l.carbs}г</div>
+      </div>
+      <button class="food-del-btn" onclick="deleteFoodLog(${l.id})">×</button>
+    </div>`).join("");
+
+  let totalHtml = "";
+  if (logs.length >= 2) {
+    const t = logs.reduce((a, l) => ({
+      cal: a.cal + l.calories, p: a.p + l.protein,
+      f: a.f + l.fat, c: a.c + l.carbs,
+    }), { cal: 0, p: 0, f: 0, c: 0 });
+    totalHtml = `
+      <div class="food-total">
+        <div class="food-total-item"><div class="food-total-val">${Math.round(t.cal)}</div><div class="food-total-lbl">ккал</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.p.toFixed(1)}г</div><div class="food-total-lbl">белки</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.f.toFixed(1)}г</div><div class="food-total-lbl">жиры</div></div>
+        <div class="food-total-item"><div class="food-total-val">${t.c.toFixed(1)}г</div><div class="food-total-lbl">углев.</div></div>
+      </div>`;
+  }
+
+  return `
+    <div class="card" style="margin-bottom:10px">
+      <span class="label">Питание сегодня</span>
+      <input type="file" id="food-input" accept="image/*" capture="environment"
+             style="display:none" onchange="onFoodPhoto(this)">
+      ${logsHtml}
+      ${totalHtml}
+      <div id="food-preview-wrap" style="display:none;margin-top:12px">
+        <img id="food-preview-img" class="food-preview">
+      </div>
+      <div id="food-result"></div>
+      <button class="food-cam-btn" onclick="document.getElementById('food-input').click()">
+        📷 Сфотографировать еду
+      </button>
+    </div>`;
+}
+
+async function onFoodPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const previewWrap = document.getElementById("food-preview-wrap");
+  const previewImg  = document.getElementById("food-preview-img");
+  if (previewWrap && previewImg) {
+    previewImg.src = URL.createObjectURL(file);
+    previewWrap.style.display = "block";
+  }
+
+  const resultDiv = document.getElementById("food-result");
+  if (resultDiv) resultDiv.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">Определяю блюдо...</div>`;
+
+  try {
+    const b64 = await compressImage(file);
+    const data = await api("POST", "/api/diary/food/analyze", { image_b64: b64 });
+    foodPending = data;
+    if (resultDiv) resultDiv.innerHTML = buildFoodResult(data);
+  } catch (e) {
+    if (resultDiv) resultDiv.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px 0">Не удалось распознать — попробуй другое фото</div>`;
+  }
+}
+
+function buildFoodResult(data) {
+  return `
+    <div style="margin-top:12px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">${data.food}</div>
+      <div class="kbju-row">
+        <div class="kbju-item"><div class="kbju-val">${data.calories}</div><div class="kbju-lbl">ккал</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.protein}г</div><div class="kbju-lbl">белки</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.fat}г</div><div class="kbju-lbl">жиры</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.carbs}г</div><div class="kbju-lbl">углев.</div></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="flex:1" onclick="saveFoodLog()">Сохранить</button>
+        <button class="btn" style="flex:0 0 auto;background:var(--card);color:var(--text);border:1px solid var(--border)"
+                onclick="document.getElementById('food-input').click()">Переснять</button>
+      </div>
+    </div>`;
+}
+
+async function saveFoodLog() {
+  if (!foodPending) return;
+  await api("POST", "/api/diary/food/save", foodPending);
+  foodPending = null;
+  toast("Сохранено");
+  loadDiary();
+}
+
+async function deleteFoodLog(id) {
+  await api("POST", "/api/diary/food/delete", { log_id: id });
+  loadDiary();
+}
+
+async function compressImage(file, maxWidth = 800) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.75).split(",")[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════

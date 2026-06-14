@@ -1,4 +1,5 @@
 import os
+import re
 import hmac
 import hashlib
 import json
@@ -302,6 +303,101 @@ async def wellness_get(request: Request):
     today_log = await db.get_wellness_today(tg["id"], today)
     history   = await db.get_wellness_history(tg["id"], 30)
     return {"today": today_log, "history": history}
+
+
+# ── API: питание / фото ──────────────────────────────────────────────────────
+
+class FoodAnalyzeIn(BaseModel):
+    image_b64: str
+
+class FoodSaveIn(BaseModel):
+    food_name: str
+    calories: int
+    protein: float
+    fat: float
+    carbs: float
+
+class FoodDeleteIn(BaseModel):
+    log_id: int
+
+
+@app.post("/api/diary/food/analyze")
+async def food_analyze(body: FoodAnalyzeIn, request: Request):
+    get_tg_user(request)
+    if not GROQ_KEY:
+        raise HTTPException(status_code=503, detail="AI not configured")
+
+    payload = {
+        "model": "llama-3.2-11b-vision-preview",
+        "messages": [{
+            "role": "user",
+            "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{body.image_b64}"},
+                },
+                {
+                    "type": "text",
+                    "text": (
+                        "Посмотри на фото еды. Определи блюдо и дай приблизительное КБЖУ на эту порцию. "
+                        'Ответь ТОЛЬКО в формате JSON, без каких-либо других слов: '
+                        '{"food": "название блюда на русском", "calories": 350, "protein": 20.5, "fat": 12.3, "carbs": 40.1}'
+                    ),
+                },
+            ],
+        }],
+        "max_tokens": 256,
+        "temperature": 0.1,
+    }
+
+    headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            json=payload, headers=headers,
+        ) as resp:
+            data = await resp.json()
+
+    if "error" in data:
+        print("FOOD AI ERROR:", data["error"])
+        raise HTTPException(status_code=500, detail="Не удалось распознать блюдо")
+
+    try:
+        text = data["choices"][0]["message"]["content"]
+        match = re.search(r'\{.*?\}', text, re.DOTALL)
+        result = json.loads(match.group() if match else text)
+        return {
+            "food":     result.get("food", "Блюдо"),
+            "calories": int(float(result.get("calories", 0))),
+            "protein":  round(float(result.get("protein", 0)), 1),
+            "fat":      round(float(result.get("fat", 0)), 1),
+            "carbs":    round(float(result.get("carbs", 0)), 1),
+        }
+    except Exception as e:
+        print("FOOD PARSE ERROR:", e)
+        raise HTTPException(status_code=500, detail="Не удалось распознать блюдо")
+
+
+@app.get("/api/diary/food")
+async def food_get(request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    return {"logs": await db.get_food_logs(tg["id"], today)}
+
+
+@app.post("/api/diary/food/save")
+async def food_save(body: FoodSaveIn, request: Request):
+    tg = get_tg_user(request)
+    today = date_cls.today().isoformat()
+    log_id = await db.log_food(tg["id"], today, body.food_name, body.calories, body.protein, body.fat, body.carbs)
+    return {"ok": True, "id": log_id}
+
+
+@app.post("/api/diary/food/delete")
+async def food_delete(body: FoodDeleteIn, request: Request):
+    tg = get_tg_user(request)
+    await db.delete_food_log(tg["id"], body.log_id)
+    return {"ok": True}
 
 
 # ── API: статьи ──────────────────────────────────────────────────────────────
