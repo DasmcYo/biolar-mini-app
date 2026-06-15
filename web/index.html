@@ -509,6 +509,49 @@
   }
   .water-ring-complete { animation: waterComplete .5s cubic-bezier(.4,0,.2,1), waterGlow 1.2s ease .3s; }
 
+  /* ══ КАТАЛОГ БОТТОМ-ШИТ ════════════════════════════════════════════════════ */
+  .catalog-sheet-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:500;
+    display:flex; align-items:flex-end; animation:fadeIn .18s;
+  }
+  .catalog-sheet {
+    background:var(--bg); border-radius:20px 20px 0 0;
+    width:100%; max-height:82vh; display:flex; flex-direction:column;
+    padding:0 0 env(safe-area-inset-bottom,0px);
+  }
+  .catalog-sheet-handle {
+    width:38px; height:4px; background:var(--border); border-radius:2px;
+    margin:12px auto 0;
+  }
+  .catalog-sheet-head {
+    padding:14px 16px 10px; display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .catalog-search {
+    width:100%; padding:10px 14px; margin:10px 16px;
+    width:calc(100% - 32px);
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    color:var(--text); font-size:14px; flex-shrink:0;
+    box-sizing:border-box;
+  }
+  .catalog-list { overflow-y:auto; padding:0 16px 16px; flex:1; }
+  .catalog-item {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 0; border-bottom:1px solid var(--border); cursor:pointer;
+  }
+  .catalog-item:last-child { border-bottom:none; }
+  .catalog-item-emoji { font-size:24px; width:36px; text-align:center; flex-shrink:0; }
+  .catalog-item-info { flex:1; min-width:0; }
+  .catalog-item-name { font-size:14px; font-weight:700; margin-bottom:2px; }
+  .catalog-item-tagline { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .catalog-item-add {
+    width:32px; height:32px; border-radius:50%; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:18px;
+    flex-shrink:0; transition:.15s;
+  }
+  .catalog-item-add.available { background:var(--green); color:#fff; }
+  .catalog-item-add.added { background:rgba(44,74,46,.1); color:var(--muted); cursor:default; }
+
   /* ══ ЦЕЛИ КБЖУ ══════════════════════════════════════════════════════════════ */
 
   .goals-block { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
@@ -910,6 +953,7 @@ async function loadProgram() {
     courseList = `
       <div class="section-head">
         <span class="label">Твой курс</span>
+        <button onclick="openCatalogSheet()" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:700;cursor:pointer">+ Добавить</button>
       </div>
       ${products.map(p => {
         const done = todayMap[p.product_id] || false;
@@ -945,10 +989,125 @@ async function loadProgram() {
           : "8 вопросов → персональный протокол добавок под твой организм"}
       </div>
     </div>
-    <button class="btn" style="margin-top:10px" onclick="startQuiz()">
-      ${products.length ? "Обновить программу" : "Начать анализ"}
-    </button>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn" style="flex:1" onclick="startQuiz()">
+        ${products.length ? "Обновить" : "Начать анализ"}
+      </button>
+      <button class="btn outline" style="flex:1" onclick="openCatalogSheet()">
+        + Добавить продукт
+      </button>
+    </div>
   `;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// КАТАЛОГ — ручное добавление продуктов
+// ══════════════════════════════════════════════════════════════════════════
+
+const CATALOG = [
+  {id:"iron_optiferrol",      emoji:"🔴", name:"Iron OptiFerrol",              tagline:"Липосомальное железо — без побочек ЖКТ"},
+  {id:"progesterone_control", emoji:"🌸", name:"Прогестерон Контроль",         tagline:"ПМС, прогестерон и перименопауза"},
+  {id:"vitamin_c_lipovit_90", emoji:"🍋", name:"Витамин С Lipovit 90 кап.",    tagline:"Липосомальный витамин C — макс. усвоение"},
+  {id:"vitamin_c_lipovit_60", emoji:"🍋", name:"Витамин С Lipovit 60 кап.",    tagline:"Липосомальный витамин C — макс. усвоение"},
+  {id:"vitamin_c_factor",     emoji:"🍊", name:"Витамин С Factor C",           tagline:"Двухэтапное действие — утром и вечером"},
+  {id:"immular_activator",    emoji:"🛡", name:"IMMULAR Activator",            tagline:"Мощный иммунный комплекс"},
+  {id:"immular_booster",      emoji:"⚡", name:"IMMULAR Booster",             tagline:"Иммунный бустер для быстрого результата"},
+  {id:"immular_control",      emoji:"🔵", name:"IMMULAR Control",             tagline:"Контроль и баланс иммунной системы"},
+  {id:"d3_4000",              emoji:"☀️", name:"Витамин Д3 4000 МЕ",          tagline:"Высокодозный D3 для восполнения дефицита"},
+  {id:"d3_7elements",         emoji:"🟠", name:"Витамин Д3 2000 МЕ + 7 эл.",  tagline:"Иммунитет, сосуды и метаболизм"},
+  {id:"d3_k2_liposomal",      emoji:"🌟", name:"Липосомальный Д3+К2",         tagline:"4000 МЕ D3 с K2 — максимальное усвоение"},
+  {id:"neuro_complex",        emoji:"🧠", name:"Нейро Комплекс",              tagline:"Мозг, фокус и защита от выгорания"},
+  {id:"calcium_7essential",   emoji:"🦴", name:"Кальций 7 Essential",          tagline:"Кальций + 7 синергичных элементов"},
+  {id:"hormone_balance",      emoji:"🌺", name:"Гормон Баланс 90 кап.",        tagline:"СПКЯ, нерегулярный цикл, гормональный баланс"},
+  {id:"chromium_4essential",  emoji:"💎", name:"Хром 4 Essential",             tagline:"Контроль сахара и тяги к сладкому"},
+  {id:"magnesium_4elements",  emoji:"🟣", name:"Магний 4 Elements",            tagline:"Глубокое расслабление, фокус и сон"},
+  {id:"vitamin_c_faster",     emoji:"🍊", name:"Витамин С Faster C",           tagline:"Быстрое усвоение — янтарная кислота + рутин"},
+  {id:"thyrosel",             emoji:"🔵", name:"ThyroSel",                     tagline:"Минималистичная формула: Se + Zn + Myo"},
+  {id:"inositol_myo_dchiro",  emoji:"🌿", name:"Гормон Баланс 75 кап.",        tagline:"СПКЯ, овуляция и фертильность"},
+  {id:"vitamin_c_pecto",      emoji:"🍑", name:"Витамин С Pecto C",            tagline:"12-часовое замедленное высвобождение"},
+  {id:"zinc_2elements",       emoji:"⚡", name:"Цинк 2 Elements",             tagline:"Цинк + медь для кожи, волос и иммунитета"},
+  {id:"thyroid_support",      emoji:"🦋", name:"Thyroid Support",              tagline:"Полный комплекс для щитовидной железы"},
+];
+
+async function openCatalogSheet() {
+  const trackerData = await api("GET", "/api/tracker");
+  const addedIds = new Set((trackerData.products || []).map(p => p.product_id));
+
+  const overlay = document.createElement("div");
+  overlay.className = "catalog-sheet-overlay";
+  overlay.id = "catalog-overlay";
+  overlay.onclick = e => { if (e.target === overlay) closeCatalogSheet(); };
+
+  overlay.innerHTML = `
+    <div class="catalog-sheet">
+      <div class="catalog-sheet-handle"></div>
+      <div class="catalog-sheet-head">
+        <div class="serif" style="font-size:18px">Каталог продуктов</div>
+        <button onclick="closeCatalogSheet()" style="background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;line-height:1">×</button>
+      </div>
+      <input class="catalog-search" id="catalog-search" placeholder="Поиск продукта..." type="text" oninput="filterCatalog(this.value,'${[...addedIds].join(',')}')">
+      <div class="catalog-list" id="catalog-list">
+        ${renderCatalogItems(CATALOG, addedIds)}
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById("catalog-search")?.focus(), 100);
+}
+
+function renderCatalogItems(items, addedIds) {
+  return items.map(p => {
+    const isAdded = addedIds.has(p.id);
+    return `
+      <div class="catalog-item" onclick="${isAdded ? '' : `addProductFromCatalog('${p.id}',this)`}">
+        <div class="catalog-item-emoji">${p.emoji}</div>
+        <div class="catalog-item-info">
+          <div class="catalog-item-name" style="${isAdded ? 'color:var(--muted)' : ''}">${p.name}</div>
+          <div class="catalog-item-tagline">${p.tagline}</div>
+        </div>
+        <div class="catalog-item-add ${isAdded ? 'added' : 'available'}">${isAdded ? '✓' : '+'}</div>
+      </div>`;
+  }).join('');
+}
+
+function filterCatalog(query, addedStr) {
+  const addedIds = new Set(addedStr ? addedStr.split(',') : []);
+  const q = query.toLowerCase().trim();
+  const filtered = q ? CATALOG.filter(p => p.name.toLowerCase().includes(q) || p.tagline.toLowerCase().includes(q)) : CATALOG;
+  const list = document.getElementById("catalog-list");
+  if (list) list.innerHTML = renderCatalogItems(filtered, addedIds);
+}
+
+async function addProductFromCatalog(productId, el) {
+  el.querySelector('.catalog-item-add').textContent = '...';
+  try {
+    await api("POST", "/api/tracker/add", { product_id: productId });
+    el.querySelector('.catalog-item-add').className = 'catalog-item-add added';
+    el.querySelector('.catalog-item-add').textContent = '✓';
+    el.querySelector('.catalog-item-name').style.color = 'var(--muted)';
+    el.onclick = null;
+    toast("Добавлено в курс");
+    // обновляем строку addedIds в поиске
+    const search = document.getElementById("catalog-search");
+    if (search) {
+      const cur = search.getAttribute("oninput") || '';
+      const match = cur.match(/'([^']*)'\)/);
+      if (match) {
+        const ids = match[1] ? match[1].split(',') : [];
+        ids.push(productId);
+        search.setAttribute("oninput", `filterCatalog(this.value,'${ids.join(',')}')`);
+      }
+    }
+  } catch(e) {
+    el.querySelector('.catalog-item-add').textContent = '+';
+    toast("Ошибка: " + e.message);
+  }
+}
+
+function closeCatalogSheet() {
+  const overlay = document.getElementById("catalog-overlay");
+  if (overlay) overlay.remove();
+  loadProgram();
 }
 
 function startQuiz() {
