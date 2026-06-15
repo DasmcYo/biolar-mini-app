@@ -1,42 +1,114 @@
 import asyncio
+import aiohttp
 import os
-import threading
+from typing import Any
 
-TURSO_URL   = os.getenv("TURSO_URL", "")
+TURSO_URL   = os.getenv("TURSO_URL", "")   # libsql://dbname-org.turso.io
 TURSO_TOKEN = os.getenv("TURSO_TOKEN", "")
 DB_PATH     = os.path.join(os.path.dirname(__file__), "biolar.db")
 
-_local = threading.local()
+
+# ── Turso HTTP API ─────────────────────────────────────────────────────────────
+
+def _http_url() -> str:
+    return TURSO_URL.replace("libsql://", "https://", 1)
 
 
-def _conn():
-    """Возвращает соединение для текущего потока. При первом вызове создаёт и синхронизирует."""
-    if not hasattr(_local, "c"):
-        import libsql_experimental as libsql
-        if TURSO_URL and TURSO_TOKEN:
-            replica = os.path.join(os.path.dirname(__file__), "replica.db")
-            _local.c = libsql.connect(replica, url=TURSO_URL, auth_token=TURSO_TOKEN)
-            _local.c.sync()
-        else:
-            _local.c = libsql.connect(DB_PATH)
-    return _local.c
+def _to_arg(v: Any) -> dict:
+    if v is None:
+        return {"type": "null"}
+    if isinstance(v, bool):
+        return {"type": "integer", "value": "1" if v else "0"}
+    if isinstance(v, int):
+        return {"type": "integer", "value": str(v)}
+    if isinstance(v, float):
+        return {"type": "real", "value": str(v)}
+    return {"type": "text", "value": str(v)}
 
 
-def _dicts(cursor) -> list[dict]:
-    cols = [d[0] for d in cursor.description]
-    return [dict(zip(cols, r)) for r in cursor.fetchall()]
-
-
-def _dict(cursor) -> dict | None:
-    if not cursor.description:
+def _from_cell(cell: dict) -> Any:
+    t = cell.get("type", "null")
+    if t == "null" or cell.get("value") is None:
         return None
-    cols = [d[0] for d in cursor.description]
-    row = cursor.fetchone()
-    return dict(zip(cols, row)) if row else None
+    if t == "integer":
+        return int(cell["value"])
+    if t == "real":
+        return float(cell["value"])
+    return cell["value"]
 
 
-async def _run(fn):
-    return await asyncio.to_thread(fn)
+async def _pipeline(stmts: list[dict]) -> list[dict]:
+    requests = [{"type": "execute", "stmt": s} for s in stmts]
+    requests.append({"type": "close"})
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+            f"{_http_url()}/v2/pipeline",
+            json={"requests": requests},
+            headers={"Authorization": f"Bearer {TURSO_TOKEN}"},
+        ) as resp:
+            data = await resp.json()
+    results = []
+    for res in data["results"][:-1]:
+        if res["type"] == "error":
+            raise Exception(res["error"]["message"])
+        results.append(res["response"]["result"])
+    return results
+
+
+async def _q(sql: str, args: list = None) -> dict:
+    stmt = {"sql": sql}
+    if args:
+        stmt["args"] = [_to_arg(a) for a in args]
+    if TURSO_URL and TURSO_TOKEN:
+        results = await _pipeline([stmt])
+        return results[0]
+    return await _local(sql, args)
+
+
+async def _local(sql: str, args: list = None) -> dict:
+    import aiosqlite
+
+    def _cell(v):
+        if v is None:
+            return {"type": "null"}
+        if isinstance(v, int):
+            return {"type": "integer", "value": str(v)}
+        if isinstance(v, float):
+            return {"type": "real", "value": str(v)}
+        return {"type": "text", "value": str(v)}
+
+    async with aiosqlite.connect(DB_PATH) as db:
+        try:
+            async with db.execute(sql, args or []) as cur:
+                cols = [d[0] for d in (cur.description or [])]
+                rows_raw = await cur.fetchall()
+                lastrowid = cur.lastrowid
+            await db.commit()
+        except Exception:
+            await db.rollback()
+            raise
+
+    return {
+        "cols": [{"name": c} for c in cols],
+        "rows": [[_cell(v) for v in row] for row in rows_raw],
+        "last_insert_rowid": str(lastrowid) if lastrowid else None,
+        "affected_row_count": 0,
+    }
+
+
+def _dicts(result: dict) -> list[dict]:
+    cols = [c["name"] for c in result["cols"]]
+    return [dict(zip(cols, [_from_cell(cell) for cell in row])) for row in result["rows"]]
+
+
+def _dict(result: dict) -> dict | None:
+    rows = _dicts(result)
+    return rows[0] if rows else None
+
+
+def _lastrow(result: dict) -> int | None:
+    v = result.get("last_insert_rowid")
+    return int(v) if v else None
 
 
 # ── Инициализация БД ──────────────────────────────────────────────────────────
@@ -144,19 +216,20 @@ SCHEMA = """
         role       TEXT NOT NULL,
         content    TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+    )
 """
 
 
 async def init_db():
-    def _():
-        conn = _conn()
-        for stmt in SCHEMA.split(";"):
-            s = stmt.strip()
-            if s:
-                conn.execute(s)
-        conn.commit()
-    await _run(_)
+    stmts = [{"sql": s.strip()} for s in SCHEMA.split(";") if s.strip()]
+    if TURSO_URL and TURSO_TOKEN:
+        await _pipeline(stmts)
+    else:
+        import aiosqlite
+        async with aiosqlite.connect(DB_PATH) as db:
+            for stmt in stmts:
+                await db.execute(stmt["sql"])
+            await db.commit()
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
@@ -164,99 +237,78 @@ async def init_db():
 async def get_or_create_user(user_id: int, username: str, first_name: str, referred_by: str = None) -> dict:
     import random, string
 
-    def _():
-        conn = _conn()
-        cur = conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
-        row = _dict(cur)
-        if row:
-            return row
-        ref_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
-        conn.execute(
+    row = _dict(await _q("SELECT * FROM users WHERE user_id = ?", [user_id]))
+    if row:
+        return row
+
+    ref_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    try:
+        await _q(
             "INSERT INTO users (user_id, username, first_name, ref_code, referred_by) VALUES (?, ?, ?, ?, ?)",
-            (user_id, username, first_name, ref_code, referred_by),
+            [user_id, username, first_name, ref_code, referred_by],
         )
         if referred_by:
-            conn.execute(
+            await _q(
                 "UPDATE giveaway_participants SET extra_chances = extra_chances + 1 "
                 "WHERE user_id = (SELECT user_id FROM users WHERE ref_code = ?)",
-                (referred_by,),
+                [referred_by],
             )
-        conn.commit()
-        return _dict(conn.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)))
+    except Exception as e:
+        if "UNIQUE" not in str(e).upper():
+            raise
 
-    return await _run(_)
+    return _dict(await _q("SELECT * FROM users WHERE user_id = ?", [user_id]))
 
 
 async def get_user(user_id: int) -> dict | None:
-    def _():
-        return _dict(_conn().execute("SELECT * FROM users WHERE user_id = ?", (user_id,)))
-    return await _run(_)
+    return _dict(await _q("SELECT * FROM users WHERE user_id = ?", [user_id]))
 
 
 # ── Tracker ───────────────────────────────────────────────────────────────────
 
 async def add_tracker_product(user_id: int, product_id: str, product_name: str):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT OR IGNORE INTO tracker_products (user_id, product_id, product_name) VALUES (?, ?, ?)",
-            (user_id, product_id, product_name),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT OR IGNORE INTO tracker_products (user_id, product_id, product_name) VALUES (?, ?, ?)",
+        [user_id, product_id, product_name],
+    )
 
 
 async def get_tracker_products(user_id: int) -> list:
-    def _():
-        return _dicts(_conn().execute(
-            "SELECT * FROM tracker_products WHERE user_id = ? AND active = 1 ORDER BY started_at",
-            (user_id,),
-        ))
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT * FROM tracker_products WHERE user_id = ? AND active = 1 ORDER BY started_at",
+        [user_id],
+    ))
 
 
 async def remove_tracker_product(user_id: int, product_id: str):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "UPDATE tracker_products SET active = 0 WHERE user_id = ? AND product_id = ?",
-            (user_id, product_id),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "UPDATE tracker_products SET active = 0 WHERE user_id = ? AND product_id = ?",
+        [user_id, product_id],
+    )
 
 
 async def log_intake(user_id: int, product_id: str) -> bool:
     from datetime import date
     today = date.today().isoformat()
-
-    def _():
-        try:
-            conn = _conn()
-            conn.execute(
-                "INSERT INTO tracker_logs (user_id, product_id, logged_at) VALUES (?, ?, ?)",
-                (user_id, product_id, today),
-            )
-            conn.commit()
-            return True
-        except Exception as e:
-            if "UNIQUE" in str(e).upper():
-                return False
-            raise
-    return await _run(_)
+    try:
+        await _q(
+            "INSERT INTO tracker_logs (user_id, product_id, logged_at) VALUES (?, ?, ?)",
+            [user_id, product_id, today],
+        )
+        return True
+    except Exception as e:
+        if "UNIQUE" in str(e).upper():
+            return False
+        raise
 
 
 async def get_streak(user_id: int, product_id: str) -> int:
     from datetime import date, timedelta
-
-    def _():
-        cur = _conn().execute(
-            "SELECT logged_at FROM tracker_logs WHERE user_id = ? AND product_id = ? ORDER BY logged_at DESC",
-            (user_id, product_id),
-        )
-        return [r[0] for r in cur.fetchall()]
-
-    rows = await _run(_)
+    result = await _q(
+        "SELECT logged_at FROM tracker_logs WHERE user_id = ? AND product_id = ? ORDER BY logged_at DESC",
+        [user_id, product_id],
+    )
+    rows = [r["logged_at"] for r in _dicts(result)]
     if not rows:
         return 0
     streak, check = 0, date.today()
@@ -273,118 +325,94 @@ async def get_streak(user_id: int, product_id: str) -> int:
 async def get_today_logs(user_id: int) -> list[str]:
     from datetime import date
     today = date.today().isoformat()
-
-    def _():
-        cur = _conn().execute(
-            "SELECT product_id FROM tracker_logs WHERE user_id = ? AND logged_at = ?",
-            (user_id, today),
-        )
-        return [r[0] for r in cur.fetchall()]
-    return await _run(_)
+    result = await _q(
+        "SELECT product_id FROM tracker_logs WHERE user_id = ? AND logged_at = ?",
+        [user_id, today],
+    )
+    return [r["product_id"] for r in _dicts(result)]
 
 
 # ── Giveaway ──────────────────────────────────────────────────────────────────
 
 async def join_giveaway(user_id: int) -> bool:
-    def _():
-        try:
-            conn = _conn()
-            conn.execute("INSERT INTO giveaway_participants (user_id) VALUES (?)", (user_id,))
-            conn.commit()
-            return True
-        except Exception as e:
-            if "UNIQUE" in str(e).upper():
-                return False
-            raise
-    return await _run(_)
+    try:
+        await _q("INSERT INTO giveaway_participants (user_id) VALUES (?)", [user_id])
+        return True
+    except Exception as e:
+        if "UNIQUE" in str(e).upper():
+            return False
+        raise
 
 
 async def get_giveaway_count() -> int:
-    def _():
-        return _conn().execute("SELECT COUNT(*) FROM giveaway_participants").fetchone()[0]
-    return await _run(_)
+    result = await _q("SELECT COUNT(*) as cnt FROM giveaway_participants")
+    return _dicts(result)[0]["cnt"]
 
 
 async def is_in_giveaway(user_id: int) -> bool:
-    def _():
-        return _conn().execute(
-            "SELECT 1 FROM giveaway_participants WHERE user_id = ?", (user_id,)
-        ).fetchone() is not None
-    return await _run(_)
+    result = await _q(
+        "SELECT 1 as found FROM giveaway_participants WHERE user_id = ?", [user_id]
+    )
+    return len(_dicts(result)) > 0
 
 
 # ── Referrals ─────────────────────────────────────────────────────────────────
 
 async def get_referral_count(ref_code: str) -> int:
-    def _():
-        return _conn().execute(
-            "SELECT COUNT(*) FROM users WHERE referred_by = ?", (ref_code,)
-        ).fetchone()[0]
-    return await _run(_)
+    result = await _q(
+        "SELECT COUNT(*) as cnt FROM users WHERE referred_by = ?", [ref_code]
+    )
+    return _dicts(result)[0]["cnt"]
 
 
 # ── Wellness ──────────────────────────────────────────────────────────────────
 
 async def log_wellness(user_id: int, date: str, energy: int, sleep_q: int, mood: int):
-    def _():
-        conn = _conn()
-        conn.execute(
-            """INSERT INTO wellness_logs (user_id, date, energy, sleep_q, mood) VALUES (?,?,?,?,?)
-               ON CONFLICT(user_id, date) DO UPDATE SET
-               energy=excluded.energy, sleep_q=excluded.sleep_q, mood=excluded.mood""",
-            (user_id, date, energy, sleep_q, mood),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        """INSERT INTO wellness_logs (user_id, date, energy, sleep_q, mood) VALUES (?,?,?,?,?)
+           ON CONFLICT(user_id, date) DO UPDATE SET
+           energy=excluded.energy, sleep_q=excluded.sleep_q, mood=excluded.mood""",
+        [user_id, date, energy, sleep_q, mood],
+    )
 
 
 async def get_wellness_today(user_id: int, date: str) -> dict | None:
-    def _():
-        return _dict(_conn().execute(
-            "SELECT energy, sleep_q, mood FROM wellness_logs WHERE user_id=? AND date=?",
-            (user_id, date),
-        ))
-    return await _run(_)
+    return _dict(await _q(
+        "SELECT energy, sleep_q, mood FROM wellness_logs WHERE user_id=? AND date=?",
+        [user_id, date],
+    ))
 
 
 async def get_wellness_history(user_id: int, days: int = 14) -> list[dict]:
-    def _():
-        return _dicts(_conn().execute(
-            "SELECT date, energy, sleep_q, mood FROM wellness_logs WHERE user_id=? ORDER BY date DESC LIMIT ?",
-            (user_id, days),
-        ))
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT date, energy, sleep_q, mood FROM wellness_logs WHERE user_id=? ORDER BY date DESC LIMIT ?",
+        [user_id, days],
+    ))
 
 
 async def get_wellness_total(user_id: int) -> int:
-    def _():
-        return _conn().execute(
-            "SELECT COUNT(*) FROM wellness_logs WHERE user_id=?", (user_id,)
-        ).fetchone()[0]
-    return await _run(_)
+    result = await _q(
+        "SELECT COUNT(*) as cnt FROM wellness_logs WHERE user_id=?", [user_id]
+    )
+    return _dicts(result)[0]["cnt"]
 
 
 # ── Course / Streak ───────────────────────────────────────────────────────────
 
 async def get_course_days(user_id: int) -> int:
-    def _():
-        return _conn().execute(
-            "SELECT COUNT(DISTINCT logged_at) FROM tracker_logs WHERE user_id=?", (user_id,)
-        ).fetchone()[0]
-    return await _run(_)
+    result = await _q(
+        "SELECT COUNT(DISTINCT logged_at) as cnt FROM tracker_logs WHERE user_id=?", [user_id]
+    )
+    return _dicts(result)[0]["cnt"]
 
 
 async def get_global_streak(user_id: int) -> int:
     from datetime import date, timedelta
-
-    def _():
-        cur = _conn().execute(
-            "SELECT DISTINCT logged_at FROM tracker_logs WHERE user_id=? ORDER BY logged_at DESC",
-            (user_id,),
-        )
-        return {r[0] for r in cur.fetchall()}
-
-    dates = await _run(_)
+    result = await _q(
+        "SELECT DISTINCT logged_at FROM tracker_logs WHERE user_id=? ORDER BY logged_at DESC",
+        [user_id],
+    )
+    dates = {r["logged_at"] for r in _dicts(result)}
     streak, day = 0, date.today()
     while day.isoformat() in dates:
         streak += 1
@@ -395,173 +423,137 @@ async def get_global_streak(user_id: int) -> int:
 # ── Points / Club ─────────────────────────────────────────────────────────────
 
 async def award_points(user_id: int, points: int) -> int:
-    def _():
-        conn = _conn()
-        conn.execute(
-            """INSERT INTO user_points (user_id, total_points) VALUES (?, ?)
-               ON CONFLICT(user_id) DO UPDATE SET total_points = total_points + excluded.total_points""",
-            (user_id, points),
-        )
-        conn.commit()
-        return conn.execute(
-            "SELECT total_points FROM user_points WHERE user_id = ?", (user_id,)
-        ).fetchone()[0]
-    return await _run(_)
+    await _q(
+        """INSERT INTO user_points (user_id, total_points) VALUES (?, ?)
+           ON CONFLICT(user_id) DO UPDATE SET total_points = total_points + excluded.total_points""",
+        [user_id, points],
+    )
+    result = await _q(
+        "SELECT total_points FROM user_points WHERE user_id = ?", [user_id]
+    )
+    return _dicts(result)[0]["total_points"]
 
 
 async def get_user_points(user_id: int) -> dict:
-    def _():
-        row = _conn().execute(
-            "SELECT total_points, last_spin_date, spin_count FROM user_points WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-        return {"total_points": row[0], "last_spin_date": row[1], "spin_count": row[2]} if row \
-            else {"total_points": 0, "last_spin_date": None, "spin_count": 0}
-    return await _run(_)
+    result = await _q(
+        "SELECT total_points, last_spin_date, spin_count FROM user_points WHERE user_id = ?",
+        [user_id],
+    )
+    row = _dict(result)
+    return row if row else {"total_points": 0, "last_spin_date": None, "spin_count": 0}
 
 
 async def can_spin(user_id: int) -> bool:
     from datetime import date
     today = date.today().isoformat()
-
-    def _():
-        row = _conn().execute(
-            "SELECT last_spin_date FROM user_points WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        return row is None or row[0] != today
-    return await _run(_)
+    result = await _q(
+        "SELECT last_spin_date FROM user_points WHERE user_id = ?", [user_id]
+    )
+    row = _dict(result)
+    return row is None or row["last_spin_date"] != today
 
 
 async def do_spin(user_id: int, points: int) -> bool:
     from datetime import date
     today = date.today().isoformat()
-
-    def _():
-        conn = _conn()
-        row = conn.execute(
-            "SELECT last_spin_date FROM user_points WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        if row and row[0] == today:
-            return False
-        conn.execute(
-            """INSERT INTO user_points (user_id, total_points, last_spin_date, spin_count) VALUES (?,?,?,1)
-               ON CONFLICT(user_id) DO UPDATE SET
-               total_points   = total_points + ?,
-               last_spin_date = ?,
-               spin_count     = spin_count + 1""",
-            (user_id, points, today, points, today),
-        )
-        conn.commit()
-        return True
-    return await _run(_)
+    result = await _q(
+        "SELECT last_spin_date FROM user_points WHERE user_id = ?", [user_id]
+    )
+    row = _dict(result)
+    if row and row["last_spin_date"] == today:
+        return False
+    await _q(
+        """INSERT INTO user_points (user_id, total_points, last_spin_date, spin_count) VALUES (?,?,?,1)
+           ON CONFLICT(user_id) DO UPDATE SET
+           total_points   = total_points + ?,
+           last_spin_date = ?,
+           spin_count     = spin_count + 1""",
+        [user_id, points, today, points, today],
+    )
+    return True
 
 
 async def get_leaderboard(limit: int = 10) -> list[dict]:
-    def _():
-        rows = _dicts(_conn().execute(
-            """SELECT u.first_name, u.username, up.total_points
-               FROM user_points up
-               JOIN users u ON u.user_id = up.user_id
-               WHERE up.total_points > 0
-               ORDER BY up.total_points DESC LIMIT ?""",
-            (limit,),
-        ))
-        return [{"rank": i + 1, **r} for i, r in enumerate(rows)]
-    return await _run(_)
+    result = await _q(
+        """SELECT u.first_name, u.username, up.total_points
+           FROM user_points up
+           JOIN users u ON u.user_id = up.user_id
+           WHERE up.total_points > 0
+           ORDER BY up.total_points DESC LIMIT ?""",
+        [limit],
+    )
+    return [{"rank": i + 1, **r} for i, r in enumerate(_dicts(result))]
 
 
 async def get_claimed_challenges(user_id: int) -> list[str]:
-    def _():
-        return [r[0] for r in _conn().execute(
-            "SELECT challenge_id FROM claimed_challenges WHERE user_id = ?", (user_id,)
-        ).fetchall()]
-    return await _run(_)
+    result = await _q(
+        "SELECT challenge_id FROM claimed_challenges WHERE user_id = ?", [user_id]
+    )
+    return [r["challenge_id"] for r in _dicts(result)]
 
 
 async def claim_challenge(user_id: int, challenge_id: str) -> bool:
-    def _():
-        try:
-            conn = _conn()
-            conn.execute(
-                "INSERT INTO claimed_challenges (user_id, challenge_id) VALUES (?,?)",
-                (user_id, challenge_id),
-            )
-            conn.commit()
-            return True
-        except Exception as e:
-            if "UNIQUE" in str(e).upper():
-                return False
-            raise
-    return await _run(_)
+    try:
+        await _q(
+            "INSERT INTO claimed_challenges (user_id, challenge_id) VALUES (?,?)",
+            [user_id, challenge_id],
+        )
+        return True
+    except Exception as e:
+        if "UNIQUE" in str(e).upper():
+            return False
+        raise
 
 
 # ── Articles ──────────────────────────────────────────────────────────────────
 
 async def seed_articles(articles: list[dict]):
-    def _():
-        conn = _conn()
-        count = conn.execute("SELECT COUNT(*) FROM articles").fetchone()[0]
-        if count == 0:
-            for a in articles:
-                conn.execute(
-                    "INSERT INTO articles (tag, title, preview, body) VALUES (?, ?, ?, ?)",
-                    (a["tag"], a["title"], a["preview"], a["body"]),
-                )
-            conn.commit()
-    await _run(_)
+    result = await _q("SELECT COUNT(*) as cnt FROM articles")
+    if _dicts(result)[0]["cnt"] == 0:
+        for a in articles:
+            await _q(
+                "INSERT INTO articles (tag, title, preview, body) VALUES (?, ?, ?, ?)",
+                [a["tag"], a["title"], a["preview"], a["body"]],
+            )
 
 
 async def get_random_articles(n: int = 4) -> list[dict]:
-    def _():
-        return _dicts(_conn().execute(
-            "SELECT id, tag, title, preview, body FROM articles ORDER BY RANDOM() LIMIT ?", (n,)
-        ))
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT id, tag, title, preview, body FROM articles ORDER BY RANDOM() LIMIT ?", [n]
+    ))
 
 
 # ── Food ──────────────────────────────────────────────────────────────────────
 
 async def log_food(user_id: int, date: str, food_name: str,
                    calories: int, protein: float, fat: float, carbs: float) -> int:
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO food_logs (user_id, date, food_name, calories, protein, fat, carbs) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user_id, date, food_name, calories, protein, fat, carbs),
-        )
-        conn.commit()
-        return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-    return await _run(_)
+    result = await _q(
+        "INSERT INTO food_logs (user_id, date, food_name, calories, protein, fat, carbs) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [user_id, date, food_name, calories, protein, fat, carbs],
+    )
+    return _lastrow(result) or 0
 
 
 async def get_food_logs(user_id: int, date: str) -> list[dict]:
-    def _():
-        return _dicts(_conn().execute(
-            "SELECT id, food_name, calories, protein, fat, carbs FROM food_logs "
-            "WHERE user_id=? AND date=? ORDER BY logged_at",
-            (user_id, date),
-        ))
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT id, food_name, calories, protein, fat, carbs FROM food_logs "
+        "WHERE user_id=? AND date=? ORDER BY logged_at",
+        [user_id, date],
+    ))
 
 
 async def delete_food_log(user_id: int, log_id: int):
-    def _():
-        conn = _conn()
-        conn.execute("DELETE FROM food_logs WHERE id=? AND user_id=?", (log_id, user_id))
-        conn.commit()
-    await _run(_)
+    await _q("DELETE FROM food_logs WHERE id=? AND user_id=?", [log_id, user_id])
 
 
 async def get_food_month(user_id: int, month: str) -> dict:
-    def _():
-        rows = _conn().execute(
-            "SELECT date, SUM(calories) as cal, COUNT(*) as cnt "
-            "FROM food_logs WHERE user_id=? AND date LIKE ? GROUP BY date",
-            (user_id, f"{month}%"),
-        ).fetchall()
-        return {r[0]: {"calories": r[1] or 0, "count": r[2]} for r in rows}
-    return await _run(_)
+    result = await _q(
+        "SELECT date, SUM(calories) as cal, COUNT(*) as cnt "
+        "FROM food_logs WHERE user_id=? AND date LIKE ? GROUP BY date",
+        [user_id, f"{month}%"],
+    )
+    return {r["date"]: {"calories": r["cal"] or 0, "count": r["cnt"]} for r in _dicts(result)}
 
 
 async def get_food_week(user_id: int) -> list[dict]:
@@ -579,142 +571,104 @@ async def get_food_week(user_id: int) -> list[dict]:
 # ── Water ──────────────────────────────────────────────────────────────────────
 
 async def get_water(user_id: int, date: str) -> int:
-    def _():
-        row = _conn().execute(
-            "SELECT glasses FROM water_logs WHERE user_id=? AND date=?", (user_id, date)
-        ).fetchone()
-        return row[0] if row else 0
-    return await _run(_)
+    result = await _q(
+        "SELECT glasses FROM water_logs WHERE user_id=? AND date=?", [user_id, date]
+    )
+    row = _dict(result)
+    return row["glasses"] if row else 0
 
 
 async def set_water(user_id: int, date: str, glasses: int):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO water_logs (user_id, date, glasses) VALUES (?,?,?) "
-            "ON CONFLICT(user_id, date) DO UPDATE SET glasses=excluded.glasses",
-            (user_id, date, glasses),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT INTO water_logs (user_id, date, glasses) VALUES (?,?,?) "
+        "ON CONFLICT(user_id, date) DO UPDATE SET glasses=excluded.glasses",
+        [user_id, date, glasses],
+    )
 
 
 # ── Goals ──────────────────────────────────────────────────────────────────────
 
 async def get_goals(user_id: int) -> dict:
-    def _():
-        row = _dict(_conn().execute(
-            "SELECT calories, protein, fat, carbs FROM user_goals WHERE user_id=?", (user_id,)
-        ))
-        return row if row else {"calories": 2000, "protein": 80.0, "fat": 70.0, "carbs": 250.0}
-    return await _run(_)
+    row = _dict(await _q(
+        "SELECT calories, protein, fat, carbs FROM user_goals WHERE user_id=?", [user_id]
+    ))
+    return row if row else {"calories": 2000, "protein": 80.0, "fat": 70.0, "carbs": 250.0}
 
 
 async def set_goals(user_id: int, calories: int, protein: float, fat: float, carbs: float):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO user_goals (user_id, calories, protein, fat, carbs) VALUES (?,?,?,?,?) "
-            "ON CONFLICT(user_id) DO UPDATE SET calories=excluded.calories, protein=excluded.protein, "
-            "fat=excluded.fat, carbs=excluded.carbs",
-            (user_id, calories, protein, fat, carbs),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT INTO user_goals (user_id, calories, protein, fat, carbs) VALUES (?,?,?,?,?) "
+        "ON CONFLICT(user_id) DO UPDATE SET calories=excluded.calories, protein=excluded.protein, "
+        "fat=excluded.fat, carbs=excluded.carbs",
+        [user_id, calories, protein, fat, carbs],
+    )
 
 
 # ── Reminders ─────────────────────────────────────────────────────────────────
 
 async def get_reminder(user_id: int) -> dict:
-    def _():
-        row = _conn().execute(
-            "SELECT reminder_time, enabled FROM user_reminders WHERE user_id=?", (user_id,)
-        ).fetchone()
-        return {"reminder_time": row[0], "enabled": bool(row[1])} if row \
-            else {"reminder_time": None, "enabled": False}
-    return await _run(_)
+    row = _dict(await _q(
+        "SELECT reminder_time, enabled FROM user_reminders WHERE user_id=?", [user_id]
+    ))
+    if row:
+        return {"reminder_time": row["reminder_time"], "enabled": bool(row["enabled"])}
+    return {"reminder_time": None, "enabled": False}
 
 
 async def set_reminder(user_id: int, reminder_time: str | None, enabled: bool):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO user_reminders (user_id, reminder_time, enabled) VALUES (?,?,?) "
-            "ON CONFLICT(user_id) DO UPDATE SET reminder_time=excluded.reminder_time, enabled=excluded.enabled",
-            (user_id, reminder_time, int(enabled)),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT INTO user_reminders (user_id, reminder_time, enabled) VALUES (?,?,?) "
+        "ON CONFLICT(user_id) DO UPDATE SET reminder_time=excluded.reminder_time, enabled=excluded.enabled",
+        [user_id, reminder_time, int(enabled)],
+    )
 
 
 async def get_users_with_reminders(current_time: str) -> list[dict]:
-    def _():
-        rows = _conn().execute(
-            "SELECT r.user_id, c.chat_id FROM user_reminders r "
-            "JOIN user_chat_ids c ON c.user_id = r.user_id "
-            "WHERE r.enabled=1 AND r.reminder_time=?",
-            (current_time,),
-        ).fetchall()
-        return [{"user_id": r[0], "chat_id": r[1]} for r in rows]
-    return await _run(_)
+    result = await _q(
+        "SELECT r.user_id, c.chat_id FROM user_reminders r "
+        "JOIN user_chat_ids c ON c.user_id = r.user_id "
+        "WHERE r.enabled=1 AND r.reminder_time=?",
+        [current_time],
+    )
+    return _dicts(result)
 
 
 # ── Chat IDs ──────────────────────────────────────────────────────────────────
 
 async def save_chat_id(user_id: int, chat_id: int):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO user_chat_ids (user_id, chat_id) VALUES (?,?) "
-            "ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id",
-            (user_id, chat_id),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT INTO user_chat_ids (user_id, chat_id) VALUES (?,?) "
+        "ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id",
+        [user_id, chat_id],
+    )
 
 
 async def get_users_for_weekly_summary() -> list[dict]:
-    def _():
-        rows = _conn().execute(
-            "SELECT u.user_id, u.first_name, c.chat_id FROM users u "
-            "JOIN user_chat_ids c ON c.user_id = u.user_id",
-        ).fetchall()
-        return [{"user_id": r[0], "first_name": r[1], "chat_id": r[2]} for r in rows]
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT u.user_id, u.first_name, c.chat_id FROM users u "
+        "JOIN user_chat_ids c ON c.user_id = u.user_id"
+    ))
 
 
 # ── AI Messages (admin log) ───────────────────────────────────────────────────
 
 async def save_ai_message(user_id: int, first_name: str, role: str, content: str):
-    def _():
-        conn = _conn()
-        conn.execute(
-            "INSERT INTO ai_messages (user_id, first_name, role, content) VALUES (?,?,?,?)",
-            (user_id, first_name, role, content),
-        )
-        conn.commit()
-    await _run(_)
+    await _q(
+        "INSERT INTO ai_messages (user_id, first_name, role, content) VALUES (?,?,?,?)",
+        [user_id, first_name, role, content],
+    )
 
 
 async def get_ai_history(user_id: int, limit: int = 20) -> list[dict]:
-    def _():
-        return _dicts(_conn().execute(
-            "SELECT role, content FROM ai_messages WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
-            (user_id, limit),
-        ))
-    rows = await _run(_)
-    return list(reversed(rows))
+    result = await _q(
+        "SELECT role, content FROM ai_messages WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+        [user_id, limit],
+    )
+    return list(reversed(_dicts(result)))
 
 
 async def get_all_ai_chats() -> list[dict]:
-    def _():
-        conn = _conn()
-        try:
-            conn.sync()
-        except Exception:
-            pass
-        return _dicts(conn.execute(
-            "SELECT user_id, first_name, role, content, created_at FROM ai_messages "
-            "ORDER BY user_id, created_at"
-        ))
-    return await _run(_)
+    return _dicts(await _q(
+        "SELECT user_id, first_name, role, content, created_at FROM ai_messages "
+        "ORDER BY user_id, created_at"
+    ))
