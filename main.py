@@ -27,14 +27,12 @@ load_dotenv()
 
 BOT_TOKEN    = os.getenv("BOT_TOKEN", "")
 WEBHOOK_URL  = os.getenv("WEBHOOK_URL", "")
-GROQ_KEY = os.getenv("GROQ_API_KEY", "")
-
-# per-user chat history: { user_id: [ {role, content}, ... ] }
-AI_SESSIONS: dict[int, list] = {}
+GROQ_KEY     = os.getenv("GROQ_API_KEY", "")
+ADMIN_KEY    = os.getenv("ADMIN_KEY", "")
 
 
-async def ask_groq(user_id: int, message: str, system_prompt: str) -> str:
-    history = AI_SESSIONS.get(user_id, [])
+async def ask_groq(user_id: int, message: str, system_prompt: str, first_name: str = "") -> str:
+    history = await db.get_ai_history(user_id, limit=20)
 
     messages = (
         [{"role": "system", "content": system_prompt}]
@@ -71,10 +69,8 @@ async def ask_groq(user_id: int, message: str, system_prompt: str) -> str:
         print("GROQ UNEXPECTED:", json.dumps(data, ensure_ascii=False)[:300])
         return "Не смог получить ответ, попробуй ещё раз."
 
-    # сохраняем историю (не больше 10 обменов = 20 сообщений)
-    history.append({"role": "user",      "content": message})
-    history.append({"role": "assistant", "content": reply})
-    AI_SESSIONS[user_id] = history[-20:]
+    await db.save_ai_message(user_id, first_name, "user", message)
+    await db.save_ai_message(user_id, first_name, "assistant", reply)
 
     return reply
 
@@ -644,7 +640,8 @@ Iron OptiFerrol, Прогестерон Контроль, Витамин С Lipo
 
 Если вопрос совсем не про здоровье — мягко возвращай к теме."""
 
-    reply = await ask_groq(tg["id"], body.message, system)
+    first_name = tg.get("first_name", "")
+    reply = await ask_groq(tg["id"], body.message, system, first_name)
     return {"message": reply}
 
 
@@ -827,6 +824,71 @@ async def challenge_claim(body: ChallengeClaimIn, request: Request):
         return {"ok": False, "already_claimed": True}
     new_total = await db.award_points(tg["id"], c["reward"])
     return {"ok": True, "reward": c["reward"], "new_total": new_total}
+
+
+# ── Admin: просмотр чатов с Биа ──────────────────────────────────────────────
+
+@app.get("/admin/chats")
+async def admin_chats(key: str = ""):
+    if not ADMIN_KEY or key != ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    messages = await db.get_all_ai_chats()
+
+    # группируем по пользователям
+    users: dict[int, dict] = {}
+    for m in messages:
+        uid = m["user_id"]
+        if uid not in users:
+            users[uid] = {"name": m["first_name"] or f"user_{uid}", "msgs": []}
+        users[uid]["msgs"].append(m)
+
+    blocks = []
+    for uid, u in users.items():
+        msgs_html = ""
+        for m in u["msgs"]:
+            role_label = "👤 Пользователь" if m["role"] == "user" else "✦ Биа"
+            color = "#1a3a1c" if m["role"] == "user" else "#4a7c59"
+            bg = "#f0f7f0" if m["role"] == "user" else "#ffffff"
+            time = m["created_at"][:16] if m["created_at"] else ""
+            text = m["content"].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+            msgs_html += f"""
+              <div style="margin-bottom:10px;padding:10px 14px;background:{bg};border-radius:10px;border-left:3px solid {color}">
+                <div style="font-size:11px;color:#888;margin-bottom:4px">{role_label} · {time}</div>
+                <div style="font-size:14px;line-height:1.6">{text}</div>
+              </div>"""
+        blocks.append(f"""
+          <div style="background:#fff;border-radius:14px;padding:20px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07)">
+            <div style="font-size:16px;font-weight:700;margin-bottom:14px;color:#1a3a1c">
+              {u['name']} <span style="font-size:12px;color:#888;font-weight:400">ID: {uid} · {len(u['msgs'])} сообщений</span>
+            </div>
+            {msgs_html}
+          </div>""")
+
+    total = len(messages)
+    unique = len(users)
+    html = f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Биа — чаты</title>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ font-family: -apple-system, Arial, sans-serif; background: #f4f1ec; padding: 24px 16px; }}
+    h1 {{ font-size: 22px; color: #1a3a1c; margin-bottom: 6px; }}
+    .meta {{ font-size: 13px; color: #888; margin-bottom: 24px; }}
+  </style>
+</head>
+<body>
+  <h1>✦ Чаты с Биа</h1>
+  <div class="meta">{unique} пользователей · {total} сообщений всего</div>
+  {''.join(blocks) if blocks else '<p style="color:#888">Сообщений пока нет</p>'}
+</body>
+</html>"""
+
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(html)
 
 
 # ── Static: Mini App ──────────────────────────────────────────────────────────

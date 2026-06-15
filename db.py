@@ -137,6 +137,14 @@ SCHEMA = """
         user_id INTEGER PRIMARY KEY,
         chat_id INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS ai_messages (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id    INTEGER NOT NULL,
+        first_name TEXT,
+        role       TEXT NOT NULL,
+        content    TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 """
 
 
@@ -672,4 +680,36 @@ async def get_users_for_weekly_summary() -> list[dict]:
             "JOIN user_chat_ids c ON c.user_id = u.user_id",
         ).fetchall()
         return [{"user_id": r[0], "first_name": r[1], "chat_id": r[2]} for r in rows]
+    return await _run(_)
+
+
+# ── AI Messages (admin log) ───────────────────────────────────────────────────
+
+async def save_ai_message(user_id: int, first_name: str, role: str, content: str):
+    def _():
+        conn = _conn()
+        conn.execute(
+            "INSERT INTO ai_messages (user_id, first_name, role, content) VALUES (?,?,?,?)",
+            (user_id, first_name, role, content),
+        )
+        conn.commit()
+    await _run(_)
+
+
+async def get_ai_history(user_id: int, limit: int = 20) -> list[dict]:
+    def _():
+        return _dicts(_conn().execute(
+            "SELECT role, content FROM ai_messages WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+            (user_id, limit),
+        ))
+    rows = await _run(_)
+    return list(reversed(rows))
+
+
+async def get_all_ai_chats() -> list[dict]:
+    def _():
+        return _dicts(_conn().execute(
+            "SELECT user_id, first_name, role, content, created_at FROM ai_messages "
+            "ORDER BY user_id, created_at"
+        ))
     return await _run(_)
