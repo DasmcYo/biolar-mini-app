@@ -1828,9 +1828,9 @@ async function sendAI(text) {
     return;
   }
 
-  // Парсим [PRODUCTS: id1, id2, ...] из ответа
-  const prodMatch = data.message.match(/\[PRODUCTS:\s*([^\]]+)\]/);
-  const cleanMsg  = data.message.replace(/\[PRODUCTS:[^\]]+\]/g, "").trim();
+  // Парсим PRODUCTS: id1, id2 (со скобками или без — модель может не добавить их)
+  const prodMatch = data.message.match(/\[?PRODUCTS:\s*([^\]\n\[]+)/i);
+  const cleanMsg  = data.message.replace(/\[?PRODUCTS:[^\]\n\[]+\]?/gi, "").trim();
 
   const typingEl = document.getElementById(typingId);
   if (typingEl) {
