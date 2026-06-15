@@ -854,12 +854,18 @@ function showScreen(name) {
 
 const urlParams = new URLSearchParams(location.search);
 
-// Если пришли по ссылке из Telegram с токеном — сохраняем и чистим URL
+// Если пришли по ссылке из Telegram с токеном — сохраняем
 const installToken = urlParams.get("t");
 if (installToken) {
   localStorage.setItem("biolar_token", installToken);
   updateManifest(installToken);
-  history.replaceState({}, "", location.pathname);
+  // Чистим URL только в PWA standalone-режиме. В Safari — оставляем ?t=TOKEN
+  // чтобы "На экран Домой" сохранил ярлык с токеном в URL
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) {
+    history.replaceState({}, "", location.pathname);
+  }
 }
 
 // Если токен уже был в localStorage — тоже обновляем манифест сразу
