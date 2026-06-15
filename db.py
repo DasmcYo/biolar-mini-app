@@ -40,16 +40,26 @@ def _from_cell(cell: dict) -> Any:
 async def _pipeline(stmts: list[dict]) -> list[dict]:
     requests = [{"type": "execute", "stmt": s} for s in stmts]
     requests.append({"type": "close"})
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"{_http_url()}/v2/pipeline",
-            json={"requests": requests},
-            headers={"Authorization": f"Bearer {TURSO_TOKEN}"},
-        ) as resp:
-            data = await resp.json()
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{_http_url()}/v2/pipeline",
+                json={"requests": requests},
+                headers={"Authorization": f"Bearer {TURSO_TOKEN}"},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                status = resp.status
+                text = await resp.text()
+        print(f"TURSO [{status}]: {text[:300]}")
+        import json as _json
+        data = _json.loads(text)
+    except Exception as e:
+        print(f"TURSO HTTP ERROR: {type(e).__name__}: {e}")
+        raise
     results = []
     for res in data["results"][:-1]:
         if res["type"] == "error":
+            print(f"TURSO SQL ERROR: {res['error']}")
             raise Exception(res["error"]["message"])
         results.append(res["response"]["result"])
     return results

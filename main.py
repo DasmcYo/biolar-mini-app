@@ -404,8 +404,12 @@ async def food_month(request: Request, month: str = None):
 async def food_save(body: FoodSaveIn, request: Request):
     tg = get_tg_user(request)
     today = date_cls.today().isoformat()
-    log_id = await db.log_food(tg["id"], today, body.food_name, body.calories, body.protein, body.fat, body.carbs)
-    return {"ok": True, "id": log_id}
+    try:
+        log_id = await db.log_food(tg["id"], today, body.food_name, body.calories, body.protein, body.fat, body.carbs)
+        return {"ok": True, "id": log_id}
+    except Exception as e:
+        print(f"FOOD SAVE ERROR: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/diary/food/delete")
