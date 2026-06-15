@@ -459,7 +459,7 @@
   .msg.user { justify-content: flex-end; }
   .msg-bubble {
     max-width: 78%; padding: 10px 14px; border-radius: 16px;
-    font-size: 13px; line-height: 1.5;
+    font-size: 13px; line-height: 1.6; white-space: pre-wrap;
   }
   .msg.bot .msg-bubble  { background: var(--card); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
   .msg.user .msg-bubble { background: linear-gradient(135deg, var(--green), var(--green2)); color: #f7f3ed; border-bottom-right-radius: 4px; }
@@ -947,11 +947,7 @@ async function loadHome() {
       </div>`;
   }
 
-  // Для новых пользователей — автоматически переходим к Биа
   window.userHasProducts = products.length > 0;
-  if (!window.userHasProducts && !localStorage.getItem("biolar_onboarding_done")) {
-    setTimeout(() => showScreen("ai"), 1500);
-  }
 
   // Самочувствие
   let wellnessHtml = "";
