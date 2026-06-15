@@ -126,87 +126,106 @@
 
   /* ══ ГЛАВНАЯ ════════════════════════════════════════════════════════════════ */
 
-  .home-greeting { margin-bottom: 20px; padding-top: 6px; }
+  .home-greeting { margin-bottom: 16px; padding: 6px 0 0; }
   .home-time-label {
-    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 4px; display: block;
+    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--green2); margin-bottom: 4px; display: block;
   }
   .home-greeting-name {
     font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 30px; letter-spacing: -.3px; line-height: 1.1;
+    font-size: 32px; letter-spacing: -.5px; line-height: 1.1; color: var(--text);
   }
 
   /* Streak card — 3 stats */
   .streak-card {
-    background: var(--green);
-    border-radius: 20px; padding: 18px 18px 16px; margin-bottom: 16px;
-    box-shadow: 0 8px 28px rgba(44,74,46,0.22);
+    background: var(--green2);
+    border-radius: 24px; padding: 18px 18px 16px; margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(74,124,89,0.28);
   }
   .streak-header {
-    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-    color: rgba(247,243,237,0.45); margin-bottom: 4px;
+    font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+    color: rgba(255,255,255,0.55); margin-bottom: 4px;
   }
-  .streak-tagline { font-size: 15px; font-weight: 700; color: #f7f3ed; margin-bottom: 14px; }
+  .streak-tagline { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 14px; }
   .streak-stats { display: flex; gap: 8px; }
   .streak-stat {
-    flex: 1; background: rgba(247,243,237,0.1); border-radius: 12px;
+    flex: 1; background: rgba(255,255,255,0.13); border-radius: 14px;
     padding: 10px 6px; text-align: center;
   }
   .streak-stat-icon { font-size: 16px; margin-bottom: 4px; }
-  .streak-stat-num { font-size: 20px; font-weight: 800; color: #f7f3ed; line-height: 1; }
-  .streak-stat-lbl { font-size: 10px; color: rgba(247,243,237,0.55); margin-top: 3px; font-weight: 500; }
+  .streak-stat-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 22px; font-weight: 700; color: #fff; line-height: 1;
+  }
+  .streak-stat-lbl { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 3px; }
 
   .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .section-head .label { color: var(--muted); }
   .section-badge {
-    background: var(--green); color: #fff; border-radius: 99px;
-    padding: 2px 10px; font-size: 11px; font-weight: 700;
+    background: #dfeae1; color: #2d4a36; border-radius: 99px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700;
   }
   .section-link {
-    font-size: 11px; font-weight: 700; color: var(--green);
+    font-size: 11px; font-weight: 700; color: var(--green2);
     letter-spacing: .3px; background: none; border: none; cursor: pointer; padding: 0;
   }
 
-  /* Список добавок на главной */
+  /* Список добавок — белая карточка */
+  .supplement-card {
+    background: #fff; border-radius: 24px;
+    padding: 16px; margin-bottom: 16px;
+    box-shadow: 0 1px 8px rgba(44,74,46,0.06);
+  }
+  .supplement-card-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .supplement-card-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 18px; font-weight: 600; color: var(--text);
+  }
   .mini-task {
     display: flex; align-items: center; gap: 12px;
-    padding: 13px 14px;
-    background: #fff;
-    border: 1px solid #ece8e0; border-radius: 14px;
-    margin-bottom: 8px;
+    padding: 12px;
+    background: rgba(233,228,218,0.6);
+    border-radius: 16px; margin-bottom: 8px; cursor: pointer;
+    border: none; width: 100%; text-align: left;
   }
+  .mini-task:last-child { margin-bottom: 0; }
   .mini-check {
     width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-    border: 2px solid #d0cac0; background: none;
-    font-size: 12px; font-weight: 700; cursor: pointer;
+    border: 2px solid #d0cac0; background: #fff;
+    font-size: 12px; font-weight: 700; pointer-events: none;
     display: flex; align-items: center; justify-content: center;
     color: transparent; transition: all .2s;
   }
-  .mini-check.done { background: var(--green); border-color: transparent; color: #fff; }
+  .mini-check.done { background: var(--green2); border-color: var(--green2); color: #fff; }
   .mini-task-info { flex: 1; min-width: 0; }
-  .mini-task-name { font-size: 14px; font-weight: 600; transition: all .2s; }
+  .mini-task-name { font-size: 14px; font-weight: 500; color: var(--text); transition: all .2s; display: block; }
   .mini-task-name.done { text-decoration: line-through; color: var(--muted); }
+  .mini-task-dose { font-size: 12px; color: var(--muted); display: block; margin-top: 1px; }
 
-  /* Wellness — 5 точек */
-  .wellness-widget {
-    background: #fff;
-    border: 1px solid #ece8e0; border-radius: 16px;
-    padding: 4px 16px; margin-bottom: 10px;
+  /* Wellness — полоски */
+  .wellness-card {
+    background: #fff; border-radius: 24px;
+    padding: 16px; margin-bottom: 16px;
+    box-shadow: 0 1px 8px rgba(44,74,46,0.06);
+  }
+  .wellness-card-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 14px;
   }
   .wellness-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0ece6;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
   }
-  .wellness-row:last-child { border-bottom: none; }
-  .wellness-row-icon { font-size: 18px; width: 26px; text-align: center; }
-  .wellness-row-label { font-size: 13px; font-weight: 600; flex: 1; }
-  .wellness-dots { display: flex; gap: 5px; }
-  .wd {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: #e4e0d8; cursor: pointer; transition: background .15s;
+  .wellness-row:last-child { margin-bottom: 0; }
+  .wellness-row-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; color: var(--green2); }
+  .wellness-row-label { font-size: 13px; width: 80px; flex-shrink: 0; }
+  .wellness-bars { display: flex; flex: 1; gap: 3px; }
+  .wb {
+    flex: 1; height: 28px; border-radius: 8px;
+    background: #e9e4da; cursor: pointer; transition: background .15s;
   }
-  .wd.filled { background: var(--green2); }
+  .wb.filled { background: var(--green2); }
 
   /* Контент-карточки */
   .content-card {
@@ -949,10 +968,27 @@ function streakTagline(s) {
   return "Невероятная серия! 🏆";
 }
 
-function dotsHtml(val) {
+function barsHtml(val, key) {
   return [1,2,3,4,5].map(i =>
-    `<span class="wd${i <= val ? ' filled' : ''}"></span>`
+    `<span class="wb${i <= val ? ' filled' : ''}" onclick="homeSetWellness('${key}',${i})"></span>`
   ).join("");
+}
+
+let homeWellnessState = {};
+
+async function homeSetWellness(key, val) {
+  homeWellnessState[key] = val;
+  // перекрашиваем бары
+  const row = document.querySelector(`[data-wkey="${key}"]`);
+  if (row) {
+    row.querySelectorAll(".wb").forEach((b, i) => {
+      b.classList.toggle("filled", i < val);
+    });
+  }
+  // логируем на сервер
+  try {
+    await api("POST", "/api/wellness/log", homeWellnessState);
+  } catch(e) { /* тихо игнорим */ }
 }
 
 async function loadHome() {
@@ -964,26 +1000,30 @@ async function loadHome() {
     api("GET", "/api/articles"),
   ]);
   CONTENT_CARDS = articlesData.articles || [];
-  const name      = user.first_name || "";
-  const streak    = data.global_streak || 0;
-  const courseDays = data.course_days || 0;
-  const refCount  = data.ref_count || 0;
-  const products  = data.products  || [];
-  const wellness  = data.wellness_today;
+  const name       = user.first_name || "";
+  const streak     = data.global_streak || 0;
+  const courseDays = data.course_days  || 0;
+  const refCount   = data.ref_count    || 0;
+  const products   = data.products     || [];
+  const wellness   = data.wellness_today;
+
+  homeWellnessState = wellness
+    ? { energy: wellness.energy, sleep_q: wellness.sleep_q, mood: wellness.mood }
+    : { energy: 0, sleep_q: 0, mood: 0 };
 
   // Приветствие
   const greetingHtml = `
     <div class="home-greeting">
       <span class="home-time-label">${timeGreeting()}</span>
-      <div class="serif home-greeting-name">
-        ${name ? `Привет, <em style="color:var(--green2)">${name}</em>` : "Добро пожаловать"}
+      <div class="home-greeting-name">
+        ${name ? `Привет, ${name}` : "Добро пожаловать"}
       </div>
     </div>`;
 
   // Стрик — 3 статы
   const streakHtml = `
     <div class="streak-card">
-      <div class="streak-header">ТВОЙ СТРИК</div>
+      <div class="streak-header">Твой стрик</div>
       <div class="streak-tagline">${streakTagline(streak)}</div>
       <div class="streak-stats">
         <div class="streak-stat">
@@ -1009,84 +1049,58 @@ async function loadHome() {
   if (products.length) {
     const doneCount = products.filter(p => p.taken_today).length;
     const items = products.map(p => `
-      <div class="mini-task" id="mini-${p.product_id}">
-        <button class="mini-check ${p.taken_today ? 'done' : ''}"
-                onclick="homeLogIntake('${p.product_id}', this)">✓</button>
-        <div class="mini-task-info">
-          <div class="mini-task-name${p.taken_today ? ' done' : ''}" id="mtname-${p.product_id}">${p.product_name}</div>
-        </div>
-      </div>`).join("");
+      <button class="mini-task" id="mini-${p.product_id}"
+              onclick="homeLogIntake('${p.product_id}', this)">
+        <span class="mini-check ${p.taken_today ? 'done' : ''}">✓</span>
+        <span class="mini-task-info">
+          <span class="mini-task-name${p.taken_today ? ' done' : ''}" id="mtname-${p.product_id}">${p.product_name}</span>
+        </span>
+      </button>`).join("");
     courseHtml = `
-      <div class="section-head">
-        <span class="label">Добавки сегодня</span>
-        <span class="section-badge">${doneCount}/${products.length}</span>
-      </div>
-      ${items}
-      <div style="height:4px"></div>`;
+      <div class="supplement-card">
+        <div class="supplement-card-head">
+          <span class="supplement-card-title">Добавки сегодня</span>
+          <span class="section-badge" id="supp-badge">${doneCount}/${products.length}</span>
+        </div>
+        ${items}
+      </div>`;
   } else {
     courseHtml = `
-      <div class="section-head"><span class="label">Программа</span></div>
-      <div class="card" style="text-align:center;padding:24px 20px">
-        <div style="font-size:28px;margin-bottom:8px">✦</div>
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px">Подберём твой курс</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-          Биа задаст пару вопросов и составит персональный протокол добавок
+      <div class="supplement-card">
+        <div style="text-align:center;padding:16px 8px">
+          <div style="font-size:28px;margin-bottom:8px">✦</div>
+          <div style="font-size:15px;font-weight:700;margin-bottom:6px">Подберём твой курс</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+            Биа задаст пару вопросов и составит персональный протокол добавок
+          </div>
+          <button class="btn" onclick="showScreen('ai')">Начать с Биа →</button>
         </div>
-        <button class="btn" onclick="showScreen('ai')">Начать с Биа →</button>
       </div>`;
   }
 
   window.userHasProducts = products.length > 0;
 
-  // Самочувствие — точки
-  let wellnessHtml = "";
-  if (wellness) {
-    wellnessHtml = `
-      <div class="section-head">
-        <span class="label">Как самочувствие?</span>
-        <button class="section-link" onclick="showScreen('diary')">Подробнее →</button>
+  // Самочувствие — полоски
+  const wv = homeWellnessState;
+  const wellnessHtml = `
+    <div class="wellness-card">
+      <div class="wellness-card-title">Как самочувствие?</div>
+      <div class="wellness-row">
+        <span class="wellness-row-icon">⚡</span>
+        <span class="wellness-row-label">Энергия</span>
+        <div class="wellness-bars" data-wkey="energy">${barsHtml(wv.energy, "energy")}</div>
       </div>
-      <div class="wellness-widget">
-        <div class="wellness-row">
-          <span class="wellness-row-icon">⚡</span>
-          <span class="wellness-row-label">Энергия</span>
-          <div class="wellness-dots">${dotsHtml(wellness.energy)}</div>
-        </div>
-        <div class="wellness-row">
-          <span class="wellness-row-icon">🌙</span>
-          <span class="wellness-row-label">Сон</span>
-          <div class="wellness-dots">${dotsHtml(wellness.sleep_q)}</div>
-        </div>
-        <div class="wellness-row">
-          <span class="wellness-row-icon">😊</span>
-          <span class="wellness-row-label">Настроение</span>
-          <div class="wellness-dots">${dotsHtml(wellness.mood)}</div>
-        </div>
-      </div>`;
-  } else {
-    wellnessHtml = `
-      <div class="section-head">
-        <span class="label">Как самочувствие?</span>
-        <button class="section-link" onclick="showScreen('diary')">Отметить →</button>
+      <div class="wellness-row">
+        <span class="wellness-row-icon">🌙</span>
+        <span class="wellness-row-label">Сон</span>
+        <div class="wellness-bars" data-wkey="sleep_q">${barsHtml(wv.sleep_q, "sleep_q")}</div>
       </div>
-      <div class="wellness-widget" style="cursor:pointer" onclick="showScreen('diary')">
-        <div class="wellness-row">
-          <span class="wellness-row-icon">⚡</span>
-          <span class="wellness-row-label">Энергия</span>
-          <div class="wellness-dots">${dotsHtml(0)}</div>
-        </div>
-        <div class="wellness-row">
-          <span class="wellness-row-icon">🌙</span>
-          <span class="wellness-row-label">Сон</span>
-          <div class="wellness-dots">${dotsHtml(0)}</div>
-        </div>
-        <div class="wellness-row">
-          <span class="wellness-row-icon">😊</span>
-          <span class="wellness-row-label">Настроение</span>
-          <div class="wellness-dots">${dotsHtml(0)}</div>
-        </div>
-      </div>`;
-  }
+      <div class="wellness-row">
+        <span class="wellness-row-icon">😊</span>
+        <span class="wellness-row-label">Настроение</span>
+        <div class="wellness-bars" data-wkey="mood">${barsHtml(wv.mood, "mood")}</div>
+      </div>
+    </div>`;
 
   // Контент
   const contentHtml = CONTENT_CARDS.map((c, i) => `
@@ -1103,7 +1117,7 @@ async function loadHome() {
     ${streakHtml}
     ${courseHtml}
     ${wellnessHtml}
-    <div style="height:8px"></div>
+    <div style="height:4px"></div>
     <div class="section-head"><span class="label">Открытия</span></div>
     ${contentHtml}
   `;
@@ -1115,19 +1129,19 @@ function toggleContent(i, btn) {
   btn.textContent = body.classList.contains("open") ? "Свернуть" : "Читать далее";
 }
 
-async function homeLogIntake(productId, btn) {
-  if (btn.classList.contains("done")) return;
+async function homeLogIntake(productId, taskBtn) {
+  const checkEl = taskBtn.querySelector(".mini-check");
+  if (checkEl && checkEl.classList.contains("done")) return;
   const data = await api("POST", "/api/tracker/log", { product_id: productId });
   if (!data.already_taken) {
-    btn.classList.add("done");
+    if (checkEl) checkEl.classList.add("done");
     const nameEl = document.getElementById("mtname-" + productId);
     if (nameEl) nameEl.classList.add("done");
     toast("Отмечено ✓");
-    // обновить badge
-    const tasks = document.querySelectorAll(".mini-check.done").length;
+    const done  = document.querySelectorAll(".mini-check.done").length;
     const total = document.querySelectorAll(".mini-check").length;
-    const badge = document.querySelector(".section-badge");
-    if (badge) badge.textContent = `${tasks}/${total}`;
+    const badge = document.getElementById("supp-badge");
+    if (badge) badge.textContent = `${done}/${total}`;
   }
 }
 
