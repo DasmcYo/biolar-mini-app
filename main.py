@@ -896,6 +896,11 @@ async def admin_chats(key: str = ""):
 app.mount("/static", StaticFiles(directory="web"), name="static")
 
 
-@app.get("/")
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return FileResponse("web/index.html")
