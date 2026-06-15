@@ -752,18 +752,21 @@ async function installPWA() {
 
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const isInTelegram = !!initData;
-  const appUrl = location.origin;
+
+  // Строим ссылку с токеном — чтобы браузер/PWA узнал тот же аккаунт
+  const token = localStorage.getItem("biolar_token");
+  const installUrl = token ? `${location.origin}/?t=${token}` : location.origin;
 
   let msg = '';
   if (isInTelegram) {
-    msg = `Открой приложение в браузере:\n\n${appUrl}\n\nЗатем нажми меню браузера → "Добавить на главный экран"`;
+    msg = `Скопируй эту ссылку и открой в браузере (Safari или Chrome):\n\n${installUrl}\n\nЗатем нажми меню браузера → "Добавить на главный экран". Войдёшь как тот же пользователь.`;
   } else if (isIOS) {
     msg = 'Нажми кнопку Поделиться (квадрат со стрелкой вверх) внизу Safari, затем выбери "На экран «Домой»"';
   } else {
     msg = 'Нажми ⋮ в правом верхнем углу браузера, затем "Добавить на главный экран" или "Установить приложение"';
   }
 
-  showInstallModal(msg, isInTelegram ? appUrl : null);
+  showInstallModal(msg, isInTelegram ? installUrl : null);
 }
 
 function showInstallModal(msg, link) {
@@ -830,6 +833,14 @@ function showScreen(name) {
 }
 
 const urlParams = new URLSearchParams(location.search);
+
+// Если пришли по ссылке из Telegram с токеном — сохраняем и чистим URL
+const installToken = urlParams.get("t");
+if (installToken) {
+  localStorage.setItem("biolar_token", installToken);
+  history.replaceState({}, "", location.pathname);
+}
+
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
 api("POST", "/api/user/init", { ref }).then(d => {
   if (d.session_token) localStorage.setItem("biolar_token", d.session_token);
