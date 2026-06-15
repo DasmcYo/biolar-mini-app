@@ -487,35 +487,21 @@
 
   /* ══ ВОДА ═══════════════════════════════════════════════════════════════════ */
 
-  .water-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-  .water-count-badge {
-    background: linear-gradient(135deg,var(--green),var(--green2));
-    color:#fff; border-radius:20px; padding:4px 14px;
-    font-size:13px; font-weight:800; letter-spacing:.3px;
+  .water-ring-wrap { display:flex; justify-content:center; margin:4px 0 20px; }
+  .water-ring-inner { position:relative; width:160px; height:160px; }
+  .water-ring-inner svg { position:absolute; inset:0; }
+  .water-ring-center {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
   }
-  .water-bar-wrap {
-    height:14px; border-radius:8px; background:rgba(44,74,46,.1);
-    overflow:hidden; margin-bottom:14px;
+  .water-ring-num { font-size:44px; font-weight:800; color:var(--text); line-height:1; }
+  .water-ring-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+  .water-undo-btn {
+    background:none; border:none; color:var(--muted); font-size:12px;
+    cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+    display:block; margin:8px auto 0;
   }
-  .water-bar-fill {
-    height:100%; border-radius:8px;
-    background:linear-gradient(90deg,#4a9fcf,#2d7aaa);
-    transition: width .35s cubic-bezier(.4,0,.2,1);
-  }
-  .water-glasses { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:14px; }
-  .water-glass {
-    width:30px; height:36px; cursor:pointer;
-    transition: transform .15s;
-  }
-  .water-glass:active { transform: scale(.88); }
-  .water-glass svg { width:100%; height:100%; }
-  .water-actions { display:flex; gap:8px; }
-  .water-action-btn {
-    flex:1; padding:10px; border-radius:12px; border:1px solid var(--border);
-    background:var(--card); color:var(--text); font-size:22px; cursor:pointer;
-    transition:.15s;
-  }
-  .water-action-btn:active { background:var(--border); }
 
   /* ══ ЦЕЛИ КБЖУ ══════════════════════════════════════════════════════════════ */
 
@@ -1828,49 +1814,54 @@ async function compressImage(file, maxWidth = 800) {
 let waterGlassesCurrent = 0;
 const WATER_GOAL = 8;
 
-function buildGlassSVG(filled) {
-  const waterColor = filled ? "#4a9fcf" : "rgba(44,74,46,.1)";
-  const bodyColor  = filled ? "rgba(74,159,207,.18)" : "rgba(44,74,46,.06)";
-  return `<svg viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M6 4h18l-2 26H8L6 4z" fill="${bodyColor}" stroke="${filled ? '#4a9fcf' : 'rgba(44,74,46,.2)'}" stroke-width="1.5" stroke-linejoin="round"/>
-    ${filled ? `<path d="M8.3 14h13.4l-1.5 16H9.8L8.3 14z" fill="${waterColor}" opacity=".7"/>` : ""}
-    <line x1="6" y1="4" x2="24" y2="4" stroke="${filled ? '#4a9fcf' : 'rgba(44,74,46,.2)'}" stroke-width="1.5" stroke-linecap="round"/>
+const WATER_R = 70;
+const WATER_C = +(2 * Math.PI * WATER_R).toFixed(2); // 439.82
+
+function _waterRingSVG(glasses) {
+  const offset = +(WATER_C * (1 - glasses / WATER_GOAL)).toFixed(2);
+  return `<svg viewBox="0 0 180 180" width="160" height="160">
+    <defs>
+      <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5bb8f0"/>
+        <stop offset="100%" stop-color="#2178b4"/>
+      </linearGradient>
+    </defs>
+    <circle cx="90" cy="90" r="${WATER_R}" fill="none" stroke="rgba(74,159,207,.13)" stroke-width="13"/>
+    <circle id="water-arc" cx="90" cy="90" r="${WATER_R}" fill="none" stroke="url(#wg)" stroke-width="13"
+      stroke-linecap="round"
+      stroke-dasharray="${WATER_C}"
+      stroke-dashoffset="${offset}"
+      transform="rotate(-90 90 90)"
+      style="transition:stroke-dashoffset .4s cubic-bezier(.4,0,.2,1)"/>
   </svg>`;
 }
 
 function buildWaterTracker(glasses) {
   waterGlassesCurrent = glasses;
-  const pct = Math.round((glasses / WATER_GOAL) * 100);
-  const glassesHtml = Array.from({length: WATER_GOAL}, (_, i) =>
-    `<div class="water-glass" onclick="adjustWater(${i < glasses ? i - glasses + 1 : i - glasses + 1 > 0 ? 1 : 1},${i})">${buildGlassSVG(i < glasses)}</div>`
-  ).join('');
   return `
     <div class="card" style="margin-bottom:10px">
-      <div class="water-header">
-        <span class="label">Вода</span>
-        <span class="water-count-badge" id="water-badge">${glasses} / ${WATER_GOAL}</span>
+      <span class="label">Вода</span>
+      <div class="water-ring-wrap">
+        <div class="water-ring-inner">
+          <div id="water-ring-svg">${_waterRingSVG(glasses)}</div>
+          <div class="water-ring-center">
+            <div style="font-size:16px;margin-bottom:2px">💧</div>
+            <div class="water-ring-num" id="water-num">${glasses}</div>
+            <div class="water-ring-sub">из ${WATER_GOAL} стаканов</div>
+          </div>
+        </div>
       </div>
-      <div class="water-bar-wrap">
-        <div class="water-bar-fill" id="water-bar" style="width:${pct}%"></div>
-      </div>
-      <div class="water-glasses" id="water-glasses">${glassesHtml}</div>
-      <div class="water-actions">
-        <button class="water-action-btn" onclick="adjustWater(-1)">−</button>
-        <button class="water-action-btn" onclick="adjustWater(1)">+ стакан</button>
-      </div>
+      <button class="btn" style="width:100%" onclick="adjustWater(1)">+ Выпил стакан</button>
+      <button class="water-undo-btn" onclick="adjustWater(-1)">Отменить последний</button>
     </div>`;
 }
 
 function _refreshWaterUI() {
-  const pct = Math.round((waterGlassesCurrent / WATER_GOAL) * 100);
-  const badge = document.getElementById("water-badge");
-  const bar   = document.getElementById("water-bar");
-  const grid  = document.getElementById("water-glasses");
-  if (badge) badge.textContent = `${waterGlassesCurrent} / ${WATER_GOAL}`;
-  if (bar)   bar.style.width = pct + "%";
-  if (grid)  grid.innerHTML  = Array.from({length: WATER_GOAL}, (_, i) =>
-    `<div class="water-glass" onclick="adjustWater(1)">${buildGlassSVG(i < waterGlassesCurrent)}</div>`
-  ).join('');
+  const offset = +(WATER_C * (1 - waterGlassesCurrent / WATER_GOAL)).toFixed(2);
+  const arc = document.getElementById("water-arc");
+  const num = document.getElementById("water-num");
+  if (arc) arc.setAttribute("stroke-dashoffset", offset);
+  if (num) num.textContent = waterGlassesCurrent;
 }
 
 async function adjustWater(delta) {
