@@ -519,12 +519,12 @@ async def claim_challenge(user_id: int, challenge_id: str) -> bool:
 
 async def seed_articles(articles: list[dict]):
     result = await _q("SELECT COUNT(*) as cnt FROM articles")
-    if _dicts(result)[0]["cnt"] == 0:
-        for a in articles:
-            await _q(
-                "INSERT INTO articles (tag, title, preview, body) VALUES (?, ?, ?, ?)",
-                [a["tag"], a["title"], a["preview"], a["body"]],
-            )
+    if _dicts(result)[0]["cnt"] == 0 and articles:
+        stmts = [{
+            "sql": "INSERT INTO articles (tag, title, preview, body) VALUES (?, ?, ?, ?)",
+            "args": [_to_arg(a["tag"]), _to_arg(a["title"]), _to_arg(a["preview"]), _to_arg(a["body"])],
+        } for a in articles]
+        await _pipeline(stmts)
 
 
 async def get_random_articles(n: int = 4) -> list[dict]:

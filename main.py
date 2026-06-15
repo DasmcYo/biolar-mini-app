@@ -127,9 +127,12 @@ scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await db.init_db()
-    from articles_data import ARTICLES
-    await db.seed_articles(ARTICLES)
+    async def _bg_init():
+        await db.init_db()
+        from articles_data import ARTICLES
+        await db.seed_articles(ARTICLES)
+    asyncio.create_task(_bg_init())   # не блокирует запуск порта
+
     if WEBHOOK_URL:
         await _set_webhook()
     scheduler.add_job(send_daily_reminders, "interval", minutes=1)
