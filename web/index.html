@@ -741,11 +741,50 @@ window.addEventListener('beforeinstallprompt', e => {
 });
 
 async function installPWA() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById('install-pwa-card')?.remove();
+  // Вариант 1: нативный Chrome промпт (Android Chrome вне Telegram)
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('install-pwa-card')?.remove();
+    return;
+  }
+
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const isInTelegram = !!initData;
+  const appUrl = location.origin;
+
+  let msg = '';
+  if (isInTelegram) {
+    msg = `Открой приложение в браузере:\n\n${appUrl}\n\nЗатем нажми меню браузера → "Добавить на главный экран"`;
+  } else if (isIOS) {
+    msg = 'Нажми кнопку Поделиться (квадрат со стрелкой вверх) внизу Safari, затем выбери "На экран «Домой»"';
+  } else {
+    msg = 'Нажми ⋮ в правом верхнем углу браузера, затем "Добавить на главный экран" или "Установить приложение"';
+  }
+
+  showInstallModal(msg, isInTelegram ? appUrl : null);
+}
+
+function showInstallModal(msg, link) {
+  const existing = document.getElementById('install-modal');
+  if (existing) existing.remove();
+
+  const lines = msg.split('\n').map(l => l ? `<div>${l}</div>` : '<div style="height:6px"></div>`).join('');
+  const linkHtml = link ? `<button class="btn" style="margin-top:12px;width:100%" onclick="navigator.clipboard?.writeText('${link}').then(()=>toast('Ссылка скопирована'));return false;">Скопировать ссылку</button>` : '';
+
+  const el = document.createElement('div');
+  el.id = 'install-modal';
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:flex-end;padding:16px';
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:24px;width:100%;box-sizing:border-box">
+      <div style="font-weight:700;font-size:17px;margin-bottom:14px">Как установить приложение</div>
+      <div style="font-size:14px;line-height:1.6;color:#333">${lines}</div>
+      ${linkHtml}
+      <button class="btn outline" style="margin-top:10px;width:100%" onclick="document.getElementById('install-modal').remove()">Закрыть</button>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────
@@ -2379,16 +2418,16 @@ async function loadClub() {
     </div>
     <button class="btn" style="margin-bottom:8px" onclick="window.open('${shareFull}','_blank')">📤 Поделиться прогрессом</button>`;
 
-  // ── PWA install card ─────────────────────────────────────────────────
-  const installHtml = deferredPrompt ? `
+  // ── PWA install card (всегда показываем) ─────────────────────────────
+  const installHtml = `
     <div id="install-pwa-card" style="background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.07)">
       <div style="font-size:28px">📲</div>
       <div style="flex:1">
         <div style="font-weight:600;font-size:14px;margin-bottom:2px">Добавить на рабочий стол</div>
-        <div style="font-size:12px;color:#888">Открывай приложение без браузера</div>
+        <div style="font-size:12px;color:#888">Открывай приложение как обычное</div>
       </div>
       <button class="btn" style="padding:8px 14px;font-size:13px;white-space:nowrap" onclick="installPWA()">Добавить</button>
-    </div>` : '';
+    </div>`;
 
   // ── Render all ────────────────────────────────────────────────────────
   screen.innerHTML = `
