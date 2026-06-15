@@ -97,7 +97,6 @@ CHALLENGES = [
     {"id": "month_streak",  "title": "Месяц подряд",     "desc": "30 дней подряд принимай курс",  "reward": 500,  "total": 30},
     {"id": "diary_30",      "title": "Дневник: 30 дней", "desc": "Заполни дневник самочувствия",  "reward": 300,  "total": 30},
     {"id": "ref_3",         "title": "Посол бренда",     "desc": "Пригласи 3 друзей",             "reward": 400,  "total": 3},
-    {"id": "spin_10",       "title": "Везунчик",         "desc": "Покрути колесо удачи 10 раз",   "reward": 250,  "total": 10},
 ]
 
 LEVELS = [
@@ -765,7 +764,6 @@ async def club_data(request: Request):
         if cid == "month_streak":  return (min(streak, 30), 30)
         if cid == "diary_30":      return (min(wellness_tot, 30), 30)
         if cid == "ref_3":         return (min(ref_count, 3), 3)
-        if cid == "spin_10":       return (min(spin_count, 10), 10)
         return (0, 1)
 
     challenges_out = []

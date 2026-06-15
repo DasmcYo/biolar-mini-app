@@ -58,6 +58,13 @@
   /* ── SCREENS ── */
   .screen { display: none; padding: 20px 16px; animation: fadeIn .18s; }
   .screen.active { display: block; }
+  #screen-ai.active {
+    display: flex !important;
+    flex-direction: column;
+    height: calc(100dvh - 88px - env(safe-area-inset-bottom, 0px) - 16px);
+    padding-bottom: 0;
+    overflow: hidden;
+  }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
   /* ── PRIMITIVES ── */
@@ -480,15 +487,35 @@
 
   /* ══ ВОДА ═══════════════════════════════════════════════════════════════════ */
 
-  .water-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; }
-  .water-btn { width:44px; height:44px; border-radius:50%; background:var(--card); border:1px solid var(--border);
-               color:var(--text); font-size:22px; line-height:1; cursor:pointer; }
-  .water-center { text-align:center; }
-  .water-num { font-size:36px; font-weight:800; color:var(--green); line-height:1; }
-  .water-sub { font-size:12px; color:var(--muted); margin-top:2px; }
-  .water-dots { display:flex; gap:6px; margin-top:4px; flex-wrap:wrap; justify-content:center; }
-  .water-dot { width:28px; height:28px; border-radius:50%; background:rgba(44,74,46,.12); transition:.2s; }
-  .water-dot.filled { background:var(--green); }
+  .water-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .water-count-badge {
+    background: linear-gradient(135deg,var(--green),var(--green2));
+    color:#fff; border-radius:20px; padding:4px 14px;
+    font-size:13px; font-weight:800; letter-spacing:.3px;
+  }
+  .water-bar-wrap {
+    height:14px; border-radius:8px; background:rgba(44,74,46,.1);
+    overflow:hidden; margin-bottom:14px;
+  }
+  .water-bar-fill {
+    height:100%; border-radius:8px;
+    background:linear-gradient(90deg,#4a9fcf,#2d7aaa);
+    transition: width .35s cubic-bezier(.4,0,.2,1);
+  }
+  .water-glasses { display:flex; gap:7px; justify-content:center; flex-wrap:wrap; margin-bottom:14px; }
+  .water-glass {
+    width:30px; height:36px; cursor:pointer;
+    transition: transform .15s;
+  }
+  .water-glass:active { transform: scale(.88); }
+  .water-glass svg { width:100%; height:100%; }
+  .water-actions { display:flex; gap:8px; }
+  .water-action-btn {
+    flex:1; padding:10px; border-radius:12px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-size:22px; cursor:pointer;
+    transition:.15s;
+  }
+  .water-action-btn:active { background:var(--border); }
 
   /* ══ ЦЕЛИ КБЖУ ══════════════════════════════════════════════════════════════ */
 
@@ -1437,7 +1464,7 @@ function loadAI() {
   ).join("");
 
   screen.innerHTML = `
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+    <div style="flex-shrink:0;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;gap:12px">
       <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✦</div>
       <div>
         <div class="serif" style="font-size:22px;letter-spacing:-.2px;line-height:1.1">Биа</div>
@@ -1445,9 +1472,9 @@ function loadAI() {
       </div>
     </div>
 
-    <div id="ai-msgs" style="min-height:120px;margin-bottom:12px">${msgsHtml}</div>
+    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px">${msgsHtml}</div>
 
-    <div class="chat-input-row" style="position:sticky;bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:8px 0">
+    <div class="chat-input-row" style="flex-shrink:0;padding:8px 0 4px;background:var(--bg)">
       <input class="chat-input" id="ai-input" placeholder="Напиши Биа..." type="text">
       <button class="chat-send" onclick="sendAIFromInput()">→</button>
     </div>
@@ -1801,34 +1828,54 @@ async function compressImage(file, maxWidth = 800) {
 let waterGlassesCurrent = 0;
 const WATER_GOAL = 8;
 
+function buildGlassSVG(filled) {
+  const waterColor = filled ? "#4a9fcf" : "rgba(44,74,46,.1)";
+  const bodyColor  = filled ? "rgba(74,159,207,.18)" : "rgba(44,74,46,.06)";
+  return `<svg viewBox="0 0 30 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 4h18l-2 26H8L6 4z" fill="${bodyColor}" stroke="${filled ? '#4a9fcf' : 'rgba(44,74,46,.2)'}" stroke-width="1.5" stroke-linejoin="round"/>
+    ${filled ? `<path d="M8.3 14h13.4l-1.5 16H9.8L8.3 14z" fill="${waterColor}" opacity=".7"/>` : ""}
+    <line x1="6" y1="4" x2="24" y2="4" stroke="${filled ? '#4a9fcf' : 'rgba(44,74,46,.2)'}" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
 function buildWaterTracker(glasses) {
   waterGlassesCurrent = glasses;
-  const dots = Array.from({length: WATER_GOAL}, (_, i) =>
-    `<div class="water-dot ${i < glasses ? 'filled' : ''}"></div>`
+  const pct = Math.round((glasses / WATER_GOAL) * 100);
+  const glassesHtml = Array.from({length: WATER_GOAL}, (_, i) =>
+    `<div class="water-glass" onclick="adjustWater(${i < glasses ? i - glasses + 1 : i - glasses + 1 > 0 ? 1 : 1},${i})">${buildGlassSVG(i < glasses)}</div>`
   ).join('');
   return `
     <div class="card" style="margin-bottom:10px">
-      <span class="label">Вода</span>
-      <div class="water-row">
-        <button class="water-btn" onclick="adjustWater(-1)">−</button>
-        <div class="water-center">
-          <div class="water-num" id="water-num">${glasses}</div>
-          <div class="water-sub">из ${WATER_GOAL} стаканов</div>
-        </div>
-        <button class="water-btn" onclick="adjustWater(1)">+</button>
+      <div class="water-header">
+        <span class="label">Вода</span>
+        <span class="water-count-badge" id="water-badge">${glasses} / ${WATER_GOAL}</span>
       </div>
-      <div class="water-dots" id="water-dots">${dots}</div>
+      <div class="water-bar-wrap">
+        <div class="water-bar-fill" id="water-bar" style="width:${pct}%"></div>
+      </div>
+      <div class="water-glasses" id="water-glasses">${glassesHtml}</div>
+      <div class="water-actions">
+        <button class="water-action-btn" onclick="adjustWater(-1)">−</button>
+        <button class="water-action-btn" onclick="adjustWater(1)">+ стакан</button>
+      </div>
     </div>`;
+}
+
+function _refreshWaterUI() {
+  const pct = Math.round((waterGlassesCurrent / WATER_GOAL) * 100);
+  const badge = document.getElementById("water-badge");
+  const bar   = document.getElementById("water-bar");
+  const grid  = document.getElementById("water-glasses");
+  if (badge) badge.textContent = `${waterGlassesCurrent} / ${WATER_GOAL}`;
+  if (bar)   bar.style.width = pct + "%";
+  if (grid)  grid.innerHTML  = Array.from({length: WATER_GOAL}, (_, i) =>
+    `<div class="water-glass" onclick="adjustWater(1)">${buildGlassSVG(i < waterGlassesCurrent)}</div>`
+  ).join('');
 }
 
 async function adjustWater(delta) {
   waterGlassesCurrent = Math.max(0, Math.min(WATER_GOAL, waterGlassesCurrent + delta));
-  const numEl  = document.getElementById("water-num");
-  const dotsEl = document.getElementById("water-dots");
-  if (numEl)  numEl.textContent = waterGlassesCurrent;
-  if (dotsEl) dotsEl.innerHTML  = Array.from({length: WATER_GOAL}, (_, i) =>
-    `<div class="water-dot ${i < waterGlassesCurrent ? 'filled' : ''}"></div>`
-  ).join('');
+  _refreshWaterUI();
   try {
     await api("POST", "/api/diary/water/set", { glasses: waterGlassesCurrent });
   } catch(e) { console.error("water save error:", e); }
@@ -1964,7 +2011,7 @@ function buildComparison(history, daysInCourse) {
 
 const CHALLENGE_ICONS = {
   first_product: "🌱", week_streak: "📅", month_streak: "🏆",
-  diary_30: "📓", ref_3: "🤝", spin_10: "🍀",
+  diary_30: "📓", ref_3: "🤝",
 };
 
 const LEVEL_COLORS = {
