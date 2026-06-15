@@ -22,7 +22,7 @@ def _to_arg(v: Any) -> dict:
     if isinstance(v, int):
         return {"type": "integer", "value": str(v)}
     if isinstance(v, float):
-        return {"type": "real", "value": str(v)}
+        return {"type": "float", "value": str(v)}
     return {"type": "text", "value": str(v)}
 
 
@@ -32,7 +32,7 @@ def _from_cell(cell: dict) -> Any:
         return None
     if t == "integer":
         return int(cell["value"])
-    if t == "real":
+    if t in ("real", "float"):
         return float(cell["value"])
     return cell["value"]
 
