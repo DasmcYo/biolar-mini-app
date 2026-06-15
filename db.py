@@ -708,7 +708,12 @@ async def get_ai_history(user_id: int, limit: int = 20) -> list[dict]:
 
 async def get_all_ai_chats() -> list[dict]:
     def _():
-        return _dicts(_conn().execute(
+        conn = _conn()
+        try:
+            conn.sync()
+        except Exception:
+            pass
+        return _dicts(conn.execute(
             "SELECT user_id, first_name, role, content, created_at FROM ai_messages "
             "ORDER BY user_id, created_at"
         ))
