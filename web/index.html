@@ -29,7 +29,7 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ── NAV ── */
@@ -39,10 +39,10 @@
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
     display: flex; z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
   }
   .nav-btn {
-    flex: 1; padding: 16px 4px 13px;
+    flex: 1; padding: 18px 4px 14px;
     font-size: 10px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
     color: #c0b4a4; background: none; border: none; cursor: pointer;
     transition: color .15s; position: relative;
@@ -1541,7 +1541,7 @@ function loadAI() {
       <div class="chat-suggestions" id="ai-sugs">${suggestHtml}</div>
     </div>
 
-    <div class="chat-input-row" style="position:sticky;bottom:calc(68px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:8px 0">
+    <div class="chat-input-row" style="position:sticky;bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--bg);padding:8px 0">
       <input class="chat-input" id="ai-input" placeholder="Спроси о нутриентах..." type="text">
       <button class="chat-send" onclick="sendAIFromInput()">→</button>
     </div>
