@@ -547,84 +547,6 @@
   .level-prog-bar  { height: 100%; background: rgba(255,255,255,0.8); border-radius: 99px; transition: width .6s; }
   .level-next { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; letter-spacing: .3px; }
 
-  /* Spin wheel */
-  .wheel-section { text-align: center; margin-bottom: 16px; }
-  .wheel-outer {
-    position: relative; width: 260px; height: 260px;
-    margin: 0 auto 16px;
-  }
-  .wheel-el {
-    width: 260px; height: 260px; border-radius: 50%;
-    background: conic-gradient(
-      rgba(255,255,255,.25) 0deg 1deg,
-      #2c4a2e 1deg 44deg,
-      rgba(255,255,255,.25) 44deg 45deg,
-      #c4965a 45deg 89deg,
-      rgba(255,255,255,.25) 89deg 90deg,
-      #4a7c59 90deg 134deg,
-      rgba(255,255,255,.25) 134deg 135deg,
-      #e2b55a 135deg 179deg,
-      rgba(255,255,255,.25) 179deg 180deg,
-      #2c4a2e 180deg 224deg,
-      rgba(255,255,255,.25) 224deg 225deg,
-      #c4965a 225deg 269deg,
-      rgba(255,255,255,.25) 269deg 270deg,
-      #4a7c59 270deg 314deg,
-      rgba(255,255,255,.25) 314deg 315deg,
-      #1a3a1c 315deg 359deg,
-      rgba(255,255,255,.25) 359deg 360deg
-    );
-    transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-    box-shadow: 0 8px 32px rgba(44,74,46,0.28), inset 0 0 0 3px rgba(255,255,255,0.12);
-  }
-  .wheel-svg {
-    position: absolute; top: 0; left: 0; width: 260px; height: 260px;
-    pointer-events: none; transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-  }
-  .wheel-svg text { fill: rgba(255,255,255,.92); font-size: 10px; font-weight: 800; font-family: -apple-system, sans-serif; }
-  .wheel-center {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-    width: 46px; height: 46px; border-radius: 50%;
-    background: var(--bg); box-shadow: 0 0 0 3px rgba(255,255,255,.2), 0 3px 12px rgba(0,0,0,.2);
-    z-index: 2;
-  }
-  .wheel-pointer {
-    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
-    width: 0; height: 0; z-index: 3;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-top: 18px solid var(--gold);
-    filter: drop-shadow(0 2px 4px rgba(196,150,90,.5));
-  }
-  .spin-btn-wrap { margin-top: 4px; }
-  .spin-already { font-size: 12px; color: var(--muted); text-align: center; padding: 8px 0; }
-
-  /* Prize reveal popup */
-  .prize-popup {
-    display: none; position: fixed;
-    inset: 0; z-index: 300;
-    background: rgba(28,28,26,.55);
-    backdrop-filter: blur(6px);
-    align-items: center; justify-content: center;
-  }
-  .prize-popup.show { display: flex; }
-  .prize-card {
-    background: linear-gradient(135deg, var(--green), var(--green2));
-    border-radius: 24px; padding: 36px 30px; text-align: center;
-    color: #fff; max-width: 300px; width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,.35);
-    animation: popIn .4s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  @keyframes popIn { from { transform: scale(.5); opacity:0; } to { transform: scale(1); opacity:1; } }
-  .prize-card-icon { font-size: 56px; margin-bottom: 12px; }
-  .prize-card-label { font-family: 'DM Serif Display', serif; font-size: 28px; margin-bottom: 8px; }
-  .prize-card-sub { font-size: 13px; color: rgba(255,255,255,.7); margin-bottom: 6px; }
-  .prize-card-promo {
-    background: rgba(255,255,255,.15); border-radius: 8px;
-    padding: 8px 14px; font-size: 16px; font-weight: 800;
-    letter-spacing: 2px; margin: 10px 0; display: inline-block;
-  }
-  .prize-card-total { font-size: 12px; color: rgba(255,255,255,.55); margin-top: 10px; }
 
   /* Challenges */
   .challenge-card {
@@ -733,17 +655,6 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- Prize popup -->
-<div class="prize-popup" id="prizePopup" onclick="closePrizePopup()">
-  <div class="prize-card" onclick="event.stopPropagation()">
-    <div class="prize-card-icon" id="prizeIcon">🎉</div>
-    <div class="prize-card-label" id="prizeLbl">+100 баллов</div>
-    <div class="prize-card-sub" id="prizeSub">Начислено на твой счёт</div>
-    <div class="prize-card-promo" id="prizePromo" style="display:none"></div>
-    <div class="prize-card-total" id="prizeTotal"></div>
-    <button class="btn" style="margin-top:18px;background:rgba(255,255,255,.18);color:#fff" onclick="closePrizePopup()">Отлично!</button>
-  </div>
-</div>
 
 <script>
 const tg = window.Telegram.WebApp;
@@ -1774,6 +1685,8 @@ function buildFoodSection(logs, goals) {
       <span class="label">Питание сегодня</span>
       <input type="file" id="food-input" accept="image/*" capture="environment"
              style="display:none" onchange="onFoodPhoto(this)">
+      <input type="file" id="food-gallery-input" accept="image/*"
+             style="display:none" onchange="onFoodPhoto(this)">
       ${logsHtml}
       ${totalHtml}
       ${goalsHtml}
@@ -1781,9 +1694,14 @@ function buildFoodSection(logs, goals) {
         <img id="food-preview-img" class="food-preview">
       </div>
       <div id="food-result"></div>
-      <button class="food-cam-btn" onclick="document.getElementById('food-input').click()">
-        📷 Сфотографировать еду
-      </button>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="food-cam-btn" style="flex:1" onclick="document.getElementById('food-input').click()">
+          📷 Камера
+        </button>
+        <button class="food-cam-btn" style="flex:1" onclick="document.getElementById('food-gallery-input').click()">
+          🖼 Галерея
+        </button>
+      </div>
       <button class="btn outline" style="margin-top:8px;width:100%;font-size:13px" onclick="runWeekAnalysis()">
         ✦ Анализ питания за неделю
       </button>
@@ -2044,22 +1962,6 @@ function buildComparison(history, daysInCourse) {
 // КЛУБ
 // ══════════════════════════════════════════════════════════════════════════
 
-// Wheel state
-let wheelRotation = 0;
-let wheelSpinning  = false;
-
-// Prizes labels on wheel (must match backend SPIN_PRIZES order idx 0-7)
-const WHEEL_LABELS = [
-  {line1:"+25",   line2:"баллов"},
-  {line1:"+50",   line2:"баллов"},
-  {line1:"+100",  line2:"баллов"},
-  {line1:"Промо", line2:"−10%"},
-  {line1:"+50",   line2:"баллов"},
-  {line1:"+200",  line2:"баллов"},
-  {line1:"+25",   line2:"баллов"},
-  {line1:"Джек!", line2:"+500"},
-];
-
 const CHALLENGE_ICONS = {
   first_product: "🌱", week_streak: "📅", month_streak: "🏆",
   diary_30: "📓", ref_3: "🤝", spin_10: "🍀",
@@ -2072,34 +1974,13 @@ const LEVEL_COLORS = {
   Platinum: "linear-gradient(135deg,#5080a0,#8090b8)",
 };
 
-function buildWheelSVG() {
-  const cx = 130, cy = 130, r = 84;
-  return WHEEL_LABELS.map((p, i) => {
-    const angle = (i * 45 + 22.5) * Math.PI / 180;
-    const x = cx + r * Math.sin(angle);
-    const y = cy - r * Math.cos(angle);
-    const rot = i * 45 + 22.5;
-    return `<text x="${x.toFixed(1)}" y="${(y-5).toFixed(1)}" text-anchor="middle" transform="rotate(${rot},${x.toFixed(1)},${y.toFixed(1)})">${p.line1}</text>
-            <text x="${x.toFixed(1)}" y="${(y+9).toFixed(1)}" text-anchor="middle" transform="rotate(${rot},${x.toFixed(1)},${y.toFixed(1)})" style="font-size:8px;opacity:.75">${p.line2}</text>`;
-  }).join("");
-}
-
-function getSpinAngle(segIdx) {
-  const A = segIdx * 45 + 22.5;
-  const targetBase = (360 - A + 360) % 360;
-  const currentBase = wheelRotation % 360;
-  let delta = targetBase - currentBase;
-  if (delta <= 0) delta += 360;
-  return wheelRotation + 5 * 360 + delta;
-}
-
 async function loadClub() {
   const screen = document.getElementById("screen-club");
   screen.innerHTML = '<div class="spinner"></div>';
 
   const data = await api("GET", "/api/club/data");
 
-  const { total_points, level, can_spin, spin_count, challenges,
+  const { total_points, level, challenges,
           leaderboard, ref_code, ref_count, giveaway_total,
           giveaway_participating, achievements_data } = data;
 
@@ -2116,23 +1997,6 @@ async function loadClub() {
       <div class="level-next">${level.next ? `${level.next_threshold} баллов → ${level.next}` : "Высший уровень достигнут"}</div>
     </div>`;
 
-  // ── Spin wheel ────────────────────────────────────────────────────────
-  const spinHtml = `
-    <div class="section-head"><span class="label">Колесо удачи</span></div>
-    <div class="wheel-section card" style="padding:22px 16px">
-      <div class="wheel-outer">
-        <div class="wheel-el" id="wheelEl"></div>
-        <svg class="wheel-svg" id="wheelSvg">${buildWheelSVG()}</svg>
-        <div class="wheel-center"></div>
-        <div class="wheel-pointer"></div>
-      </div>
-      <div class="spin-btn-wrap">
-        ${can_spin
-          ? `<button class="btn" id="spinBtn" onclick="doSpin()">Получить ежедневный бонус</button>`
-          : `<div class="spin-already">Уже получил сегодня — возвращайся завтра</div>`}
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Прокруток всего: ${spin_count}</div>
-    </div>`;
 
   // ── Challenges ────────────────────────────────────────────────────────
   const challengesHtml = `
@@ -2278,7 +2142,6 @@ async function loadClub() {
     </div>
     ${lvlHtml}
     ${shareCardHtml}
-    ${spinHtml}
     ${challengesHtml}
     ${lbHtml}
     ${achHtml}
@@ -2326,61 +2189,6 @@ async function saveReminder() {
     await api("POST", "/api/settings/reminder", { reminder_time: time, enabled });
     toast(enabled ? `Напоминание в ${time} включено` : "Напоминание выключено");
   } catch(e) { toast("Ошибка: " + e.message); }
-}
-
-// ══════════════════════════════════════════════════════════════════════════
-// SPIN
-// ══════════════════════════════════════════════════════════════════════════
-
-async function doSpin() {
-  if (wheelSpinning) return;
-  wheelSpinning = true;
-  const btn = document.getElementById("spinBtn");
-  if (btn) { btn.disabled = true; btn.textContent = "Крутится..."; }
-
-  const data = await api("POST", "/api/club/spin");
-
-  if (data.already_spun) {
-    toast("Уже получил сегодня");
-    wheelSpinning = false;
-    if (btn) { btn.disabled = false; btn.textContent = "Получить ежедневный бонус"; }
-    return;
-  }
-
-  // Spin animation
-  const targetRot = getSpinAngle(data.segment);
-  wheelRotation = targetRot;
-  const wheelEl = document.getElementById("wheelEl");
-  const wheelSvg = document.getElementById("wheelSvg");
-  if (wheelEl) wheelEl.style.transform = `rotate(${targetRot}deg)`;
-  if (wheelSvg) wheelSvg.style.transform = `rotate(${targetRot}deg)`;
-
-  // Wait for animation (4.5s) then show prize popup
-  setTimeout(() => {
-    wheelSpinning = false;
-    showPrizePopup(data.prize, data.new_total);
-    // Swap button to "already spun"
-    if (btn) {
-      btn.outerHTML = `<div class="spin-already">Возвращайся завтра за новым бонусом</div>`;
-    }
-  }, 4600);
-}
-
-function showPrizePopup(prize, newTotal) {
-  const icons = [null, "+25", "+50", "+100", "🎟", "+50", "+200", "+25", "🏆"];
-  const iconMap = { 25:"✨", 50:"⚡", 100:"💎", 200:"🔥", 500:"🏆" };
-  document.getElementById("prizeIcon").textContent  = prize.promo ? "🎟" : (iconMap[prize.points] || "✨");
-  document.getElementById("prizeLbl").textContent   = prize.label;
-  document.getElementById("prizeSub").textContent   = prize.promo ? "Твой промокод:" : "Баллы начислены на счёт";
-  const promoEl = document.getElementById("prizePromo");
-  if (prize.promo) { promoEl.textContent = prize.promo; promoEl.style.display = "inline-block"; }
-  else             { promoEl.style.display = "none"; }
-  document.getElementById("prizeTotal").textContent = `Всего баллов: ${newTotal}`;
-  document.getElementById("prizePopup").classList.add("show");
-}
-
-function closePrizePopup() {
-  document.getElementById("prizePopup").classList.remove("show");
 }
 
 async function claimChallenge(challengeId, btn) {
