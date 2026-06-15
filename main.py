@@ -190,12 +190,28 @@ def verify_tg_init_data(init_data: str) -> dict | None:
 
 def get_tg_user(request: Request) -> dict:
     init_data = request.headers.get("X-Telegram-Init-Data", "")
-    if not init_data:
-        raise HTTPException(status_code=401, detail="Missing Telegram auth")
-    user = verify_tg_init_data(init_data)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid Telegram auth")
-    return user
+    if init_data:
+        user = verify_tg_init_data(init_data)
+        if user:
+            return user
+    raise HTTPException(status_code=401, detail="Invalid Telegram auth")
+
+
+async def get_tg_user_or_session(request: Request) -> dict:
+    """Telegram initData или session token из localStorage."""
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    if init_data:
+        user = verify_tg_init_data(init_data)
+        if user:
+            return user
+
+    token = request.headers.get("X-Session-Token", "")
+    if token:
+        user = await db.get_user_by_session_token(token)
+        if user:
+            return {"id": user["user_id"], "first_name": user["first_name"] or "", "username": user["username"] or ""}
+
+    raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
@@ -233,7 +249,7 @@ class TrackerLogIn(BaseModel):
 
 @app.post("/api/user/init")
 async def user_init(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     body = await request.json()
     referred_by = body.get("ref")
     user = await db.get_or_create_user(
@@ -243,7 +259,7 @@ async def user_init(request: Request):
         referred_by=referred_by,
     )
     ref_count = await db.get_referral_count(user["ref_code"])
-    return {**user, "ref_count": ref_count}
+    return {**user, "ref_count": ref_count, "session_token": user.get("session_token", "")}
 
 
 # ── API: квиз ─────────────────────────────────────────────────────────────────
@@ -274,7 +290,7 @@ async def quiz_smart_result(body: SmartQuizIn):
 
 @app.get("/api/home")
 async def home_data(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     products    = await db.get_tracker_products(tg["id"])
     today_logs  = await db.get_today_logs(tg["id"])
@@ -297,7 +313,7 @@ async def home_data(request: Request):
 
 @app.post("/api/wellness/log")
 async def wellness_log(body: WellnessIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     await db.log_wellness(tg["id"], today, body.energy, body.sleep_q, body.mood)
     await db.award_points(tg["id"], 10)
@@ -306,7 +322,7 @@ async def wellness_log(body: WellnessIn, request: Request):
 
 @app.get("/api/wellness")
 async def wellness_get(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     today_log = await db.get_wellness_today(tg["id"], today)
     history   = await db.get_wellness_history(tg["id"], 30)
@@ -331,7 +347,7 @@ class FoodDeleteIn(BaseModel):
 
 @app.post("/api/diary/food/analyze")
 async def food_analyze(body: FoodAnalyzeIn, request: Request):
-    get_tg_user(request)
+    await get_tg_user_or_session(request)
     if not GROQ_KEY:
         raise HTTPException(status_code=503, detail="AI not configured")
 
@@ -391,14 +407,14 @@ async def food_analyze(body: FoodAnalyzeIn, request: Request):
 
 @app.get("/api/diary/food")
 async def food_get(request: Request, date: str = None):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     d = date if date else date_cls.today().isoformat()
     return {"logs": await db.get_food_logs(tg["id"], d)}
 
 
 @app.get("/api/diary/food/month")
 async def food_month(request: Request, month: str = None):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     m = month if month else date_cls.today().strftime("%Y-%m")
     days = await db.get_food_month(tg["id"], m)
     return {"days": days}
@@ -406,7 +422,7 @@ async def food_month(request: Request, month: str = None):
 
 @app.post("/api/diary/food/save")
 async def food_save(body: FoodSaveIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     try:
         log_id = await db.log_food(tg["id"], today, body.food_name, body.calories, body.protein, body.fat, body.carbs)
@@ -418,7 +434,7 @@ async def food_save(body: FoodSaveIn, request: Request):
 
 @app.post("/api/diary/food/delete")
 async def food_delete(body: FoodDeleteIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     await db.delete_food_log(tg["id"], body.log_id)
     return {"ok": True}
 
@@ -430,13 +446,13 @@ class WaterSetIn(BaseModel):
 
 @app.get("/api/diary/water")
 async def water_get(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     return {"glasses": await db.get_water(tg["id"], today)}
 
 @app.post("/api/diary/water/set")
 async def water_set(body: WaterSetIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
     g = max(0, min(body.glasses, 20))
     await db.set_water(tg["id"], today, g)
@@ -453,12 +469,12 @@ class GoalsIn(BaseModel):
 
 @app.get("/api/diary/goals")
 async def goals_get(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     return await db.get_goals(tg["id"])
 
 @app.post("/api/diary/goals")
 async def goals_set(body: GoalsIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     await db.set_goals(tg["id"], body.calories, body.protein, body.fat, body.carbs)
     return {"ok": True}
 
@@ -467,7 +483,7 @@ async def goals_set(body: GoalsIn, request: Request):
 
 @app.get("/api/diary/food/week-analysis")
 async def food_week_analysis(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     if not GROQ_KEY:
         raise HTTPException(status_code=503, detail="AI not configured")
     week = await db.get_food_week(tg["id"])
@@ -500,12 +516,12 @@ class ReminderIn(BaseModel):
 
 @app.get("/api/settings/reminder")
 async def reminder_get(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     return await db.get_reminder(tg["id"])
 
 @app.post("/api/settings/reminder")
 async def reminder_set(body: ReminderIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     await db.set_reminder(tg["id"], body.reminder_time, body.enabled)
     return {"ok": True}
 
@@ -605,7 +621,7 @@ async def articles_random():
 
 @app.post("/api/ai/chat")
 async def ai_chat(body: ChatIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
 
     if not body.message.strip():
         raise HTTPException(status_code=400, detail="Empty message")
@@ -655,7 +671,7 @@ Iron OptiFerrol, Прогестерон Контроль, Витамин С Lipo
 
 @app.get("/api/tracker")
 async def tracker_get(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     products = await db.get_tracker_products(tg["id"])
     today_logs = await db.get_today_logs(tg["id"])
     result = []
@@ -667,7 +683,7 @@ async def tracker_get(request: Request):
 
 @app.post("/api/tracker/add")
 async def tracker_add(body: TrackerAddIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     if body.product_id not in PRODUCTS:
         raise HTTPException(status_code=400, detail="Unknown product")
     p = PRODUCTS[body.product_id]
@@ -677,7 +693,7 @@ async def tracker_add(body: TrackerAddIn, request: Request):
 
 @app.post("/api/tracker/log")
 async def tracker_log(body: TrackerLogIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     ok = await db.log_intake(tg["id"], body.product_id)
     streak = await db.get_streak(tg["id"], body.product_id)
     if ok:
@@ -687,7 +703,7 @@ async def tracker_log(body: TrackerLogIn, request: Request):
 
 @app.delete("/api/tracker/{product_id}")
 async def tracker_remove(product_id: str, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     await db.remove_tracker_product(tg["id"], product_id)
     return {"ok": True}
 
@@ -696,7 +712,7 @@ async def tracker_remove(product_id: str, request: Request):
 
 @app.get("/api/referral")
 async def referral_info(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     user = await db.get_user(tg["id"])
     if not user:
         raise HTTPException(status_code=404)
@@ -719,7 +735,7 @@ async def referral_info(request: Request):
 
 @app.get("/api/giveaway")
 async def giveaway_info(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     count = await db.get_giveaway_count()
     participating = await db.is_in_giveaway(tg["id"])
     return {"total_participants": count, "participating": participating}
@@ -727,7 +743,7 @@ async def giveaway_info(request: Request):
 
 @app.post("/api/giveaway/join")
 async def giveaway_join(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     await db.get_or_create_user(tg["id"], tg.get("username", ""), tg.get("first_name", ""))
     ok = await db.join_giveaway(tg["id"])
     count = await db.get_giveaway_count()
@@ -741,7 +757,7 @@ class ChallengeClaimIn(BaseModel):
 
 @app.get("/api/club/data")
 async def club_data(request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     user = await db.get_user(tg["id"])
     if not user:
         raise HTTPException(status_code=404)
@@ -802,7 +818,7 @@ async def club_data(request: Request):
 @app.post("/api/club/spin")
 async def club_spin(request: Request):
     import random as _random
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     if not await db.can_spin(tg["id"]):
         return {"already_spun": True}
     weights = [p["weight"] for p in SPIN_PRIZES]
@@ -821,7 +837,7 @@ async def club_spin(request: Request):
 
 @app.post("/api/club/challenge/claim")
 async def challenge_claim(body: ChallengeClaimIn, request: Request):
-    tg = get_tg_user(request)
+    tg = await get_tg_user_or_session(request)
     c = next((x for x in CHALLENGES if x["id"] == body.challenge_id), None)
     if not c:
         raise HTTPException(status_code=400, detail="Unknown challenge")

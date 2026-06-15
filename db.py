@@ -240,22 +240,32 @@ async def init_db():
             for stmt in stmts:
                 await db.execute(stmt["sql"])
             await db.commit()
+    # Migration: add session_token column if not exists
+    try:
+        await _q("ALTER TABLE users ADD COLUMN session_token TEXT")
+    except Exception:
+        pass
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
 
 async def get_or_create_user(user_id: int, username: str, first_name: str, referred_by: str = None) -> dict:
-    import random, string
+    import random, string, secrets
 
     row = _dict(await _q("SELECT * FROM users WHERE user_id = ?", [user_id]))
     if row:
+        if not row.get("session_token"):
+            token = secrets.token_urlsafe(32)
+            await _q("UPDATE users SET session_token = ? WHERE user_id = ?", [token, user_id])
+            row["session_token"] = token
         return row
 
     ref_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    session_token = secrets.token_urlsafe(32)
     try:
         await _q(
-            "INSERT INTO users (user_id, username, first_name, ref_code, referred_by) VALUES (?, ?, ?, ?, ?)",
-            [user_id, username, first_name, ref_code, referred_by],
+            "INSERT INTO users (user_id, username, first_name, ref_code, referred_by, session_token) VALUES (?, ?, ?, ?, ?, ?)",
+            [user_id, username, first_name, ref_code, referred_by, session_token],
         )
         if referred_by:
             await _q(
@@ -272,6 +282,10 @@ async def get_or_create_user(user_id: int, username: str, first_name: str, refer
 
 async def get_user(user_id: int) -> dict | None:
     return _dict(await _q("SELECT * FROM users WHERE user_id = ?", [user_id]))
+
+
+async def get_user_by_session_token(token: str) -> dict | None:
+    return _dict(await _q("SELECT * FROM users WHERE session_token = ?", [token]))
 
 
 # ── Tracker ───────────────────────────────────────────────────────────────────
