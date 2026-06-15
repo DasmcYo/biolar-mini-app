@@ -12,26 +12,52 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      borderRadius: { lg:'1.25rem', xl:'1.75rem', '2xl':'2.25rem', '3xl':'2.75rem' },
+      colors: {
+        background:'#f4f1ec', foreground:'#2d2a24',
+        card:    { DEFAULT:'#ffffff',  foreground:'#2d2a24' },
+        primary: { DEFAULT:'#4a7c59', foreground:'#ffffff' },
+        secondary:{ DEFAULT:'#e9e4da', foreground:'#3a362e' },
+        muted:   { DEFAULT:'#ebe7df', foreground:'#8c8678' },
+        accent:  { DEFAULT:'#dfeae1', foreground:'#2d4a36' },
+        border:  '#e4ded2',
+      },
+      fontFamily: {
+        heading: ['"DM Serif Display"','Georgia','serif'],
+        sans:    ['Manrope','system-ui','sans-serif'],
+      },
+    },
+  },
+}
+</script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg:     #f7f3ed;
+    --bg:     #f4f1ec;
     --card:   #ffffff;
     --green:  #2c4a2e;
     --green2: #4a7c59;
     --gold:   #c4965a;
     --gold2:  #dab07a;
-    --text:   #1c1c1a;
-    --muted:  #8c8070;
-    --border: rgba(44,74,46,0.1);
+    --text:   #2d2a24;
+    --muted:  #8c8678;
+    --border: #e4ded2;
     --radius: 14px;
+    --accent: #dfeae1;
+    --accent-fg: #2d4a36;
+    --secondary: #e9e4da;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
   body {
-    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-family: 'Manrope', -apple-system, 'Segoe UI', Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
@@ -101,9 +127,9 @@
   .btn + .btn { margin-top: 8px; }
 
   .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px; margin-bottom: 10px;
-    box-shadow: 0 2px 12px rgba(44,74,46,0.05);
+    background: var(--card);
+    border-radius: 1.75rem; padding: 18px; margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
 
   .spinner { display: flex; justify-content: center; padding: 60px; }
@@ -139,7 +165,7 @@
   /* Streak card — 3 stats */
   .streak-card {
     background: var(--green2);
-    border-radius: 24px; padding: 18px 18px 16px; margin-bottom: 16px;
+    border-radius: 2.75rem; padding: 20px 20px 18px; margin-bottom: 16px;
     box-shadow: 0 4px 20px rgba(74,124,89,0.28);
   }
   .streak-header {
@@ -172,9 +198,9 @@
 
   /* Список добавок — белая карточка */
   .supplement-card {
-    background: #fff; border-radius: 24px;
-    padding: 16px; margin-bottom: 16px;
-    box-shadow: 0 1px 8px rgba(44,74,46,0.06);
+    background: #fff; border-radius: 2.75rem;
+    padding: 18px 18px 14px; margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
   .supplement-card-head {
     display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
@@ -187,7 +213,7 @@
     display: flex; align-items: center; gap: 12px;
     padding: 12px;
     background: rgba(233,228,218,0.6);
-    border-radius: 16px; margin-bottom: 8px; cursor: pointer;
+    border-radius: 2.25rem; margin-bottom: 8px; cursor: pointer;
     border: none; width: 100%; text-align: left;
   }
   .mini-task:last-child { margin-bottom: 0; }
@@ -206,9 +232,9 @@
 
   /* Wellness — полоски */
   .wellness-card {
-    background: #fff; border-radius: 24px;
-    padding: 16px; margin-bottom: 16px;
-    box-shadow: 0 1px 8px rgba(44,74,46,0.06);
+    background: #fff; border-radius: 2.75rem;
+    padding: 18px; margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
   .wellness-card-title {
     font-family: 'DM Serif Display', Georgia, serif;
@@ -1188,13 +1214,20 @@ async function loadProgram() {
   let courseBanner = "";
   if (courseDays > 0 || products.length > 0) {
     courseBanner = `
-      <div class="course-banner">
-        <span class="label">30-дневный курс</span>
-        <div class="course-day-num">${courseDays}</div>
-        <div class="course-prog-wrap">
-          <div class="course-prog-bar" style="width:${pct}%"></div>
+      <div style="background:#fff;border-radius:2.75rem;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:3px">Твоя программа</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:600">${pct}% сегодня</div>
+          </div>
+          <div style="width:52px;height:52px;border-radius:1.25rem;background:var(--accent);display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'DM Serif Display',serif;font-size:16px;font-weight:700;color:var(--accent-fg)">${products.filter(p=>(homeData.products||[]).find(hp=>hp.product_id===p.product_id&&hp.taken_today)).length}/${products.length}</span>
+          </div>
         </div>
-        <div class="course-prog-sub">${courseDays} из 30 дней пройдено${courseDays >= 30 ? " — курс завершён!" : ""}</div>
+        <div style="height:6px;background:var(--secondary);border-radius:99px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:var(--green2);border-radius:99px;transition:width .5s"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">${courseDays} из 30 дней курса${courseDays >= 30 ? " — завершён!" : ""}</div>
       </div>`;
   }
 
@@ -1203,52 +1236,41 @@ async function loadProgram() {
     const today = homeData.products || [];
     const todayMap = Object.fromEntries(today.map(p => [p.product_id, p.taken_today]));
     courseList = `
-      <div class="section-head">
-        <span class="label">Твой курс</span>
-        <button onclick="openCatalogSheet()" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:700;cursor:pointer">+ Добавить</button>
-      </div>
-      ${products.map(p => {
-        const done = todayMap[p.product_id] || false;
-        return `
-          <div class="course-item" id="tracker-${p.product_id}">
-            <button class="course-check ${done ? 'done' : ''}"
-                    onclick="logIntake('${p.product_id}', this)">
-              ${done ? "✓" : ""}
-            </button>
-            <div class="course-info">
-              <div class="course-name">${p.product_name}</div>
-              <div class="course-streak">Добавлено в курс</div>
-            </div>
-            <button class="course-del" onclick="removeProduct('${p.product_id}')">×</button>
-          </div>`;
-      }).join("")}
-      <div style="height:12px"></div>`;
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        ${products.map(p => {
+          const done = todayMap[p.product_id] || false;
+          return `
+            <div id="tracker-${p.product_id}" style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:2.75rem;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
+              <div style="width:44px;height:44px;border-radius:1.25rem;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <span style="font-family:'DM Serif Display',serif;font-size:16px;font-weight:700;color:var(--accent-fg)">${p.product_name.charAt(0)}</span>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.product_name}</div>
+                <div class="course-streak" id="streak-${p.product_id}" style="font-size:12px;color:var(--muted);margin-top:1px">Добавлено в курс</div>
+              </div>
+              <button onclick="logIntake('${p.product_id}', this)" class="course-check ${done ? 'done' : ''}"
+                style="flex-shrink:0;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;${done ? 'background:var(--accent);color:var(--accent-fg)' : 'background:var(--green2);color:#fff'}">
+                ${done ? "✓ Принял" : "Принял"}
+              </button>
+              <button onclick="removeProduct('${p.product_id}')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
+            </div>`;
+        }).join("")}
+      </div>`;
   }
 
   screen.innerHTML = `
+    <header style="padding:24px 0 8px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Твоя программа</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Трекер добавок</div>
+    </header>
     ${courseBanner}
     ${courseList}
-    <div class="section-head">
-      <span class="label">${products.length ? "Пересмотреть анализ" : "Персональный анализ"}</span>
-    </div>
-    <div class="card" style="cursor:pointer;padding:20px;margin-bottom:4px" onclick="startQuiz()">
-      <div style="font-size:15px;font-weight:700;margin-bottom:6px">
-        ${products.length ? "Обновить программу" : "Пройти анализ"}
-      </div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.6">
-        ${products.length
-          ? "Ответь на 8 вопросов заново — обновим рекомендации"
-          : "8 вопросов → персональный протокол добавок под твой организм"}
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn" style="flex:1" onclick="startQuiz()">
-        ${products.length ? "Обновить" : "Начать анализ"}
-      </button>
-      <button class="btn outline" style="flex:1" onclick="openCatalogSheet()">
-        + Добавить продукт
-      </button>
-    </div>
+    <button onclick="openCatalogSheet()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:2.75rem;border:2px dashed var(--border);background:rgba(255,255,255,0.5);padding:18px;font-size:14px;font-weight:600;color:var(--green2);cursor:pointer;margin-bottom:12px">
+      + Добавить продукт из каталога
+    </button>
+    <button class="btn outline" onclick="startQuiz()" style="width:100%;border-radius:2.75rem">
+      ${products.length ? "Обновить программу" : "Пройти персональный анализ"}
+    </button>
   `;
 }
 
@@ -1503,10 +1525,13 @@ async function logIntake(productId, btn) {
   if (btn.classList.contains("done")) { toast("Уже отмечено сегодня"); return; }
   const data = await api("POST", "/api/tracker/log", { product_id: productId });
   if (data.already_taken) { toast("Уже отмечено сегодня"); return; }
-  btn.classList.add("done"); btn.textContent = "✓";
+  btn.classList.add("done");
+  btn.textContent = "✓ Принял";
+  btn.style.background = "var(--accent)";
+  btn.style.color = "var(--accent-fg)";
   const s = data.streak;
-  const row = btn.closest(".course-item");
-  if (row) row.querySelector(".course-streak").textContent = `${s} ${s===1?'день':s<5?'дня':'дней'} подряд`;
+  const streakEl = document.getElementById("streak-" + productId);
+  if (streakEl) streakEl.textContent = `${s} ${s===1?'день':s<5?'дня':'дней'} подряд`;
   toast("Отмечено");
 }
 
@@ -1567,10 +1592,10 @@ async function loadDiary() {
   const goals          = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
 
   screen.innerHTML = `
-    <div style="margin-bottom:20px">
-      <span class="label" style="margin-bottom:6px">Дневник</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Твой заряд</div>
-    </div>
+    <header style="padding:24px 0 16px">
+      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Дневник</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой прогресс</div>
+    </header>
     ${checkinHtml}
     ${supplHtml}
     ${insightHtml}
@@ -1865,20 +1890,29 @@ function loadAI() {
   ).join("");
 
   screen.innerHTML = `
-    <div style="flex-shrink:0;padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;gap:12px">
-      <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✦</div>
+    <div style="flex-shrink:0;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);padding:12px 0 14px;margin:-20px -16px 16px;padding-left:16px;padding-right:16px">
+      <div style="width:44px;height:44px;border-radius:99px;background:var(--green2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/></svg>
+      </div>
       <div>
-        <div class="serif" style="font-size:22px;letter-spacing:-.2px;line-height:1.1">Биа</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Личный архитектор здоровья</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:18px;font-weight:600;line-height:1">Биа</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--green2);display:inline-block"></span>
+          <span style="font-size:11px;color:var(--muted)">AI-нутрициолог · онлайн</span>
+        </div>
       </div>
     </div>
-    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px">
+    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px;display:flex;flex-direction:column;gap:14px">
       <div class="msg bot"><div class="msg-bubble">Привет! Я Биа — твой личный нутрициолог. Помогу разобраться с дефицитами, подобрать протокол и ответить на любой вопрос про здоровье.</div></div>
     </div>
-    ${suggestHtml ? `<div id="ai-sugs" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:8px;flex-shrink:0">${suggestHtml}</div>` : ""}
-    <div class="chat-input-row" style="flex-shrink:0;padding:8px 0 4px;background:var(--bg)">
-      <input class="chat-input" id="ai-input" placeholder="Напиши Биа..." type="text">
-      <button class="chat-send" onclick="sendAIFromInput()">→</button>
+    ${suggestHtml ? `<div id="ai-sugs" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;flex-shrink:0">${suggestHtml}</div>` : ""}
+    <div style="flex-shrink:0;border-top:1px solid var(--border);background:#fff;margin:0 -16px;padding:10px 16px 8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input style="flex:1;height:44px;border-radius:99px;border:1.5px solid var(--border);background:rgba(233,228,218,0.5);padding:0 18px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--text)" id="ai-input" placeholder="Спроси Биа..." type="text">
+        <button onclick="sendAIFromInput()" style="width:44px;height:44px;border-radius:99px;background:var(--green2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+        </button>
+      </div>
     </div>
   `;
 
@@ -2522,14 +2556,21 @@ async function loadClub() {
   // ── Level card ────────────────────────────────────────────────────────
   const lvlGrad = LEVEL_COLORS[level.name] || LEVEL_COLORS.Bronze;
   const lvlHtml = `
-    <div class="level-hero" style="background:${lvlGrad}">
-      <span class="label" style="color:rgba(255,255,255,.55)">Biolar Club</span>
-      <div class="level-name">${level.name}</div>
-      <div class="level-pts"><strong>${total_points}</strong> баллов${level.next ? ` · до ${level.next}: ${level.next_threshold - total_points}` : " · Максимум!"}</div>
-      <div class="level-prog-wrap">
-        <div class="level-prog-bar" style="width:${level.progress_pct}%"></div>
+    <div style="background:${lvlGrad};border-radius:2.75rem;padding:22px;box-shadow:0 4px 20px rgba(0,0,0,0.15);margin-bottom:14px;color:#fff">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px">Уровень</div>
+          <div style="font-family:'DM Serif Display',serif;font-size:24px;font-weight:600">${level.name}</div>
+        </div>
+        <div style="width:56px;height:56px;border-radius:1.25rem;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:24px">👑</div>
       </div>
-      <div class="level-next">${level.next ? `${level.next_threshold} баллов → ${level.next}` : "Высший уровень достигнут"}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:8px">
+        <span><strong style="color:#fff">${total_points.toLocaleString('ru')}</strong> XP</span>
+        <span>${level.next ? `до ${level.next} — ${(level.next_threshold - total_points).toLocaleString('ru')} XP` : 'Максимальный уровень'}</span>
+      </div>
+      <div style="height:8px;border-radius:99px;background:rgba(255,255,255,0.25);overflow:hidden">
+        <div style="height:100%;width:${level.progress_pct}%;background:#fff;border-radius:99px;transition:width .5s"></div>
+      </div>
     </div>`;
 
 
