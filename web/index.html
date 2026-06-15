@@ -734,6 +734,11 @@ const user     = tg.initDataUnsafe?.user || {};
 
 // ── PWA install ────────────────────────────────────────────────────────────
 
+function updateManifest(token) {
+  const el = document.querySelector('link[rel="manifest"]');
+  if (el && token) el.href = `/manifest.json?t=${encodeURIComponent(token)}`;
+}
+
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
@@ -838,12 +843,20 @@ const urlParams = new URLSearchParams(location.search);
 const installToken = urlParams.get("t");
 if (installToken) {
   localStorage.setItem("biolar_token", installToken);
+  updateManifest(installToken);
   history.replaceState({}, "", location.pathname);
 }
 
+// Если токен уже был в localStorage — тоже обновляем манифест сразу
+const existingToken = localStorage.getItem("biolar_token");
+if (existingToken) updateManifest(existingToken);
+
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
 api("POST", "/api/user/init", { ref }).then(d => {
-  if (d.session_token) localStorage.setItem("biolar_token", d.session_token);
+  if (d.session_token) {
+    localStorage.setItem("biolar_token", d.session_token);
+    updateManifest(d.session_token);
+  }
 }).catch(() => {});
 
 // ══════════════════════════════════════════════════════════════════════════

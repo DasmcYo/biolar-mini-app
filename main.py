@@ -924,8 +924,27 @@ async def health():
 
 
 @app.get("/manifest.json")
-async def manifest():
-    return FileResponse("web/manifest.json", media_type="application/manifest+json")
+async def manifest(t: str = ""):
+    start_url = f"/?t={t}" if t else "/"
+    return JSONResponse(
+        content={
+            "name": "Biolar — твой нутрициолог",
+            "short_name": "Biolar",
+            "description": "Персональный AI-нутрициолог и трекер добавок",
+            "start_url": start_url,
+            "scope": "/",
+            "display": "standalone",
+            "orientation": "portrait",
+            "background_color": "#f4f1ec",
+            "theme_color": "#4a7c59",
+            "lang": "ru",
+            "icons": [
+                {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+                {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+            ],
+        },
+        headers={"Content-Type": "application/manifest+json"},
+    )
 
 
 @app.get("/sw.js")
