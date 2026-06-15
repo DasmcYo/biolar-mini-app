@@ -32,7 +32,8 @@ GROQ_KEY     = os.getenv("GROQ_API_KEY", "")
 ADMIN_KEY    = os.getenv("ADMIN_KEY", "")
 
 
-async def ask_groq(user_id: int, message: str, system_prompt: str, first_name: str = "") -> str:
+async def ask_groq(user_id: int, message: str, system_prompt: str,
+                   first_name: str = "", save_user_msg: bool = True) -> str:
     history = await db.get_ai_history(user_id, limit=20)
 
     messages = (
@@ -70,7 +71,8 @@ async def ask_groq(user_id: int, message: str, system_prompt: str, first_name: s
         print("GROQ UNEXPECTED:", json.dumps(data, ensure_ascii=False)[:300])
         return "Не смог получить ответ, попробуй ещё раз."
 
-    await db.save_ai_message(user_id, first_name, "user", message)
+    if save_user_msg:
+        await db.save_ai_message(user_id, first_name, "user", message)
     await db.save_ai_message(user_id, first_name, "assistant", reply)
 
     return reply
@@ -619,6 +621,13 @@ async def articles_random():
 
 # ── API: ИИ-нутрициолог (заглушка) ───────────────────────────────────────────
 
+@app.get("/api/ai/history")
+async def ai_history(request: Request):
+    tg = await get_tg_user_or_session(request)
+    msgs = await db.get_ai_history(tg["id"], limit=60)
+    return {"messages": msgs}
+
+
 @app.post("/api/ai/chat")
 async def ai_chat(body: ChatIn, request: Request):
     tg = await get_tg_user_or_session(request)
@@ -629,41 +638,57 @@ async def ai_chat(body: ChatIn, request: Request):
     if not GROQ_KEY:
         return {"message": "AI-нутрициолог скоро будет доступен."}
 
-    # контекст пользователя для персонализации
-    products  = await db.get_tracker_products(tg["id"])
-    history   = await db.get_wellness_history(tg["id"], 7)
-    course_days = await db.get_course_days(tg["id"])
+    is_onboarding = body.message.strip() == "__onboarding_start__"
+
+    products    = await db.get_tracker_products(tg["id"])
+    wellness_h  = await db.get_wellness_history(tg["id"], 7)
 
     prod_names = ", ".join(p["product_name"] for p in products) if products else "ничего не добавлено"
 
     avg_charge = ""
-    if history:
-        charges = [round((e["energy"] + e["sleep_q"] + e["mood"]) / 3, 1) for e in history]
+    if wellness_h:
+        charges = [round((e["energy"] + e["sleep_q"] + e["mood"]) / 3, 1) for e in wellness_h]
         avg_charge = f"{sum(charges)/len(charges):.1f}/5"
 
-    system = f"""Ты — персональный нутрициолог Biolar Organics. Говоришь по-русски, тепло и конкретно — как знакомый эксперт.
+    catalog_lines = "\n".join(
+        f"  {pid}: {p['name']} — {p['tagline']}"
+        for pid, p in PRODUCTS.items()
+    )
 
-Твоя область знаний: питание, нутриенты, витамины, минералы, гормоны, анализы крови, синдромы и заболевания связанные с нутритивным статусом (СПКЯ, гипотиреоз, анемия, инсулинорезистентность и т.д.), образ жизни и его влияние на здоровье.
+    onboarding_block = ""
+    if not products:
+        onboarding_block = """
+РЕЖИМ ОНБОРДИНГА: у пользователя нет продуктов в плане. Твоя задача — провести короткий диалог (2-4 вопроса), выявить ключевую цель и проблемы, затем порекомендовать 1-3 продукта.
+
+Если сообщение — "__onboarding_start__": поприветствуй тепло одной фразой и задай ОДИН вопрос о главной цели или проблеме. Пример: "С чем сейчас запрос — энергия, сон, иммунитет, гормоны, щитовидка, мозг?"
+
+В ходе диалога задавай уточняющие вопросы по одному. Когда поймёшь ситуацию — дай персональную рекомендацию 1-3 продуктов и ОБЯЗАТЕЛЬНО добавь в самом конце сообщения строку:
+[PRODUCTS: id1, id2, id3]
+Используй точные id из каталога."""
+
+    system = f"""Ты — Биа, персональный нутрициолог Biolar Organics. Говоришь по-русски, тепло и конкретно — как знакомый эксперт.
+
+Твоя область: питание, нутриенты, витамины, минералы, гормоны, анализы крови, СПКЯ, гипотиреоз, анемия, инсулинорезистентность и другие нутритивные состояния, образ жизни.
 
 Как отвечаешь:
-— Понимаешь русские медицинские аббревиатуры (СПКЯ, ИР, ТТГ, ЖДА, АМГ, ФСГ и др.). Если аббревиатура незнакома — уточни у пользователя что имеется в виду.
-— Даёшь конкретный, практичный совет. Без лишних оговорок "проконсультируйтесь с врачом" — только если ситуация реально требует врача.
+— Понимаешь русские аббревиатуры (СПКЯ, ИР, ТТГ, ЖДА, АМГ, ФСГ и др.).
+— Даёшь конкретный практичный совет, без лишних "проконсультируйтесь с врачом".
 — Если вопрос неточный — задаёшь один уточняющий вопрос.
-— Длина ответа по ситуации: простой — коротко, сложный — подробнее.
+— Длина ответа по ситуации: просто — коротко, сложно — подробнее.
 — Пишешь живо, без канцелярита.
 
-Продукты Biolar Organics:
-Iron OptiFerrol, Прогестерон Контроль, Витамин С Lipovit, Витамин С Factor C, IMMULAR Activator, IMMULAR Booster, IMMULAR Control, Витамин Д3 4000 МЕ, Витамин Д3 2000 МЕ + 7 элементов, Липосомальный Д3+К2, Нейро Комплекс, Кальций 7 Essential, Гормон Баланс, Хром 4 Essential, Магний 4 Elements, Витамин С Faster C, ThyroSel, Витамин С Pecto C, Цинк 2 Elements, Thyroid Support.
-Рекомендуй только эти продукты когда уместно, не выдумывай других.
-
+Каталог продуктов Biolar Organics (рекомендуй только их, id строго из этого списка):
+{catalog_lines}
+{onboarding_block}
 Данные пользователя:
 — Принимает: {prod_names}
 {f"— Средний заряд за неделю: {avg_charge}" if avg_charge else ""}
 
-Если вопрос совсем не про здоровье — мягко возвращай к теме."""
+Если вопрос не про здоровье — мягко возвращай к теме."""
 
     first_name = tg.get("first_name", "")
-    reply = await ask_groq(tg["id"], body.message, system, first_name)
+    reply = await ask_groq(tg["id"], body.message, system, first_name,
+                           save_user_msg=not is_onboarding)
     return {"message": reply}
 
 
@@ -679,6 +704,21 @@ async def tracker_get(request: Request):
         streak = await db.get_streak(tg["id"], p["product_id"])
         result.append({**p, "streak": streak, "taken_today": p["product_id"] in today_logs})
     return {"products": result}
+
+
+@app.post("/api/tracker/bulk-add")
+async def tracker_bulk_add(request: Request):
+    tg = await get_tg_user_or_session(request)
+    body = await request.json()
+    added = []
+    for pid in body.get("product_ids", []):
+        if pid in PRODUCTS:
+            try:
+                await db.add_tracker_product(tg["id"], pid, PRODUCTS[pid]["name"])
+                added.append(pid)
+            except Exception:
+                pass  # уже есть
+    return {"ok": True, "added": added}
 
 
 @app.post("/api/tracker/add")

@@ -938,11 +938,19 @@ async function loadHome() {
     courseHtml = `
       <div class="section-head"><span class="label">Программа</span></div>
       <div class="card" style="text-align:center;padding:24px">
-        <div style="font-size:14px;color:var(--muted);margin-bottom:16px;line-height:1.6">
-          Пройди анализ, чтобы получить<br>персональный курс добавок
+        <div style="font-size:28px;margin-bottom:8px">✦</div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:6px">Давай подберём твой курс</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.6">
+          Биа задаст пару вопросов и составит<br>персональный протокол добавок
         </div>
-        <button class="btn" onclick="showScreen('program')">Пройти анализ</button>
+        <button class="btn" onclick="showScreen('ai')">Начать с Биа →</button>
       </div>`;
+  }
+
+  // Для новых пользователей — автоматически переходим к Биа
+  window.userHasProducts = products.length > 0;
+  if (!window.userHasProducts && !localStorage.getItem("biolar_onboarding_done")) {
+    setTimeout(() => showScreen("ai"), 1500);
   }
 
   // Самочувствие
@@ -1704,10 +1712,8 @@ async function sendChat(text) {
 // AI НУТРИЦИОЛОГ
 // ══════════════════════════════════════════════════════════════════════════
 
-const AI_MESSAGES = [
-  { role:"bot", text:"Привет! Я Биа — твой личный архитектор здоровья. Помогу выстроить систему: разберём дефициты, подберём протокол, расскажу как всё работает в связке. Спрашивай." }
-];
 let aiLoaded = false;
+let aiOnboardingTriggered = false;
 
 const AI_SUGGESTIONS = [
   "Можно совмещать D3 и магний?",
@@ -1718,18 +1724,18 @@ const AI_SUGGESTIONS = [
   "Чем отличается цитрат от оксида магния?",
 ];
 
+function escAI(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function loadAI() {
   const screen = document.getElementById("screen-ai");
-  if (aiLoaded) return; // не перерисовывать — чат уже там
+  if (aiLoaded) return;
   aiLoaded = true;
 
-  const msgsHtml = AI_MESSAGES.map(m => `
-    <div class="msg ${m.role}">
-      <div class="msg-bubble">${m.text}</div>
-    </div>`).join("");
-
-  const suggestHtml = AI_SUGGESTIONS.map(s =>
-    `<div class="chat-sug" onclick="sendAI(this.textContent)">${s}</div>`
+  const isNew = !window.userHasProducts && !localStorage.getItem("biolar_onboarding_done");
+  const suggestHtml = isNew ? "" : AI_SUGGESTIONS.map(s =>
+    `<div class="chat-sug" onclick="sendAI(this.textContent)">${escAI(s)}</div>`
   ).join("");
 
   screen.innerHTML = `
@@ -1740,9 +1746,10 @@ function loadAI() {
         <div style="font-size:11px;color:var(--muted);margin-top:2px">Личный архитектор здоровья</div>
       </div>
     </div>
-
-    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px">${msgsHtml}</div>
-
+    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px">
+      <div class="msg bot"><div class="msg-bubble">Привет! Я Биа — твой личный нутрициолог. Помогу разобраться с дефицитами, подобрать протокол и ответить на любой вопрос про здоровье.</div></div>
+    </div>
+    ${suggestHtml ? `<div id="ai-sugs" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:8px;flex-shrink:0">${suggestHtml}</div>` : ""}
     <div class="chat-input-row" style="flex-shrink:0;padding:8px 0 4px;background:var(--bg)">
       <input class="chat-input" id="ai-input" placeholder="Напиши Биа..." type="text">
       <button class="chat-send" onclick="sendAIFromInput()">→</button>
@@ -1751,6 +1758,36 @@ function loadAI() {
 
   const inp = document.getElementById("ai-input");
   if (inp) inp.addEventListener("keydown", e => { if (e.key === "Enter") sendAIFromInput(); });
+
+  initAIChat(isNew);
+}
+
+async function initAIChat(isNew) {
+  const msgs = document.getElementById("ai-msgs");
+  if (!msgs) return;
+
+  // Загружаем историю из БД
+  try {
+    const { messages } = await api("GET", "/api/ai/history");
+    if (messages && messages.length > 0) {
+      msgs.innerHTML = "";
+      messages.forEach(m => {
+        if (m.content === "__onboarding_start__") return;
+        const role = m.role === "assistant" ? "bot" : "user";
+        msgs.insertAdjacentHTML("beforeend",
+          `<div class="msg ${role}"><div class="msg-bubble">${escAI(m.content)}</div></div>`
+        );
+      });
+      msgs.scrollTop = msgs.scrollHeight;
+      return; // есть история — онбординг не нужен
+    }
+  } catch(e) {}
+
+  // Нет истории + новый пользователь — запускаем онбординг
+  if (isNew && !aiOnboardingTriggered) {
+    aiOnboardingTriggered = true;
+    setTimeout(() => sendAI("__onboarding_start__"), 600);
+  }
 }
 
 async function sendAIFromInput() {
@@ -1765,29 +1802,71 @@ async function sendAI(text) {
   const msgs = document.getElementById("ai-msgs");
   if (!msgs) return;
 
-  // Показать вопрос пользователя
-  msgs.insertAdjacentHTML("beforeend",
-    `<div class="msg user"><div class="msg-bubble">${text}</div></div>`
-  );
-  msgs.scrollIntoView({ behavior: "smooth", block: "end" });
+  const isOnboarding = text === "__onboarding_start__";
 
-  // Показать индикатор набора
+  if (!isOnboarding) {
+    msgs.insertAdjacentHTML("beforeend",
+      `<div class="msg user"><div class="msg-bubble">${escAI(text)}</div></div>`
+    );
+    msgs.scrollTop = msgs.scrollHeight;
+    const sugsEl = document.getElementById("ai-sugs");
+    if (sugsEl) sugsEl.style.display = "none";
+  }
+
   const typingId = "ai-typing-" + Date.now();
   msgs.insertAdjacentHTML("beforeend",
     `<div class="msg bot" id="${typingId}"><div class="msg-bubble" style="color:var(--muted)">...</div></div>`
   );
+  msgs.scrollTop = msgs.scrollHeight;
 
-  const data = await api("POST", "/api/ai/chat", { message: text });
+  let data;
+  try {
+    data = await api("POST", "/api/ai/chat", { message: text });
+  } catch(e) {
+    const el = document.getElementById(typingId);
+    if (el) el.querySelector(".msg-bubble").textContent = "Ошибка соединения, попробуй ещё раз.";
+    return;
+  }
 
-  // Заменить точки на ответ
+  // Парсим [PRODUCTS: id1, id2, ...] из ответа
+  const prodMatch = data.message.match(/\[PRODUCTS:\s*([^\]]+)\]/);
+  const cleanMsg  = data.message.replace(/\[PRODUCTS:[^\]]+\]/g, "").trim();
+
   const typingEl = document.getElementById(typingId);
-  if (typingEl) typingEl.querySelector(".msg-bubble").textContent = data.message;
+  if (typingEl) {
+    const bubble = typingEl.querySelector(".msg-bubble");
+    bubble.style.color = "";
+    bubble.textContent = cleanMsg;
 
-  AI_MESSAGES.push({ role:"user", text }, { role:"bot", text: data.message });
+    if (prodMatch) {
+      const ids = prodMatch[1].split(",").map(s => s.trim()).filter(Boolean);
+      const btn = document.createElement("button");
+      btn.className = "btn";
+      btn.style.cssText = "display:block;margin-top:12px;width:100%;font-size:14px";
+      btn.textContent = "✦ Добавить в план";
+      btn.onclick = () => addRecommendedProducts(ids, btn);
+      bubble.appendChild(btn);
+    }
+  }
 
-  // Скрыть саджесты после первого вопроса
-  const sugsEl = document.getElementById("ai-sugs");
-  if (sugsEl) sugsEl.style.display = "none";
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function addRecommendedProducts(ids, btn) {
+  btn.disabled = true;
+  btn.textContent = "...";
+  try {
+    await api("POST", "/api/tracker/bulk-add", { product_ids: ids });
+    btn.textContent = "✓ Добавлено в план";
+    btn.style.opacity = "0.6";
+    window.userHasProducts = true;
+    localStorage.setItem("biolar_onboarding_done", "1");
+    toast("Добавки добавлены в твой план!");
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = "✦ Добавить в план";
+    toast("Ошибка: " + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════
