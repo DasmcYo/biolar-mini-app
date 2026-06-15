@@ -907,6 +907,26 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse("web/manifest.json", media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse("web/sw.js", media_type="application/javascript")
+
+
+@app.get("/icon-192.png")
+async def icon192():
+    return FileResponse("web/icon-192.png", media_type="image/png")
+
+
+@app.get("/icon-512.png")
+async def icon512():
+    return FileResponse("web/icon-512.png", media_type="image/png")
+
+
 @app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return FileResponse("web/index.html")
