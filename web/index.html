@@ -770,7 +770,7 @@ function showInstallModal(msg, link) {
   const existing = document.getElementById('install-modal');
   if (existing) existing.remove();
 
-  const lines = msg.split('\n').map(l => l ? `<div>${l}</div>` : '<div style="height:6px"></div>`).join('');
+  const lines = msg.split('\n').map(l => l ? `<div>${l}</div>` : '<div style="height:6px"></div>').join('');
   const linkHtml = link ? `<button class="btn" style="margin-top:12px;width:100%" onclick="navigator.clipboard?.writeText('${link}').then(()=>toast('Ссылка скопирована'));return false;">Скопировать ссылку</button>` : '';
 
   const el = document.createElement('div');
