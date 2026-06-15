@@ -963,5 +963,15 @@ async def icon512():
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
-async def root():
+async def root(request: Request, t: str = ""):
+    if request.method == "HEAD":
+        from fastapi.responses import Response
+        return Response(headers={"content-type": "text/html"})
+    if t:
+        # Инжектим токен в manifest link прямо в HTML — до того как Safari его распарсит
+        with open("web/index.html", "r", encoding="utf-8") as f:
+            html = f.read()
+        html = html.replace('href="/manifest.json"', f'href="/manifest.json?t={t}"', 1)
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content=html)
     return FileResponse("web/index.html")

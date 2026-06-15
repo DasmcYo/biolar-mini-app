@@ -740,6 +740,8 @@ function updateManifest(token) {
 }
 
 let deferredPrompt = null;
+let currentSessionToken = null;   // обновляется когда init вернул ответ
+
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
@@ -758,20 +760,33 @@ async function installPWA() {
   const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
   const isInTelegram = !!initData;
 
-  // Строим ссылку с токеном — чтобы браузер/PWA узнал тот же аккаунт
-  const token = localStorage.getItem("biolar_token");
+  // Берём токен — сначала из переменной (свежий от init), потом из localStorage
+  const token = currentSessionToken || localStorage.getItem("biolar_token");
   const installUrl = token ? `${location.origin}/?t=${token}` : location.origin;
 
-  let msg = '';
   if (isInTelegram) {
-    msg = `Скопируй эту ссылку и открой в браузере (Safari или Chrome):\n\n${installUrl}\n\nЗатем нажми меню браузера → "Добавить на главный экран". Войдёшь как тот же пользователь.`;
-  } else if (isIOS) {
+    // Открываем Safari автоматически через Telegram API — не нужно копипастить
+    if (token) {
+      tg.openLink(installUrl);
+      showInstallModal(
+        'Safari открылся с твоей ссылкой.\n\nНажми Поделиться (квадрат со стрелкой) → "На экран «Домой»"',
+        null
+      );
+    } else {
+      showInstallModal('Подожди секунду, приложение загружается...\n\nПопробуй ещё раз через пару секунд.', null);
+    }
+    return;
+  }
+
+  if (deferredPrompt) return;  // нативный промпт уже сработает
+
+  let msg = '';
+  if (isIOS) {
     msg = 'Нажми кнопку Поделиться (квадрат со стрелкой вверх) внизу Safari, затем выбери "На экран «Домой»"';
   } else {
     msg = 'Нажми ⋮ в правом верхнем углу браузера, затем "Добавить на главный экран" или "Установить приложение"';
   }
-
-  showInstallModal(msg, isInTelegram ? installUrl : null);
+  showInstallModal(msg, null);
 }
 
 function showInstallModal(msg, link) {
@@ -854,6 +869,7 @@ if (existingToken) updateManifest(existingToken);
 const ref = urlParams.get("ref") || tg.initDataUnsafe?.start_param?.replace("ref_", "") || null;
 api("POST", "/api/user/init", { ref }).then(d => {
   if (d.session_token) {
+    currentSessionToken = d.session_token;
     localStorage.setItem("biolar_token", d.session_token);
     updateManifest(d.session_token);
   }
