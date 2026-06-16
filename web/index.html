@@ -39,19 +39,38 @@ tailwind.config = {
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
-    --bg:     #f4f1ec;
-    --card:   #ffffff;
-    --green:  #2c4a2e;
-    --green2: #4a7c59;
-    --gold:   #c4965a;
-    --gold2:  #dab07a;
-    --text:   #2d2a24;
-    --muted:  #8c8678;
-    --border: #e4ded2;
-    --radius: 14px;
-    --accent: #dfeae1;
+    --bg:        #f4f1ec;
+    --card:      #ffffff;
+    --green:     #2c4a2e;
+    --green2:    #4a7c59;
+    --gold:      #c4965a;
+    --gold2:     #dab07a;
+    --text:      #2d2a24;
+    --muted:     #8c8678;
+    --border:    #e4ded2;
+    --radius:    14px;
+    --accent:    #dfeae1;
     --accent-fg: #2d4a36;
     --secondary: #e9e4da;
+    --nav-bg:    #ffffff;
+    --nav-border:#e8e3da;
+  }
+
+  html.dark {
+    --bg:        #16161a;
+    --card:      #1f1f24;
+    --green:     #4a7c59;
+    --green2:    #5d9970;
+    --gold:      #c4965a;
+    --gold2:     #dab07a;
+    --text:      #edeae4;
+    --muted:     #7a7570;
+    --border:    #2e2e34;
+    --accent:    #1e2e22;
+    --accent-fg: #8ecfa0;
+    --secondary: #252528;
+    --nav-bg:    #1a1a1e;
+    --nav-border:#2e2e34;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -67,8 +86,8 @@ tailwind.config = {
   /* ── NAV ── */
   .nav {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: #fff;
-    border-top: 1px solid #e8e3da;
+    background: var(--nav-bg);
+    border-top: 1px solid var(--nav-border);
     display: flex; z-index: 100;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -150,6 +169,16 @@ tailwind.config = {
   }
   .toast.show { opacity: 1; }
 
+  /* ── Theme toggle ── */
+  .theme-toggle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--secondary); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    transition: background .2s, transform .15s;
+  }
+  .theme-toggle:active { transform: scale(.9); }
+
   /* ══ ГЛАВНАЯ ════════════════════════════════════════════════════════════════ */
 
   .home-greeting { margin-bottom: 16px; padding: 6px 0 0; }
@@ -198,7 +227,7 @@ tailwind.config = {
 
   /* Список добавок — белая карточка */
   .supplement-card {
-    background: #fff; border-radius: 2.75rem;
+    background: var(--card); border-radius: 2.75rem;
     padding: 18px 18px 14px; margin-bottom: 16px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
@@ -232,7 +261,7 @@ tailwind.config = {
 
   /* Wellness — полоски */
   .wellness-card {
-    background: #fff; border-radius: 2.75rem;
+    background: var(--card); border-radius: 2.75rem;
     padding: 18px; margin-bottom: 16px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   }
@@ -986,6 +1015,20 @@ function timeGreeting() {
   return "ДОБРОЙ НОЧИ";
 }
 
+function toggleTheme() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('biolar_theme', isDark ? 'dark' : 'light');
+  // Обновляем иконку кнопки
+  const btn = document.querySelector('.theme-toggle');
+  if (btn) btn.textContent = isDark ? '☀️' : '🌙';
+}
+
+// Применяем тему сразу при загрузке
+(function() {
+  const saved = localStorage.getItem('biolar_theme');
+  if (saved === 'dark') document.documentElement.classList.add('dark');
+}());
+
 function streakTagline(s) {
   if (s === 0) return "Начни сегодня ✨";
   if (s === 1) return "Первый шаг сделан!";
@@ -1038,12 +1081,18 @@ async function loadHome() {
     : { energy: 0, sleep_q: 0, mood: 0 };
 
   // Приветствие
+  const isDark = document.documentElement.classList.contains('dark');
   const greetingHtml = `
-    <div class="home-greeting">
-      <span class="home-time-label">${timeGreeting()}</span>
-      <div class="home-greeting-name">
-        ${name ? `Привет, ${name}` : "Добро пожаловать"}
+    <div class="home-greeting" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div>
+        <span class="home-time-label">${timeGreeting()}</span>
+        <div class="home-greeting-name">
+          ${name ? `Привет, ${name}` : "Добро пожаловать"}
+        </div>
       </div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+        ${isDark ? '☀️' : '🌙'}
+      </button>
     </div>`;
 
   // Стрик — 3 статы
