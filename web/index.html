@@ -267,6 +267,125 @@ tailwind.config = {
   }
   .prog-dot.popping { animation: dotPop .28s ease; }
 
+  /* ══ ДНЕВНИК ════════════════════════════════════════════════════════════════ */
+  .diary-cal-strip {
+    display: flex; gap: 8px; overflow-x: auto; padding: 0 2px 6px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; margin-bottom: 16px;
+  }
+  .diary-cal-strip::-webkit-scrollbar { display: none; }
+  .diary-cal-day {
+    flex-shrink: 0; width: 52px; height: 68px; border-radius: 1.5rem;
+    background: var(--card); border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.06); transition: background .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diary-cal-day.active { background: var(--green2); }
+  .diary-cal-dow { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; }
+  .diary-cal-day.active .diary-cal-dow { color: rgba(255,255,255,.7); }
+  .diary-cal-num { font-family: Fraunces, serif; font-size: 20px; font-weight: 600; color: var(--text); line-height: 1; }
+  .diary-cal-day.active .diary-cal-num { color: #fff; }
+
+  .diary-section {
+    background: var(--card); border-radius: 1.75rem; padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 12px;
+  }
+  .diary-section-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .diary-section-title {
+    font-family: Fraunces, serif; font-size: 17px; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .diary-section-sub { font-size: 13px; color: var(--muted); }
+
+  /* Water glasses */
+  .diary-glasses-row { display: flex; gap: 6px; }
+  .diary-glass {
+    flex: 1; height: 52px; border-radius: 14px;
+    border: 1.5px solid var(--border); background: var(--secondary);
+    cursor: pointer; display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 6px; font-size: 16px;
+    transition: background .15s, border-color .15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diary-glass.filled { background: rgba(91,184,240,.2); border-color: #5bb8f0; }
+
+  /* КБЖУ rings */
+  .diary-kbju-rings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .diary-ring-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .diary-ring-svg-wrap { position: relative; width: 64px; height: 64px; }
+  .diary-ring-svg-wrap svg { transform: rotate(-90deg); display: block; }
+  .diary-ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .diary-ring-val { font-size: 12px; font-weight: 700; color: var(--text); line-height: 1.1; text-align: center; }
+  .diary-ring-lbl { font-size: 11px; color: var(--muted); }
+
+  /* Meal cards */
+  .diary-food-card {
+    background: var(--card); border-radius: 1.75rem; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06); margin-bottom: 8px;
+  }
+  .diary-food-emoji {
+    width: 52px; height: 52px; border-radius: 1.25rem; background: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;
+  }
+  .diary-food-info { flex: 1; min-width: 0; }
+  .diary-food-name { font-size: 14px; font-weight: 500; color: var(--text); }
+  .diary-food-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: var(--accent); color: var(--accent-fg);
+    border-radius: 99px; padding: 2px 8px;
+    font-size: 10px; font-weight: 700; margin-top: 4px;
+  }
+  .diary-food-macros { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .diary-food-del {
+    background: var(--secondary); border: none; border-radius: 50%;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--muted); cursor: pointer; flex-shrink: 0;
+  }
+  .diary-add-photo-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; border: none; border-radius: 1.75rem;
+    background: var(--green2); color: #fff;
+    padding: 16px; font-size: 14px; font-weight: 700; cursor: pointer;
+    transition: opacity .15s; margin-top: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .diary-add-photo-btn:active { opacity: .85; }
+
+  /* Photo modal */
+  .photo-modal-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,.45);
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .photo-modal-sheet {
+    width: 100%; max-width: 430px;
+    background: var(--card);
+    border-radius: 2rem 2rem 0 0;
+    padding: 16px 20px 36px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .photo-modal-handle {
+    width: 36px; height: 4px; border-radius: 99px; background: var(--border); margin: 0 auto 16px;
+  }
+  .photo-modal-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .photo-modal-title { font-family: Fraunces, serif; font-size: 20px; font-weight: 600; }
+  .photo-modal-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--secondary); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--muted); line-height: 1;
+  }
+
   /* ══ ГЛАВНАЯ ════════════════════════════════════════════════════════════════ */
 
   .home-greeting { margin-bottom: 16px; padding: 6px 0 0; }
@@ -1757,6 +1876,7 @@ async function removeProduct(productId) {
 
 let chargeVal = 0;
 let diaryForceEdit = false;
+let diarySelectedDate = new Date().toISOString().split("T")[0];
 const DAYS_RU = ["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
 const CHAT_MESSAGES = [
   { role:"bot", text:"Привет! Я — AI-нутрициолог Biolar. Пока в разработке, но уже скоро смогу отвечать на любые вопросы о нутриентах, витаминах и добавках." }
@@ -1766,104 +1886,31 @@ async function loadDiary() {
   const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const [wellData, homeData, foodData, waterData, goalsData] = await Promise.all([
+  const [wellData, foodData, waterData, goalsData] = await Promise.all([
     api("GET", "/api/wellness"),
-    api("GET", "/api/home"),
-    api("GET", "/api/diary/food"),
+    api("GET", `/api/diary/food?date=${diarySelectedDate}`),
     api("GET", "/api/diary/water"),
     api("GET", "/api/diary/goals"),
   ]);
-  const today   = wellData.today;
-  const history = wellData.history || [];
-  const products = homeData.products || [];
-
-  // Course start = earliest started_at across active products
-  let courseStart = null;
-  let daysInCourse = 0;
-  if (products.length) {
-    const starts = products.map(p => p.started_at).filter(Boolean).sort();
-    courseStart = starts[0] || null;
-    if (courseStart) {
-      daysInCourse = Math.floor((Date.now() - new Date(courseStart).getTime()) / 86400000);
-      if (daysInCourse < 0) daysInCourse = 0;
-    }
-  }
-
+  const today = wellData.today;
   const checkinHtml = (today && !diaryForceEdit) ? buildCheckinDone(today) : buildCheckinFormHtml();
   diaryForceEdit = false;
 
-  const supplHtml      = products.length ? buildSupplTimeline(products[0], daysInCourse) : "";
-  const insightHtml    = buildInsight(history, daysInCourse);
-  const comparisonHtml = buildComparison(history, daysInCourse);
-  const trendHtml      = buildTrend30(history, courseStart);
-  const foodLogs       = foodData.logs || [];
-  const waterGlasses   = waterData.glasses || 0;
-  const goals          = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
+  const foodLogs = foodData.logs || [];
+  waterGlassesCurrent = waterData.glasses || 0;
+  const goals = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
 
   screen.innerHTML = `
-    <header style="padding:24px 0 16px">
+    <header style="padding:24px 0 8px">
       <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Дневник</div>
-      <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой прогресс</div>
+      <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой день</div>
     </header>
+    ${buildCalendarStrip(diarySelectedDate)}
     ${checkinHtml}
-    ${supplHtml}
-    ${insightHtml}
-    ${comparisonHtml}
-    <div class="card" style="margin-bottom:10px">
-      <span class="label">30 дней</span>
-      <div class="trend30-outer">${trendHtml}</div>
-      <div class="trend30-footer" style="margin-top:6px">
-        <span>${history.length ? history[history.length-1].date.slice(5) : '—'}</span>
-        <span>сегодня</span>
-      </div>
-    </div>
-    ${buildFoodSection(foodLogs, goals)}
-    ${buildWaterTracker(waterGlasses)}
-    <div class="card" style="margin-bottom:10px">
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
-        <span class="cal-month-lbl" id="cal-month-lbl"></span>
-        <button class="cal-nav-btn" onclick="calChangeMonth(1)">›</button>
-      </div>
-      <div class="cal-wd-row">
-        ${['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div class="cal-wd">${d}</div>`).join('')}
-      </div>
-      <div id="cal-grid-wrap"></div>
-      <div class="cal-legend">
-        <span class="cal-leg-lbl">Меньше</span>
-        ${['c0','c1','c2','c3','c4','c5'].map(c=>`<div class="cal-leg-dot ${c}"></div>`).join('')}
-        <span class="cal-leg-lbl">Больше</span>
-      </div>
-      <div id="cal-day-detail"></div>
-    </div>
-    <div class="card" style="margin-bottom:10px" id="reminder-card">
-      <span class="label">Напоминание о курсе</span>
-      <div style="font-size:13px;margin:10px 0 12px;color:var(--muted)">Напомнить принять добавки каждый день</div>
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <input type="time" id="rem-time" value="09:00"
-               style="padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="toggle-wrap" onclick="toggleReminder(this)">
-            <div class="toggle-track" id="rem-track"></div>
-            <div class="toggle-thumb" id="rem-thumb"></div>
-          </div>
-          <span id="rem-lbl" style="font-size:13px;color:var(--muted)">Выкл</span>
-        </div>
-        <button class="btn" style="padding:8px 18px;font-size:13px" onclick="saveReminder()">Сохранить</button>
-      </div>
-    </div>
-    <div class="card" style="cursor:pointer;padding:18px" onclick="showScreen('ai')">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),var(--green2));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✦</div>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:3px">Биа</div>
-          <div style="font-size:12px;color:var(--muted)">Личный архитектор здоровья →</div>
-        </div>
-      </div>
-    </div>
+    ${buildGlassesTracker(waterGlassesCurrent)}
+    ${buildKBJURings(foodLogs, goals)}
+    ${buildMealLog(foodLogs, goals)}
   `;
-  await initCalendar();
-  await loadReminderSettings();
 }
 
 function buildCheckinFormHtml(initVal) {
@@ -2547,8 +2594,9 @@ async function compressImage(file, maxWidth = 800) {
 let waterGlassesCurrent = 0;
 const WATER_GOAL = 8;
 
+// legacy SVG helpers kept for backward compat
 const WATER_R = 70;
-const WATER_C = +(2 * Math.PI * WATER_R).toFixed(2); // 439.82
+const WATER_C = +(2 * Math.PI * WATER_R).toFixed(2);
 
 function _waterRingSVG(glasses) {
   const offset = +(WATER_C * (1 - glasses / WATER_GOAL)).toFixed(2);
@@ -2658,6 +2706,221 @@ async function saveGoals() {
     await api("POST", "/api/diary/goals", { calories: cal, protein: p, fat: f, carbs: c });
     document.getElementById("goals-modal")?.remove();
     toast("Цели сохранены");
+    await loadDiary();
+  } catch(e) { toast("Ошибка: " + e.message); }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ДНЕВНИК — НОВЫЙ ДИЗАЙН
+// ══════════════════════════════════════════════════════════════════════════
+
+const DAYS_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const FOOD_EMOJIS = ['🍳','🥗','🍜','🥩','🍱','🥙','🍕','🥣','🍎','🥪'];
+
+function buildCalendarStrip(selectedDate) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = -3; i <= 3; i++) {
+    const d = new Date(today); d.setDate(d.getDate() + i); days.push(d);
+  }
+  const html = days.map(d => {
+    const ds = d.toISOString().split("T")[0];
+    const active = ds === selectedDate ? " active" : "";
+    return `<button class="diary-cal-day${active}" onclick="switchDiaryDate('${ds}')">
+      <span class="diary-cal-dow">${DAYS_RU[d.getDay()]}</span>
+      <span class="diary-cal-num">${d.getDate()}</span>
+    </button>`;
+  }).join("");
+  return `<div class="diary-cal-strip">${html}</div>`;
+}
+
+async function switchDiaryDate(dateStr) {
+  diarySelectedDate = dateStr;
+  await loadDiary();
+}
+
+function buildGlassesTracker(glasses) {
+  const btns = Array.from({length: 8}, (_, i) => {
+    const filled = i < glasses ? " filled" : "";
+    return `<button class="diary-glass${filled}" id="dg${i}" onclick="clickGlass(${i})">💧</button>`;
+  }).join("");
+  return `
+    <div class="diary-section">
+      <div class="diary-section-head">
+        <span class="diary-section-title">💧 Вода</span>
+        <span class="diary-section-sub" id="water-glasses-lbl">${glasses} из 8</span>
+      </div>
+      <div class="diary-glasses-row">${btns}</div>
+    </div>`;
+}
+
+function clickGlass(i) {
+  const next = (i + 1 === waterGlassesCurrent) ? i : i + 1;
+  setWaterAmount(next);
+}
+
+async function setWaterAmount(n) {
+  waterGlassesCurrent = n;
+  for (let i = 0; i < 8; i++) {
+    const btn = document.getElementById("dg" + i);
+    if (btn) { if (i < n) btn.classList.add("filled"); else btn.classList.remove("filled"); }
+  }
+  const lbl = document.getElementById("water-glasses-lbl");
+  if (lbl) lbl.textContent = `${n} из 8`;
+  try { await api("POST", "/api/diary/water/set", { glasses: n }); } catch(e) {}
+}
+
+function buildKBJURings(logs, goals) {
+  const t = logs.reduce((a, l) => ({
+    cal: a.cal + (l.calories || 0),
+    p:   a.p   + (l.protein  || 0),
+    f:   a.f   + (l.fat      || 0),
+    c:   a.c   + (l.carbs    || 0),
+  }), { cal: 0, p: 0, f: 0, c: 0 });
+
+  const rings = [
+    { label: 'Ккал',  val: Math.round(t.cal), goal: goals.calories, color: '#4CAF50' },
+    { label: 'Белки', val: Math.round(t.p),   goal: goals.protein,  color: '#5b8ee6' },
+    { label: 'Жиры',  val: Math.round(t.f),   goal: goals.fat,      color: '#e68a3f' },
+    { label: 'Углев', val: Math.round(t.c),   goal: goals.carbs,    color: '#9b6fe6' },
+  ];
+  const R = 26, SZ = 64, C = +(2 * Math.PI * R).toFixed(2);
+  const ringsHtml = rings.map(r => {
+    const pct = r.goal > 0 ? Math.min(1, r.val / r.goal) : 0;
+    const offset = +(C * (1 - pct)).toFixed(2);
+    return `
+      <div class="diary-ring-wrap">
+        <div class="diary-ring-svg-wrap">
+          <svg viewBox="0 0 ${SZ} ${SZ}" width="${SZ}" height="${SZ}">
+            <circle cx="32" cy="32" r="${R}" fill="none" stroke="var(--border)" stroke-width="5"/>
+            <circle cx="32" cy="32" r="${R}" fill="none" stroke="${r.color}" stroke-width="5"
+                    stroke-dasharray="${C}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+          </svg>
+          <div class="diary-ring-center">
+            <div class="diary-ring-val">${r.val}</div>
+          </div>
+        </div>
+        <div class="diary-ring-lbl">${r.label}</div>
+      </div>`;
+  }).join("");
+  return `
+    <div class="diary-section">
+      <div class="diary-section-head">
+        <span class="diary-section-title">🍽 КБЖУ</span>
+        <button style="background:none;border:none;color:var(--green2);font-size:12px;font-weight:600;cursor:pointer"
+                onclick="openGoalsModal(${goals.calories},${goals.protein},${goals.fat},${goals.carbs})">Изменить цели</button>
+      </div>
+      <div class="diary-kbju-rings">${ringsHtml}</div>
+    </div>`;
+}
+
+function buildMealLog(logs, goals) {
+  const cardsHtml = logs.map((l, i) => {
+    const emoji = FOOD_EMOJIS[i % FOOD_EMOJIS.length];
+    return `
+      <div class="diary-food-card">
+        <div class="diary-food-emoji">${emoji}</div>
+        <div class="diary-food-info">
+          <div class="diary-food-name">${l.food_name}</div>
+          <div><span class="diary-food-badge">✦ AI: ${l.calories} ккал</span></div>
+          <div class="diary-food-macros">Б ${l.protein}г · Ж ${l.fat}г · У ${l.carbs}г</div>
+        </div>
+        <button class="diary-food-del" onclick="deleteFoodLog(${l.id})">×</button>
+      </div>`;
+  }).join("");
+  return `
+    <div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:Fraunces,serif;font-size:17px;font-weight:600">Приёмы пищи</div>
+      </div>
+      ${cardsHtml}
+      <button class="diary-add-photo-btn" onclick="openPhotoModal()">
+        <span>📷</span><span>Добавить фото еды</span>
+      </button>
+    </div>`;
+}
+
+function openPhotoModal() {
+  document.getElementById("photo-modal")?.remove();
+  const overlay = document.createElement("div");
+  overlay.id = "photo-modal";
+  overlay.className = "photo-modal-overlay";
+  overlay.innerHTML = `
+    <div class="photo-modal-sheet">
+      <div class="photo-modal-handle"></div>
+      <div class="photo-modal-head">
+        <span class="photo-modal-title">Что ел?</span>
+        <button class="photo-modal-close" onclick="closePhotoModal()">×</button>
+      </div>
+      <div id="photo-modal-body">
+        <input type="file" id="modal-food-input" accept="image/*" capture="environment"
+               style="display:none" onchange="onModalFoodPhoto(this)">
+        <input type="file" id="modal-gallery-input" accept="image/*"
+               style="display:none" onchange="onModalFoodPhoto(this)">
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <button class="food-cam-btn" style="flex:1" onclick="document.getElementById('modal-food-input').click()">
+            📷 Камера
+          </button>
+          <button class="food-cam-btn" style="flex:1" onclick="document.getElementById('modal-gallery-input').click()">
+            🖼 Галерея
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("click", e => { if (e.target === overlay) closePhotoModal(); });
+}
+
+function closePhotoModal() {
+  document.getElementById("photo-modal")?.remove();
+  foodPending = null;
+}
+
+async function onModalFoodPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const body = document.getElementById("photo-modal-body");
+  if (!body) return;
+  const objUrl = URL.createObjectURL(file);
+  body.innerHTML = `
+    <img src="${objUrl}" style="width:100%;border-radius:1rem;margin-bottom:12px;max-height:200px;object-fit:cover">
+    <div style="text-align:center;padding:12px;color:var(--muted);font-size:13px">Определяю блюдо...</div>`;
+  try {
+    const b64 = await compressImage(file);
+    const data = await api("POST", "/api/diary/food/analyze", { image_b64: b64 });
+    foodPending = data;
+    body.innerHTML = `
+      <img src="${objUrl}" style="width:100%;border-radius:1rem;margin-bottom:12px;max-height:200px;object-fit:cover">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">${data.food}</div>
+      <div class="kbju-row" style="margin-bottom:14px">
+        <div class="kbju-item"><div class="kbju-val">${data.calories}</div><div class="kbju-lbl">ккал</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.protein}г</div><div class="kbju-lbl">белки</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.fat}г</div><div class="kbju-lbl">жиры</div></div>
+        <div class="kbju-item"><div class="kbju-val">${data.carbs}г</div><div class="kbju-lbl">углев.</div></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="flex:1" onclick="saveModalFood()">Сохранить</button>
+        <button class="btn" style="flex:0 0 auto;background:var(--card);color:var(--text);border:1px solid var(--border)"
+                onclick="closePhotoModal()">Отмена</button>
+      </div>`;
+  } catch(e) {
+    body.innerHTML += `<div style="color:var(--muted);font-size:12px;padding:8px 0">Ошибка: ${e.message}</div>`;
+  }
+}
+
+async function saveModalFood() {
+  if (!foodPending) return;
+  try {
+    await api("POST", "/api/diary/food/save", {
+      food_name: foodPending.food,
+      calories:  foodPending.calories,
+      protein:   foodPending.protein,
+      fat:       foodPending.fat,
+      carbs:     foodPending.carbs,
+    });
+    foodPending = null;
+    closePhotoModal();
+    toast("Сохранено");
     await loadDiary();
   } catch(e) { toast("Ошибка: " + e.message); }
 }
