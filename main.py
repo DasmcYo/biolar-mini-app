@@ -1003,8 +1003,8 @@ async def manifest(t: str = ""):
     start_url = f"/?t={t}" if t else "/"
     return JSONResponse(
         content={
-            "name": "Biolar — твой нутрициолог",
-            "short_name": "Biolar",
+            "name": "Архитектура Здоровья",
+            "short_name": "Архитектура Здоровья",
             "description": "Персональный AI-нутрициолог и трекер добавок",
             "start_url": start_url,
             "scope": "/",
