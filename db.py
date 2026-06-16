@@ -569,7 +569,7 @@ async def log_food(user_id: int, date: str, food_name: str,
 
 async def get_food_logs(user_id: int, date: str) -> list[dict]:
     return _dicts(await _q(
-        "SELECT id, food_name, calories, protein, fat, carbs FROM food_logs "
+        "SELECT id, food_name, calories, protein, fat, carbs, logged_at FROM food_logs "
         "WHERE user_id=? AND date=? ORDER BY logged_at",
         [user_id, date],
     ))

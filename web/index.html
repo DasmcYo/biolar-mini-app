@@ -1886,15 +1886,11 @@ async function loadDiary() {
   const screen = document.getElementById("screen-diary");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const [wellData, foodData, waterData, goalsData] = await Promise.all([
-    api("GET", "/api/wellness"),
+  const [foodData, waterData, goalsData] = await Promise.all([
     api("GET", `/api/diary/food?date=${diarySelectedDate}`),
     api("GET", "/api/diary/water"),
     api("GET", "/api/diary/goals"),
   ]);
-  const today = wellData.today;
-  const checkinHtml = (today && !diaryForceEdit) ? buildCheckinDone(today) : buildCheckinFormHtml();
-  diaryForceEdit = false;
 
   const foodLogs = foodData.logs || [];
   waterGlassesCurrent = waterData.glasses || 0;
@@ -1906,7 +1902,6 @@ async function loadDiary() {
       <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой день</div>
     </header>
     ${buildCalendarStrip(diarySelectedDate)}
-    ${checkinHtml}
     ${buildGlassesTracker(waterGlassesCurrent)}
     ${buildKBJURings(foodLogs, goals)}
     ${buildMealLog(foodLogs, goals)}
@@ -2810,13 +2805,15 @@ function buildKBJURings(logs, goals) {
 }
 
 function buildMealLog(logs, goals) {
-  const cardsHtml = logs.map((l, i) => {
-    const emoji = FOOD_EMOJIS[i % FOOD_EMOJIS.length];
+  const cardsHtml = logs.map(l => {
+    const timeStr = l.logged_at ? l.logged_at.slice(11, 16) : "";
     return `
       <div class="diary-food-card">
-        <div class="diary-food-emoji">${emoji}</div>
         <div class="diary-food-info">
-          <div class="diary-food-name">${l.food_name}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div class="diary-food-name">${l.food_name}</div>
+            ${timeStr ? `<div style="font-size:11px;color:var(--muted);flex-shrink:0">${timeStr}</div>` : ""}
+          </div>
           <div><span class="diary-food-badge">✦ AI: ${l.calories} ккал</span></div>
           <div class="diary-food-macros">Б ${l.protein}г · Ж ${l.fat}г · У ${l.carbs}г</div>
         </div>
