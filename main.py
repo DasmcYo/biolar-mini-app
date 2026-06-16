@@ -317,6 +317,7 @@ async def home_data(request: Request):
         "course_days": course_days,
         "global_streak": streak,
         "ref_count": ref_count,
+        "first_name": (user or {}).get("first_name") or tg.get("first_name") or "",
     }
 
 

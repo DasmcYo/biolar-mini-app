@@ -1325,7 +1325,7 @@ async function loadHome() {
     api("GET", "/api/articles"),
   ]);
   CONTENT_CARDS = articlesData.articles || [];
-  const name       = user.first_name || "";
+  const name       = data.first_name || user?.first_name || "";
   const streak     = data.global_streak || 0;
   const courseDays = data.course_days  || 0;
   const refCount   = data.ref_count    || 0;
