@@ -356,6 +356,14 @@ async def get_today_logs(user_id: int) -> list[str]:
     return [r["product_id"] for r in _dicts(result)]
 
 
+async def get_product_days_taken(user_id: int, product_id: str) -> int:
+    result = await _q(
+        "SELECT COUNT(DISTINCT logged_at) as cnt FROM tracker_logs WHERE user_id=? AND product_id=?",
+        [user_id, product_id],
+    )
+    return _dicts(result)[0]["cnt"]
+
+
 # ── Giveaway ──────────────────────────────────────────────────────────────────
 
 async def join_giveaway(user_id: int) -> bool:

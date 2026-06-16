@@ -179,6 +179,85 @@ tailwind.config = {
   }
   .theme-toggle:active { transform: scale(.9); }
 
+  /* ══ ПРОГРАММА ══════════════════════════════════════════════════════════════ */
+  .prog-card {
+    background: var(--card);
+    border-radius: 2rem;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    margin-bottom: 10px;
+  }
+  .prog-card-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .prog-card-emoji {
+    width: 44px; height: 44px; border-radius: 1.25rem;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .prog-card-info { flex: 1; min-width: 0; }
+  .prog-card-name {
+    font-size: 14px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .prog-card-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .prog-ring-wrap {
+    flex-shrink: 0; position: relative; width: 56px; height: 56px;
+  }
+  .prog-ring-wrap svg {
+    display: block;
+    transform: rotate(-90deg);
+  }
+  .prog-ring-label {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .prog-ring-days {
+    font-size: 13px; font-weight: 700; color: var(--text); line-height: 1;
+  }
+  .prog-ring-of { font-size: 9px; color: var(--muted); line-height: 1.4; }
+  .prog-delete {
+    background: none; border: none; color: var(--muted);
+    font-size: 20px; cursor: pointer; padding: 4px;
+    line-height: 1; flex-shrink: 0; margin-left: 2px;
+  }
+  .prog-daily-bar {
+    background: var(--secondary);
+    border-radius: 1.25rem;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .prog-dots { display: flex; gap: 8px; align-items: center; }
+  .prog-dot {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--card);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700;
+    color: transparent;
+    transition: background .2s, border-color .2s, color .2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .prog-dot.taken {
+    background: var(--accent); border-color: var(--green2);
+    color: var(--accent-fg);
+  }
+  .prog-dot-lbl {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    margin-left: auto;
+  }
+  .prog-dot-lbl.done { color: var(--green2); }
+  @keyframes dotPop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    100% { transform: scale(1); }
+  }
+  .prog-dot.popping { animation: dotPop .28s ease; }
+
   /* ══ ГЛАВНАЯ ════════════════════════════════════════════════════════════════ */
 
   .home-greeting { margin-bottom: 16px; padding: 6px 0 0; }
@@ -813,7 +892,7 @@ tailwind.config = {
         <line x1="4" y1="6" x2="4" y2="6" stroke-width="3"/><line x1="4" y1="12" x2="4" y2="12" stroke-width="3"/><line x1="4" y1="18" x2="4" y2="18" stroke-width="3"/>
       </svg>
     </span>
-    <span class="nav-label">Курс</span>
+    <span class="nav-label">Программа</span>
   </button>
   <button class="nav-btn" onclick="showScreen('diary')" id="nav-diary">
     <span class="nav-icon">
@@ -1249,72 +1328,87 @@ async function loadProgram() {
   const screen = document.getElementById("screen-program");
   screen.innerHTML = '<div class="spinner"></div>';
 
-  const [trackerData, homeData] = await Promise.all([
-    api("GET", "/api/tracker"),
-    api("GET", "/api/home"),
-  ]);
-  const products   = trackerData.products || [];
-  const today_logs = await api("GET", "/api/tracker").then(() =>
-    homeData.products.filter(p => p.taken_today).map(p => p.product_id)
-  );
-  const courseDays = homeData.course_days || 0;
-  const pct = Math.min(Math.round((courseDays / 30) * 100), 100);
+  const trackerData = await api("GET", "/api/tracker");
+  const products = trackerData.products || [];
 
-  let courseBanner = "";
-  if (courseDays > 0 || products.length > 0) {
-    courseBanner = `
-      <div style="background:#fff;border-radius:2.75rem;padding:20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div>
-            <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:3px">Твоя программа</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:600">${pct}% сегодня</div>
-          </div>
-          <div style="width:52px;height:52px;border-radius:1.25rem;background:var(--accent);display:flex;align-items:center;justify-content:center">
-            <span style="font-family:'DM Serif Display',serif;font-size:16px;font-weight:700;color:var(--accent-fg)">${products.filter(p=>(homeData.products||[]).find(hp=>hp.product_id===p.product_id&&hp.taken_today)).length}/${products.length}</span>
-          </div>
-        </div>
+  // Summary banner
+  const takenCount = products.filter(p => p.taken_today).length;
+  let banner = "";
+  if (products.length > 0) {
+    const pct = Math.round((takenCount / products.length) * 100);
+    banner = `
+      <div class="prog-card" style="margin-bottom:16px">
+        <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Сегодня</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:22px;font-weight:600;margin-bottom:10px">${takenCount} из ${products.length} принято</div>
         <div style="height:6px;background:var(--secondary);border-radius:99px;overflow:hidden">
           <div style="height:100%;width:${pct}%;background:var(--green2);border-radius:99px;transition:width .5s"></div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">${courseDays} из 30 дней курса${courseDays >= 30 ? " — завершён!" : ""}</div>
       </div>`;
   }
 
-  let courseList = "";
-  if (products.length) {
-    const today = homeData.products || [];
-    const todayMap = Object.fromEntries(today.map(p => [p.product_id, p.taken_today]));
-    courseList = `
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        ${products.map(p => {
-          const done = todayMap[p.product_id] || false;
-          return `
-            <div id="tracker-${p.product_id}" style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:2.75rem;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">
-              <div style="width:44px;height:44px;border-radius:1.25rem;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <span style="font-family:'DM Serif Display',serif;font-size:16px;font-weight:700;color:var(--accent-fg)">${p.product_name.charAt(0)}</span>
-              </div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.product_name}</div>
-                <div class="course-streak" id="streak-${p.product_id}" style="font-size:12px;color:var(--muted);margin-top:1px">Добавлено в курс</div>
-              </div>
-              <button onclick="logIntake('${p.product_id}', this)" class="course-check ${done ? 'done' : ''}"
-                style="flex-shrink:0;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;${done ? 'background:var(--accent);color:var(--accent-fg)' : 'background:var(--green2);color:#fff'}">
-                ${done ? "✓ Принял" : "Принял"}
-              </button>
-              <button onclick="removeProduct('${p.product_id}')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
-            </div>`;
-        }).join("")}
+  // Helper: SVG progress ring
+  function buildRing(pid, daysTaken, durationDays) {
+    const r = 22, circ = +(2 * Math.PI * r).toFixed(2);
+    const offset = +(circ * (1 - Math.min(daysTaken / Math.max(durationDays, 1), 1))).toFixed(2);
+    return `
+      <div class="prog-ring-wrap">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle cx="28" cy="28" r="${r}" fill="none" stroke="var(--secondary)" stroke-width="4"/>
+          <circle id="ring-${pid}" cx="28" cy="28" r="${r}" fill="none" stroke="var(--green2)" stroke-width="4"
+            stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
+            stroke-linecap="round"
+            style="transition:stroke-dashoffset .8s ease"/>
+        </svg>
+        <div class="prog-ring-label">
+          <span id="ring-days-${pid}" class="prog-ring-days">${daysTaken}</span>
+          <span class="prog-ring-of">из ${durationDays}</span>
+        </div>
       </div>`;
   }
+
+  // Helper: daily dose dots
+  function buildDots(pid, dailyDose, taken) {
+    const dots = Array.from({length: dailyDose}, () =>
+      `<div class="prog-dot ${taken ? 'taken' : ''}" onclick="tapDot('${pid}', this)">${taken ? '✓' : ''}</div>`
+    ).join('');
+    return `
+      <div class="prog-daily-bar">
+        <div class="prog-dots">${dots}</div>
+        <span class="prog-dot-lbl ${taken ? 'done' : ''}">${taken ? 'Принято' : 'Отметить приём'}</span>
+      </div>`;
+  }
+
+  // Product cards
+  const cards = products.map(p => {
+    const daysTaken   = p.days_taken   || 0;
+    const duration    = p.duration_days || 30;
+    const dailyDose   = p.daily_dose   || 1;
+    const taken       = p.taken_today  || false;
+    const emoji = (CATALOG.find(c => c.id === p.product_id) || {}).emoji || '💊';
+    return `
+      <div id="tracker-${p.product_id}" class="prog-card"
+           data-days-taken="${daysTaken}" data-duration="${duration}" data-dose="${dailyDose}">
+        <div class="prog-card-top">
+          <div class="prog-card-emoji">${emoji}</div>
+          <div class="prog-card-info">
+            <div class="prog-card-name">${p.product_name}</div>
+            <div class="prog-card-meta">День ${daysTaken} · курс ${duration} дней</div>
+          </div>
+          ${buildRing(p.product_id, daysTaken, duration)}
+          <button onclick="removeProduct('${p.product_id}')" class="prog-delete">×</button>
+        </div>
+        ${buildDots(p.product_id, dailyDose, taken)}
+      </div>`;
+  }).join('');
 
   screen.innerHTML = `
     <header style="padding:24px 0 8px">
-      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Твоя программа</div>
-      <div style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Трекер добавок</div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Biolar</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Программа</div>
     </header>
-    ${courseBanner}
-    ${courseList}
-    <button onclick="openCatalogSheet()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:2.75rem;border:2px dashed var(--border);background:rgba(255,255,255,0.5);padding:18px;font-size:14px;font-weight:600;color:var(--green2);cursor:pointer;margin-bottom:12px">
+    ${banner}
+    ${cards}
+    <button onclick="openCatalogSheet()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:2.75rem;border:2px dashed var(--border);background:rgba(255,255,255,0.5);padding:18px;font-size:14px;font-weight:600;color:var(--green2);cursor:pointer;margin-bottom:12px;margin-top:4px">
       + Добавить продукт из каталога
     </button>
     <button class="btn outline" onclick="startQuiz()" style="width:100%;border-radius:2.75rem">
@@ -1570,18 +1664,47 @@ async function addToTracker(productId) {
   toast("Добавлено в курс");
 }
 
-async function logIntake(productId, btn) {
-  if (btn.classList.contains("done")) { toast("Уже отмечено сегодня"); return; }
+async function tapDot(productId, dot) {
+  const bar = dot.closest('.prog-daily-bar');
+  const dots = [...bar.querySelectorAll('.prog-dot')];
+  if (dots[0].classList.contains('taken')) { toast("Уже отмечено сегодня"); return; }
+
+  // Stagger-fill all dots with animation
+  dots.forEach((d, i) => {
+    setTimeout(() => {
+      d.classList.add('taken', 'popping');
+      d.textContent = '✓';
+      setTimeout(() => d.classList.remove('popping'), 300);
+    }, i * 110);
+  });
+
+  // Update label
+  const lbl = bar.querySelector('.prog-dot-lbl');
+  setTimeout(() => {
+    if (lbl) { lbl.textContent = 'Принято'; lbl.classList.add('done'); }
+  }, dots.length * 110);
+
+  // API call
   const data = await api("POST", "/api/tracker/log", { product_id: productId });
-  if (data.already_taken) { toast("Уже отмечено сегодня"); return; }
-  btn.classList.add("done");
-  btn.textContent = "✓ Принял";
-  btn.style.background = "var(--accent)";
-  btn.style.color = "var(--accent-fg)";
-  const s = data.streak;
-  const streakEl = document.getElementById("streak-" + productId);
-  if (streakEl) streakEl.textContent = `${s} ${s===1?'день':s<5?'дня':'дней'} подряд`;
-  toast("Отмечено");
+  if (data.already_taken) return;
+
+  toast("✓ Принято");
+
+  // Update ring in-place (increment days_taken by 1)
+  const card = document.getElementById('tracker-' + productId);
+  if (!card) return;
+  const daysTaken = (parseInt(card.dataset.daysTaken) || 0) + 1;
+  const duration  = parseInt(card.dataset.duration) || 30;
+  card.dataset.daysTaken = daysTaken;
+
+  const r = 22, circ = +(2 * Math.PI * r).toFixed(2);
+  const offset = +(circ * (1 - Math.min(daysTaken / duration, 1))).toFixed(2);
+  const ring = document.getElementById('ring-' + productId);
+  if (ring) ring.setAttribute('stroke-dashoffset', offset);
+  const daysEl = document.getElementById('ring-days-' + productId);
+  if (daysEl) daysEl.textContent = daysTaken;
+  const meta = card.querySelector('.prog-card-meta');
+  if (meta) meta.textContent = `День ${daysTaken} · курс ${duration} дней`;
 }
 
 async function removeProduct(productId) {

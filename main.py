@@ -728,7 +728,16 @@ async def tracker_get(request: Request):
     result = []
     for p in products:
         streak = await db.get_streak(tg["id"], p["product_id"])
-        result.append({**p, "streak": streak, "taken_today": p["product_id"] in today_logs})
+        days_taken = await db.get_product_days_taken(tg["id"], p["product_id"])
+        catalog_p = PRODUCTS.get(p["product_id"], {})
+        result.append({
+            **p,
+            "streak": streak,
+            "taken_today": p["product_id"] in today_logs,
+            "days_taken": days_taken,
+            "duration_days": catalog_p.get("duration_days", 30),
+            "daily_dose": catalog_p.get("daily_dose", 1),
+        })
     return {"products": result}
 
 
