@@ -1929,9 +1929,13 @@ async function loadDiary() {
     ${buildKBJURings(foodLogs, goals)}
     ${buildMealLog(foodLogs, goals)}
   `);
-  setTimeout(() => {
-    document.querySelector(".diary-cal-day.active")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
-  }, 0);
+  requestAnimationFrame(() => {
+    const strip = document.querySelector(".diary-cal-strip");
+    const active = strip?.querySelector(".diary-cal-day.active");
+    if (strip && active) {
+      strip.scrollLeft = active.offsetLeft - strip.offsetWidth / 2 + active.offsetWidth / 2;
+    }
+  });
 }
 
 function buildCheckinFormHtml(initVal) {
