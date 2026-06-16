@@ -2132,9 +2132,6 @@ function loadAI() {
   aiLoaded = true;
 
   const isNew = !window.userHasProducts && !localStorage.getItem("biolar_onboarding_done");
-  const suggestHtml = isNew ? "" : AI_SUGGESTIONS.map(s =>
-    `<div class="chat-sug" onclick="sendAI(this.textContent)">${escAI(s)}</div>`
-  ).join("");
 
   screen.innerHTML = `
     <div style="flex-shrink:0;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.85);backdrop-filter:blur(12px);padding:12px 0 14px;margin:-20px -16px 16px;padding-left:16px;padding-right:16px">
@@ -2152,7 +2149,6 @@ function loadAI() {
     <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px;display:flex;flex-direction:column;gap:14px">
       <div class="msg bot"><div class="msg-bubble">Привет! Я Биа — твой личный нутрициолог. Помогу разобраться с дефицитами, подобрать протокол и ответить на любой вопрос про здоровье.</div></div>
     </div>
-    ${suggestHtml ? `<div id="ai-sugs" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;flex-shrink:0">${suggestHtml}</div>` : ""}
     <div style="flex-shrink:0;border-top:1px solid var(--border);background:#fff;margin:0 -16px;padding:10px 16px 8px">
       <div style="display:flex;align-items:center;gap:8px">
         <input style="flex:1;height:44px;border-radius:99px;border:1.5px solid var(--border);background:rgba(233,228,218,0.5);padding:0 18px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--text)" id="ai-input" placeholder="Спроси Биа..." type="text">
