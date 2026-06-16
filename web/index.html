@@ -310,6 +310,15 @@ tailwind.config = {
     -webkit-tap-highlight-color: transparent;
   }
   .diary-glass.filled { background: rgba(91,184,240,.2); border-color: #5bb8f0; }
+  .diary-water-done {
+    margin-top: 12px; border-radius: 1.25rem; padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(91,184,240,.18), rgba(91,184,240,.08));
+    border: 1px solid rgba(91,184,240,.35);
+    display: flex; align-items: center; gap: 10px; animation: waterDone .4s ease;
+  }
+  @keyframes waterDone { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .diary-water-done-icon { font-size: 22px; }
+  .diary-water-done-text { font-size: 13px; font-weight: 600; color: #2b8cbe; }
 
   /* КБЖУ rings */
   .diary-kbju-rings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -1896,9 +1905,13 @@ async function loadDiary() {
   waterGlassesCurrent = waterData.glasses || 0;
   const goals = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
 
+  const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const _now = new Date();
+  const _dateLabel = `${_now.getDate()} ${MONTHS_RU[_now.getMonth()]}`;
+
   screen.innerHTML = `
     <header style="padding:24px 0 8px">
-      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Дневник</div>
+      <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">${_dateLabel}</div>
       <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой день</div>
     </header>
     ${buildCalendarStrip(diarySelectedDate)}
@@ -2172,8 +2185,10 @@ async function initAIChat(isNew) {
       messages.forEach(m => {
         if (m.content === "__onboarding_start__") return;
         const role = m.role === "assistant" ? "bot" : "user";
+        const clean = m.content.replace(/\[?PRODUCTS:[^\]\n\[]+\]?/gi, "").trim();
+        if (!clean) return;
         msgs.insertAdjacentHTML("beforeend",
-          `<div class="msg ${role}"><div class="msg-bubble">${escAI(m.content)}</div></div>`
+          `<div class="msg ${role}"><div class="msg-bubble">${escAI(clean)}</div></div>`
         );
       });
       msgs.scrollTop = msgs.scrollHeight;
@@ -2734,13 +2749,19 @@ function buildGlassesTracker(glasses) {
     const filled = i < glasses ? " filled" : "";
     return `<button class="diary-glass${filled}" id="dg${i}" onclick="clickGlass(${i})">💧</button>`;
   }).join("");
+  const doneBanner = glasses >= 8 ? `
+    <div class="diary-water-done" id="water-done-wrap">
+      <span class="diary-water-done-icon">💧</span>
+      <span class="diary-water-done-text">Водный баланс восстановлен</span>
+    </div>` : "";
   return `
-    <div class="diary-section">
+    <div class="diary-section" id="water-section">
       <div class="diary-section-head">
         <span class="diary-section-title">💧 Вода</span>
         <span class="diary-section-sub" id="water-glasses-lbl">${glasses} из 8</span>
       </div>
-      <div class="diary-glasses-row">${btns}</div>
+      <div class="diary-glasses-row" id="water-glasses-row">${btns}</div>
+      ${doneBanner}
     </div>`;
 }
 
@@ -2757,6 +2778,27 @@ async function setWaterAmount(n) {
   }
   const lbl = document.getElementById("water-glasses-lbl");
   if (lbl) lbl.textContent = `${n} из 8`;
+
+  if (n >= 8) {
+    const row = document.getElementById("water-glasses-row");
+    if (row) { row.querySelectorAll(".diary-glass").forEach(b => b.disabled = true); }
+    const wrap = document.getElementById("water-done-wrap");
+    if (!wrap) {
+      const section = document.getElementById("water-section");
+      if (section) {
+        section.insertAdjacentHTML("beforeend", `
+          <div class="diary-water-done" id="water-done-wrap">
+            <span class="diary-water-done-icon">💧</span>
+            <span class="diary-water-done-text">Водный баланс восстановлен</span>
+          </div>`);
+      }
+    }
+  } else {
+    document.getElementById("water-done-wrap")?.remove();
+    const row = document.getElementById("water-glasses-row");
+    if (row) { row.querySelectorAll(".diary-glass").forEach(b => b.disabled = false); }
+  }
+
   try { await api("POST", "/api/diary/water/set", { glasses: n }); } catch(e) {}
 }
 
@@ -2769,10 +2811,10 @@ function buildKBJURings(logs, goals) {
   }), { cal: 0, p: 0, f: 0, c: 0 });
 
   const rings = [
-    { label: 'Ккал',  val: Math.round(t.cal), goal: goals.calories, color: '#4CAF50' },
-    { label: 'Белки', val: Math.round(t.p),   goal: goals.protein,  color: '#5b8ee6' },
-    { label: 'Жиры',  val: Math.round(t.f),   goal: goals.fat,      color: '#e68a3f' },
-    { label: 'Углев', val: Math.round(t.c),   goal: goals.carbs,    color: '#9b6fe6' },
+    { label: 'Ккал',  val: Math.round(t.cal), goal: goals.calories, color: '#4CAF50', unit: '' },
+    { label: 'Белки', val: Math.round(t.p),   goal: goals.protein,  color: '#5b8ee6', unit: 'г' },
+    { label: 'Жиры',  val: Math.round(t.f),   goal: goals.fat,      color: '#e68a3f', unit: 'г' },
+    { label: 'Углев', val: Math.round(t.c),   goal: goals.carbs,    color: '#9b6fe6', unit: 'г' },
   ];
   const R = 26, SZ = 64, C = +(2 * Math.PI * R).toFixed(2);
   const ringsHtml = rings.map(r => {
@@ -2787,7 +2829,7 @@ function buildKBJURings(logs, goals) {
                     stroke-dasharray="${C}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
           </svg>
           <div class="diary-ring-center">
-            <div class="diary-ring-val">${r.val}</div>
+            <div class="diary-ring-val">${r.val}${r.unit ? `<span style="font-size:9px;font-weight:400">${r.unit}</span>` : ''}</div>
           </div>
         </div>
         <div class="diary-ring-lbl">${r.label}</div>
@@ -2796,7 +2838,7 @@ function buildKBJURings(logs, goals) {
   return `
     <div class="diary-section">
       <div class="diary-section-head">
-        <span class="diary-section-title">🍽 КБЖУ</span>
+        <span class="diary-section-title">КБЖУ</span>
         <button style="background:none;border:none;color:var(--green2);font-size:12px;font-weight:600;cursor:pointer"
                 onclick="openGoalsModal(${goals.calories},${goals.protein},${goals.fat},${goals.carbs})">Изменить цели</button>
       </div>
