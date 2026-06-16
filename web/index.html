@@ -109,16 +109,19 @@ tailwind.config = {
   .nav-btn.active { color: var(--green); }
 
   /* ── SCREENS ── */
-  .screen { display: none; padding: 20px 16px; animation: fadeIn .18s; }
-  .screen.active { display: block; }
+  .screen { display: none; padding: 20px 16px; }
+  .screen.active { display: block; animation: screenIn .22s cubic-bezier(.22,.68,0,1.2); }
   #screen-ai.active {
     display: flex !important;
     flex-direction: column;
     height: calc(100dvh - 88px - env(safe-area-inset-bottom, 0px) - 16px);
     padding-bottom: 0;
     overflow: hidden;
+    animation: screenIn .22s cubic-bezier(.22,.68,0,1.2);
   }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+  @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn   { from { opacity: 0; transform: translateY(4px);  } to { opacity: 1; } }
+  .screen-content { animation: fadeIn .2s ease; }
 
   /* ── PRIMITIVES ── */
   .label {
@@ -1127,13 +1130,12 @@ async function installPWA() {
   const installUrl = token ? `${location.origin}/?t=${token}` : location.origin;
 
   if (isInTelegram) {
-    // Открываем Safari автоматически через Telegram API — не нужно копипастить
     if (token) {
-      tg.openLink(installUrl);
       showInstallModal(
-        'Safari открылся с твоей ссылкой.\n\nНажми Поделиться (квадрат со стрелкой) → "На экран «Домой»"',
+        'Сейчас откроем браузер...\n\nДальше нажми Поделиться (квадрат со стрелкой) → "На экран «Домой»"',
         null
       );
+      setTimeout(() => tg.openLink(installUrl), 3500);
     } else {
       showInstallModal('Подожди секунду, приложение загружается...\n\nПопробуй ещё раз через пару секунд.', null);
     }
@@ -1212,6 +1214,14 @@ function showScreen(name) {
   if (name === "diary")   loadDiary();
   if (name === "ai")      loadAI();
   if (name === "club")    loadClub();
+}
+
+function setScreenHTML(screen, html) {
+  const wrap = document.createElement("div");
+  wrap.className = "screen-content";
+  wrap.innerHTML = html;
+  screen.innerHTML = "";
+  screen.appendChild(wrap);
 }
 
 const urlParams = new URLSearchParams(location.search);
@@ -1434,7 +1444,7 @@ async function loadHome() {
       <button class="content-toggle" onclick="toggleContent(${i}, this)">Читать далее</button>
     </div>`).join("");
 
-  screen.innerHTML = `
+  setScreenHTML(screen, `
     ${greetingHtml}
     ${streakHtml}
     ${courseHtml}
@@ -1442,7 +1452,7 @@ async function loadHome() {
     <div style="height:4px"></div>
     <div class="section-head"><span class="label">Открытия</span></div>
     ${contentHtml}
-  `;
+  `);
 }
 
 function toggleContent(i, btn) {
@@ -1569,7 +1579,7 @@ async function loadProgram() {
       </div>`;
   }).join('');
 
-  screen.innerHTML = `
+  setScreenHTML(screen, `
     <header style="padding:24px 0 8px">
       <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">Biolar</div>
       <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Программа</div>
@@ -1579,7 +1589,7 @@ async function loadProgram() {
     <button onclick="openCatalogSheet()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:2.75rem;border:2px dashed var(--border);background:rgba(255,255,255,0.5);padding:18px;font-size:14px;font-weight:600;color:var(--green2);cursor:pointer;margin-top:4px">
       + Добавить продукт из каталога
     </button>
-  `;
+  `);
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -1909,7 +1919,7 @@ async function loadDiary() {
   const _now = new Date();
   const _dateLabel = `${_now.getDate()} ${MONTHS_RU[_now.getMonth()]}`;
 
-  screen.innerHTML = `
+  setScreenHTML(screen, `
     <header style="padding:24px 0 8px">
       <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--green2);margin-bottom:4px">${_dateLabel}</div>
       <div style="font-family:Fraunces,serif;font-size:28px;font-weight:600;letter-spacing:-.3px">Твой день</div>
@@ -1918,7 +1928,10 @@ async function loadDiary() {
     ${buildGlassesTracker(waterGlassesCurrent)}
     ${buildKBJURings(foodLogs, goals)}
     ${buildMealLog(foodLogs, goals)}
-  `;
+  `);
+  setTimeout(() => {
+    document.querySelector(".diary-cal-day.active")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "auto" });
+  }, 0);
 }
 
 function buildCheckinFormHtml(initVal) {
@@ -2150,7 +2163,7 @@ function loadAI() {
         <div style="font-family:Fraunces,serif;font-size:18px;font-weight:600;line-height:1">Биа</div>
         <div style="display:flex;align-items:center;gap:5px;margin-top:3px">
           <span style="width:6px;height:6px;border-radius:50%;background:var(--green2);display:inline-block"></span>
-          <span style="font-size:11px;color:var(--muted)">AI-нутрициолог · онлайн</span>
+          <span style="font-size:11px;color:var(--muted)">личный архитектор здоровья · онлайн</span>
         </div>
       </div>
     </div>
@@ -3230,7 +3243,7 @@ async function loadClub() {
     </div>`;
 
   // ── Render all ────────────────────────────────────────────────────────
-  screen.innerHTML = `
+  setScreenHTML(screen, `
     <div style="margin-bottom:16px">
       <span class="label" style="margin-bottom:6px">Biolar Club</span>
       <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Твой профиль</div>
@@ -3245,7 +3258,7 @@ async function loadClub() {
     <div style="height:8px"></div>
     ${refHtml}
     <div style="height:8px"></div>
-  `;
+  `);
 }
 
 // ══════════════════════════════════════════════════════════════════════════
