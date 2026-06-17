@@ -72,6 +72,11 @@ async def ask_groq(user_id: int, message: str, system_prompt: str,
         print("GROQ UNEXPECTED:", json.dumps(data, ensure_ascii=False)[:300])
         return "Не смог получить ответ, попробуй ещё раз."
 
+    # Фильтр: убираем CJK и прочие нечитаемые Unicode-блоки
+    import re as _re
+    reply = _re.sub(r"[^ -~ -ÿЀ-ӿ
+	]", "", reply).strip()
+
     if save_user_msg:
         await db.save_ai_message(user_id, first_name, "user", message)
     await db.save_ai_message(user_id, first_name, "assistant", reply)
@@ -693,6 +698,7 @@ async def ai_chat(body: ChatIn, request: Request):
 
 ━━ ФОРМАТИРОВАНИЕ ━━
 Разделяй мысли пустой строкой. Каждый абзац — одна идея, максимум 2-3 предложения. Никаких стен текста.
+Пиши только обычным текстом: никаких **, *, ##, иероглифов, псевдографики и спецсимволов.
 
 ━━ ПРАВИЛО ПРОДУКТОВ ━━
 НЕ рекомендуй продукты Biolar в первых 1-2 сообщениях и не вставляй их в каждый ответ.
