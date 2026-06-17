@@ -678,7 +678,7 @@ async def ai_chat(body: ChatIn, request: Request):
 [PRODUCTS: id1, id2, id3]
 Квадратные скобки обязательны. id — строго из каталога."""
 
-    system = f"""Ты — Биа, персональный нутрициолог Biolar Organics. Говоришь по-русски, тепло и с лёгким юмором — как умный знакомый, который разбирается в здоровье.
+    system = f"""Ты — Доктор Биолар, персональный нутрициолог Biolar Organics. Говоришь по-русски, тепло и с лёгким юмором — как умный знакомый, который разбирается в здоровье.
 
 ━━ ТВОЯ ЭКСПЕРТИЗА ━━
 Питание, нутриенты, витамины, минералы, гормоны, анализы крови, СПКЯ, гипотиреоз, анемия, инсулинорезистентность, щитовидная железа, образ жизни и его влияние на здоровье. Понимаешь русские аббревиатуры: СПКЯ, ИР, ТТГ, Т3/Т4, ЖДА, АМГ, ФСГ, ЛГ, ПТГ и др.
@@ -924,7 +924,7 @@ async def challenge_claim(body: ChallengeClaimIn, request: Request):
     return {"ok": True, "reward": c["reward"], "new_total": new_total}
 
 
-# ── Admin: просмотр чатов с Биа ──────────────────────────────────────────────
+# ── Admin: просмотр чатов с Доктор Биолар ──────────────────────────────────────────────
 
 @app.get("/admin/chats")
 async def admin_chats(key: str = ""):
@@ -945,7 +945,7 @@ async def admin_chats(key: str = ""):
     for uid, u in users.items():
         msgs_html = ""
         for m in u["msgs"]:
-            role_label = "👤 Пользователь" if m["role"] == "user" else "✦ Биа"
+            role_label = "👤 Пользователь" if m["role"] == "user" else "✦ Доктор Биолар"
             color = "#1a3a1c" if m["role"] == "user" else "#4a7c59"
             bg = "#f0f7f0" if m["role"] == "user" else "#ffffff"
             time = m["created_at"][:16] if m["created_at"] else ""
@@ -970,7 +970,7 @@ async def admin_chats(key: str = ""):
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Биа — чаты</title>
+  <title>Доктор Биолар — чаты</title>
   <style>
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{ font-family: -apple-system, Arial, sans-serif; background: #f4f1ec; padding: 24px 16px; }}
@@ -979,7 +979,7 @@ async def admin_chats(key: str = ""):
   </style>
 </head>
 <body>
-  <h1>✦ Чаты с Биа</h1>
+  <h1>✦ Чаты с Доктор Биолар</h1>
   <div class="meta">{unique} пользователей · {total} сообщений всего</div>
   {''.join(blocks) if blocks else '<p style="color:#888">Сообщений пока нет</p>'}
 </body>
