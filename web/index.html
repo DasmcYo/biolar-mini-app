@@ -114,7 +114,7 @@ tailwind.config = {
   #screen-ai.active {
     display: flex !important;
     flex-direction: column;
-    height: calc(100dvh - 88px - env(safe-area-inset-bottom, 0px) - 16px);
+    height: calc(100dvh - 88px - env(safe-area-inset-bottom, 0px) - 20px);
     padding-bottom: 0;
     overflow: hidden;
     animation: screenIn .22s cubic-bezier(.22,.68,0,1.2);
@@ -2174,9 +2174,9 @@ function loadAI() {
     <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px;display:flex;flex-direction:column;gap:14px">
       <div class="msg bot"><div class="msg-bubble">Привет! Я Доктор Биолар — твой личный нутрициолог. Помогу разобраться с дефицитами, подобрать протокол и ответить на любой вопрос про здоровье.</div></div>
     </div>
-    <div style="flex-shrink:0;border-top:1px solid var(--border);background:#fff;margin:0 -16px;padding:10px 16px 8px">
+    <div style="flex-shrink:0;border-top:1px solid var(--border);background:var(--bg);margin:0 -16px 0;padding:10px 16px">
       <div style="display:flex;align-items:center;gap:8px">
-        <input style="flex:1;height:44px;border-radius:99px;border:1.5px solid var(--border);background:rgba(233,228,218,0.5);padding:0 18px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--text)" id="ai-input" placeholder="Спроси Доктор Биолар..." type="text">
+        <input style="flex:1;height:44px;border-radius:99px;border:1.5px solid var(--border);background:rgba(233,228,218,0.5);padding:0 18px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--text)" id="ai-input" placeholder="Спроси Доктора Биолар..." type="text">
         <button onclick="sendAIFromInput()" style="width:44px;height:44px;border-radius:99px;background:var(--green2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
         </button>
