@@ -112,11 +112,8 @@ tailwind.config = {
   .screen { display: none; padding: 20px 16px; }
   .screen.active { display: block; animation: screenIn .22s cubic-bezier(.22,.68,0,1.2); }
   #screen-ai.active {
-    display: flex !important;
-    flex-direction: column;
-    height: calc(100dvh - 88px - env(safe-area-inset-bottom, 0px) - 20px);
-    padding-bottom: 0;
-    overflow: hidden;
+    display: block !important;
+    padding-bottom: 72px;
     animation: screenIn .22s cubic-bezier(.22,.68,0,1.2);
   }
   @keyframes screenIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -2123,11 +2120,11 @@ async function sendChat(text) {
   const msgs = document.getElementById("chat-msgs");
   if (!msgs) return;
   msgs.insertAdjacentHTML("beforeend", `<div class="msg user"><div class="msg-bubble">${text}</div></div>`);
-  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById("screen-ai")?.scrollTo(0, 999999);
 
   const data = await api("POST", "/api/ai/chat", { message: text });
   msgs.insertAdjacentHTML("beforeend", `<div class="msg bot"><div class="msg-bubble">${data.message}</div></div>`);
-  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById("screen-ai")?.scrollTo(0, 999999);
   CHAT_MESSAGES.push({ role:"user", text }, { role:"bot", text: data.message });
 }
 
@@ -2171,10 +2168,10 @@ function loadAI() {
         </div>
       </div>
     </div>
-    <div id="ai-msgs" style="flex:1;overflow-y:auto;padding-bottom:8px;display:flex;flex-direction:column;gap:14px">
+    <div id="ai-msgs" style="display:flex;flex-direction:column;gap:14px;padding-bottom:8px">
       <div class="msg bot"><div class="msg-bubble">Привет! Я Доктор Биолар — твой личный нутрициолог. Помогу разобраться с дефицитами, подобрать протокол и ответить на любой вопрос про здоровье.</div></div>
     </div>
-    <div style="flex-shrink:0;border-top:1px solid var(--border);background:var(--bg);margin:0 -16px 0;padding:10px 16px">
+    <div id="ai-input-bar" style="position:fixed;left:0;right:0;bottom:calc(88px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--border);background:var(--bg);padding:10px 16px">
       <div style="display:flex;align-items:center;gap:8px">
         <input style="flex:1;height:44px;border-radius:99px;border:1.5px solid var(--border);background:rgba(233,228,218,0.5);padding:0 18px;font-size:14px;font-family:'Manrope',sans-serif;outline:none;color:var(--text)" id="ai-input" placeholder="Спроси Доктора Биолар..." type="text">
         <button onclick="sendAIFromInput()" style="width:44px;height:44px;border-radius:99px;background:var(--green2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -2208,7 +2205,7 @@ async function initAIChat(isNew) {
           `<div class="msg ${role}"><div class="msg-bubble">${escAI(clean)}</div></div>`
         );
       });
-      msgs.scrollTop = msgs.scrollHeight;
+      document.getElementById("screen-ai")?.scrollTo(0, 999999);
       return; // есть история — онбординг не нужен
     }
   } catch(e) {}
@@ -2238,7 +2235,7 @@ async function sendAI(text) {
     msgs.insertAdjacentHTML("beforeend",
       `<div class="msg user"><div class="msg-bubble">${escAI(text)}</div></div>`
     );
-    msgs.scrollTop = msgs.scrollHeight;
+    document.getElementById("screen-ai")?.scrollTo(0, 999999);
     const sugsEl = document.getElementById("ai-sugs");
     if (sugsEl) sugsEl.style.display = "none";
   }
@@ -2247,7 +2244,7 @@ async function sendAI(text) {
   msgs.insertAdjacentHTML("beforeend",
     `<div class="msg bot" id="${typingId}"><div class="msg-bubble" style="color:var(--muted)">...</div></div>`
   );
-  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById("screen-ai")?.scrollTo(0, 999999);
 
   let data;
   try {
@@ -2289,7 +2286,7 @@ async function sendAI(text) {
     msgs.appendChild(row);
   }
 
-  msgs.scrollTop = msgs.scrollHeight;
+  document.getElementById("screen-ai")?.scrollTo(0, 999999);
 }
 
 async function addOneProduct(productId, btn) {
