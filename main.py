@@ -74,8 +74,7 @@ async def ask_groq(user_id: int, message: str, system_prompt: str,
 
     # Фильтр: убираем CJK и прочие нечитаемые Unicode-блоки
     import re as _re
-    reply = _re.sub(r"[^ -~ -ÿЀ-ӿ
-	]", "", reply).strip()
+    reply = _re.sub(r"[^\x20-\x7e\xa0-\xff\u0400-\u04ff\n\r\t]", "", reply).strip()
 
     if save_user_msg:
         await db.save_ai_message(user_id, first_name, "user", message)
