@@ -1010,7 +1010,7 @@ async def manifest(t: str = ""):
     return JSONResponse(
         content={
             "name": "Архитектура Здоровья",
-            "short_name": "Архитектура Здоровья",
+            "short_name": "Biolar",
             "description": "Персональный AI-нутрициолог и трекер добавок",
             "start_url": start_url,
             "scope": "/",
