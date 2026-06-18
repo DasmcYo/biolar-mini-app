@@ -1921,6 +1921,8 @@ async function loadDiary() {
 
   const foodLogs = foodData.logs || [];
   waterGlassesCurrent = waterData.glasses || 0;
+  waterGoalGlasses = waterData.goal_glasses || 10;
+  waterGoalMl = waterData.goal_ml || 2000;
   const goals = goalsData || { calories: 2000, protein: 80, fat: 70, carbs: 250 };
 
   const MONTHS_RU = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
@@ -2623,14 +2625,15 @@ async function compressImage(file, maxWidth = 800) {
 // ══════════════════════════════════════════════════════════════════════════
 
 let waterGlassesCurrent = 0;
-const WATER_GOAL = 8;
+let waterGoalGlasses = 10;
+let waterGoalMl = 2000;
 
 // legacy SVG helpers kept for backward compat
 const WATER_R = 70;
 const WATER_C = +(2 * Math.PI * WATER_R).toFixed(2);
 
 function _waterRingSVG(glasses) {
-  const offset = +(WATER_C * (1 - glasses / WATER_GOAL)).toFixed(2);
+  const offset = +(WATER_C * (1 - glasses / waterGoalGlasses)).toFixed(2);
   return `<svg viewBox="0 0 180 180" width="160" height="160">
     <defs>
       <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -2659,7 +2662,7 @@ function buildWaterTracker(glasses) {
           <div class="water-ring-center">
             <div style="font-size:16px;margin-bottom:2px">💧</div>
             <div class="water-ring-num" id="water-num">${glasses}</div>
-            <div class="water-ring-sub">из ${WATER_GOAL} стаканов</div>
+            <div class="water-ring-sub">из ${waterGoalGlasses} стаканов</div>
           </div>
         </div>
       </div>
@@ -2668,15 +2671,15 @@ function buildWaterTracker(glasses) {
 }
 
 function _refreshWaterUI(prevGlasses) {
-  const offset = +(WATER_C * (1 - waterGlassesCurrent / WATER_GOAL)).toFixed(2);
+  const offset = +(WATER_C * (1 - waterGlassesCurrent / waterGoalGlasses)).toFixed(2);
   const arc  = document.getElementById("water-arc");
   const num  = document.getElementById("water-num");
   const ring = document.getElementById("water-ring-svg");
   const btn  = document.getElementById("water-add-btn");
   if (arc) arc.setAttribute("stroke-dashoffset", offset);
   if (num) num.textContent = waterGlassesCurrent;
-  if (btn) btn.disabled = waterGlassesCurrent >= WATER_GOAL;
-  if (ring && waterGlassesCurrent === WATER_GOAL && prevGlasses < WATER_GOAL) {
+  if (btn) btn.disabled = waterGlassesCurrent >= waterGoalGlasses;
+  if (ring && waterGlassesCurrent === waterGoalGlasses && prevGlasses < waterGoalGlasses) {
     ring.classList.remove("water-ring-complete");
     void ring.offsetWidth; // reflow чтобы анимация перезапустилась
     ring.classList.add("water-ring-complete");
@@ -2684,9 +2687,9 @@ function _refreshWaterUI(prevGlasses) {
 }
 
 async function adjustWater(delta) {
-  if (waterGlassesCurrent >= WATER_GOAL && delta > 0) return;
+  if (waterGlassesCurrent >= waterGoalGlasses && delta > 0) return;
   const prev = waterGlassesCurrent;
-  waterGlassesCurrent = Math.max(0, Math.min(WATER_GOAL, waterGlassesCurrent + delta));
+  waterGlassesCurrent = Math.max(0, Math.min(waterGoalGlasses, waterGlassesCurrent + delta));
   _refreshWaterUI(prev);
   try {
     await api("POST", "/api/diary/water/set", { glasses: waterGlassesCurrent });
@@ -2770,11 +2773,13 @@ async function switchDiaryDate(dateStr) {
 }
 
 function buildGlassesTracker(glasses) {
-  const btns = Array.from({length: 8}, (_, i) => {
+  const goal = waterGoalGlasses;
+  const mlDrunk = glasses * 200;
+  const btns = Array.from({length: goal}, (_, i) => {
     const filled = i < glasses ? " filled" : "";
     return `<button class="diary-glass${filled}" id="dg${i}" onclick="clickGlass(${i})">💧</button>`;
   }).join("");
-  const doneBanner = glasses >= 8 ? `
+  const doneBanner = glasses >= goal ? `
     <div class="diary-water-done" id="water-done-wrap">
       <span class="diary-water-done-icon">💧</span>
       <span class="diary-water-done-text">Водный баланс восстановлен</span>
@@ -2783,7 +2788,8 @@ function buildGlassesTracker(glasses) {
     <div class="diary-section" id="water-section">
       <div class="diary-section-head">
         <span class="diary-section-title">💧 Вода</span>
-        <span class="diary-section-sub" id="water-glasses-lbl">${glasses} из 8</span>
+        <span class="diary-section-sub" id="water-glasses-lbl">${mlDrunk} из ${waterGoalMl} мл</span>
+        <button onclick="openWaterGoalSheet()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 4px;line-height:1" title="Изменить норму">✏️</button>
       </div>
       <div class="diary-glasses-row" id="water-glasses-row">${btns}</div>
       ${doneBanner}
@@ -2796,15 +2802,17 @@ function clickGlass(i) {
 }
 
 async function setWaterAmount(n) {
-  waterGlassesCurrent = n;
-  for (let i = 0; i < 8; i++) {
+  const goal = waterGoalGlasses;
+  waterGlassesCurrent = Math.max(0, Math.min(n, goal));
+  for (let i = 0; i < goal; i++) {
     const btn = document.getElementById("dg" + i);
-    if (btn) { if (i < n) btn.classList.add("filled"); else btn.classList.remove("filled"); }
+    if (btn) { if (i < waterGlassesCurrent) btn.classList.add("filled"); else btn.classList.remove("filled"); }
   }
+  const mlDrunk = waterGlassesCurrent * 200;
   const lbl = document.getElementById("water-glasses-lbl");
-  if (lbl) lbl.textContent = `${n} из 8`;
+  if (lbl) lbl.textContent = `${mlDrunk} из ${waterGoalMl} мл`;
 
-  if (n >= 8) {
+  if (waterGlassesCurrent >= goal) {
     const row = document.getElementById("water-glasses-row");
     if (row) { row.querySelectorAll(".diary-glass").forEach(b => b.disabled = true); }
     const wrap = document.getElementById("water-done-wrap");
@@ -2824,7 +2832,53 @@ async function setWaterAmount(n) {
     if (row) { row.querySelectorAll(".diary-glass").forEach(b => b.disabled = false); }
   }
 
-  try { await api("POST", "/api/diary/water/set", { glasses: n }); } catch(e) {}
+  try { await api("POST", "/api/diary/water/set", { glasses: waterGlassesCurrent }); } catch(e) {}
+}
+
+function openWaterGoalSheet() {
+  const curL = (waterGoalMl / 1000).toFixed(1);
+  const sheet = document.createElement("div");
+  sheet.id = "water-goal-sheet";
+  sheet.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:999;display:flex;align-items:flex-end";
+  sheet.innerHTML = `
+    <div style="background:var(--card);border-radius:1.5rem 1.5rem 0 0;padding:28px 20px 40px;width:100%;box-sizing:border-box">
+      <div style="font-family:Fraunces,serif;font-size:20px;font-weight:600;margin-bottom:6px">Норма воды</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">1 стакан = 200 мл · стаканов будет: <span id="wg-glasses-preview">${waterGoalGlasses}</span></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <input id="wg-input" type="number" step="0.1" min="0.2" max="10" value="${curL}"
+          style="flex:1;height:52px;border-radius:1rem;border:1.5px solid var(--border);background:var(--bg);
+                 padding:0 16px;font-size:20px;font-weight:600;color:var(--text);outline:none;text-align:center"
+          oninput="document.getElementById('wg-glasses-preview').textContent=Math.ceil(parseFloat(this.value||0)*1000/200)||0">
+        <span style="font-size:18px;font-weight:600;color:var(--muted)">л</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button onclick="document.getElementById('water-goal-sheet').remove()"
+          style="height:50px;border-radius:1rem;border:1.5px solid var(--border);background:none;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer">
+          Отмена
+        </button>
+        <button onclick="saveWaterGoal()"
+          style="height:50px;border-radius:1rem;border:none;background:var(--green2);color:#fff;font-size:15px;font-weight:600;cursor:pointer">
+          Сохранить
+        </button>
+      </div>
+    </div>`;
+  sheet.addEventListener("click", e => { if (e.target === sheet) sheet.remove(); });
+  document.body.appendChild(sheet);
+  setTimeout(() => document.getElementById("wg-input")?.focus(), 100);
+}
+
+async function saveWaterGoal() {
+  const val = parseFloat(document.getElementById("wg-input")?.value || "0");
+  if (!val || val < 0.2) { toast("Введи корректное значение"); return; }
+  const goal_ml = Math.round(val * 1000);
+  const data = await api("POST", "/api/diary/water/goal", { goal_ml });
+  waterGoalMl = data.goal_ml;
+  waterGoalGlasses = data.goal_glasses;
+  document.getElementById("water-goal-sheet")?.remove();
+  // Rebuild water section
+  const section = document.getElementById("water-section");
+  if (section) section.outerHTML = buildGlassesTracker(waterGlassesCurrent);
+  toast("Норма обновлена");
 }
 
 function buildKBJURings(logs, goals) {

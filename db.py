@@ -254,6 +254,11 @@ async def init_db():
         await _q("ALTER TABLE users ADD COLUMN session_token TEXT")
     except Exception:
         pass
+    # Migration: add water_goal_ml to user_goals
+    try:
+        await _q("ALTER TABLE user_goals ADD COLUMN water_goal_ml INTEGER DEFAULT 2000")
+    except Exception:
+        pass
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
@@ -674,9 +679,13 @@ async def set_water(user_id: int, date: str, glasses: int):
 
 async def get_goals(user_id: int) -> dict:
     row = _dict(await _q(
-        "SELECT calories, protein, fat, carbs FROM user_goals WHERE user_id=?", [user_id]
+        "SELECT calories, protein, fat, carbs, water_goal_ml FROM user_goals WHERE user_id=?", [user_id]
     ))
-    return row if row else {"calories": 2000, "protein": 80.0, "fat": 70.0, "carbs": 250.0}
+    if not row:
+        return {"calories": 2000, "protein": 80.0, "fat": 70.0, "carbs": 250.0, "water_goal_ml": 2000}
+    if row.get("water_goal_ml") is None:
+        row["water_goal_ml"] = 2000
+    return row
 
 
 async def set_goals(user_id: int, calories: int, protein: float, fat: float, carbs: float):
@@ -685,6 +694,14 @@ async def set_goals(user_id: int, calories: int, protein: float, fat: float, car
         "ON CONFLICT(user_id) DO UPDATE SET calories=excluded.calories, protein=excluded.protein, "
         "fat=excluded.fat, carbs=excluded.carbs",
         [user_id, calories, protein, fat, carbs],
+    )
+
+
+async def set_water_goal(user_id: int, goal_ml: int):
+    await _q(
+        "INSERT INTO user_goals (user_id, water_goal_ml) VALUES (?,?) "
+        "ON CONFLICT(user_id) DO UPDATE SET water_goal_ml=excluded.water_goal_ml",
+        [user_id, goal_ml],
     )
 
 

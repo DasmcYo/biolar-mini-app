@@ -460,19 +460,36 @@ async def food_delete(body: FoodDeleteIn, request: Request):
 class WaterSetIn(BaseModel):
     glasses: int
 
+class WaterGoalIn(BaseModel):
+    goal_ml: int
+
 @app.get("/api/diary/water")
 async def water_get(request: Request):
     tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
-    return {"glasses": await db.get_water(tg["id"], today)}
+    goals = await db.get_goals(tg["id"])
+    goal_ml = goals.get("water_goal_ml") or 2000
+    goal_glasses = max(1, -(-goal_ml // 200))  # ceil division
+    glasses = await db.get_water(tg["id"], today)
+    return {"glasses": glasses, "goal_ml": goal_ml, "goal_glasses": goal_glasses}
 
 @app.post("/api/diary/water/set")
 async def water_set(body: WaterSetIn, request: Request):
     tg = await get_tg_user_or_session(request)
     today = date_cls.today().isoformat()
-    g = max(0, min(body.glasses, 20))
+    goals = await db.get_goals(tg["id"])
+    goal_glasses = max(1, -(-((goals.get("water_goal_ml") or 2000)) // 200))
+    g = max(0, min(body.glasses, goal_glasses + 5))
     await db.set_water(tg["id"], today, g)
     return {"ok": True, "glasses": g}
+
+@app.post("/api/diary/water/goal")
+async def water_goal_set(body: WaterGoalIn, request: Request):
+    tg = await get_tg_user_or_session(request)
+    ml = max(200, min(body.goal_ml, 10000))
+    await db.set_water_goal(tg["id"], ml)
+    goal_glasses = max(1, -(-ml // 200))
+    return {"ok": True, "goal_ml": ml, "goal_glasses": goal_glasses}
 
 
 # ── API: цели КБЖУ ────────────────────────────────────────────────────────────
