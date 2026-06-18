@@ -260,6 +260,7 @@ tailwind.config = {
     margin-left: auto;
   }
   .prog-dot-lbl.done { color: var(--green2); }
+  .prog-dot.taken:active { transform: scale(.88); opacity: .75; }
   @keyframes dotPop {
     0%   { transform: scale(1); }
     40%  { transform: scale(1.35); }
@@ -1542,14 +1543,17 @@ async function loadProgram() {
   }
 
   // Helper: daily dose dots
-  function buildDots(pid, dailyDose, taken) {
-    const dots = Array.from({length: dailyDose}, () =>
-      `<div class="prog-dot ${taken ? 'taken' : ''}" onclick="tapDot('${pid}', this)">${taken ? '✓' : ''}</div>`
-    ).join('');
+  function buildDots(pid, dailyDose, dosesToday) {
+    const dots = Array.from({length: dailyDose}, (_, i) => {
+      const filled = i < dosesToday;
+      return `<div class="prog-dot ${filled ? 'taken' : ''}" data-index="${i}" onclick="tapDot('${pid}', this)">${filled ? '✓' : ''}</div>`;
+    }).join('');
+    const allDone = dosesToday >= dailyDose;
+    const lbl = allDone ? 'Принято' : dosesToday > 0 ? `${dosesToday} из ${dailyDose} принято` : 'Отметить приём';
     return `
       <div class="prog-daily-bar">
         <div class="prog-dots">${dots}</div>
-        <span class="prog-dot-lbl ${taken ? 'done' : ''}">${taken ? 'Принято' : 'Отметить приём'}</span>
+        <span class="prog-dot-lbl ${allDone ? 'done' : ''}">${lbl}</span>
       </div>`;
   }
 
@@ -1558,11 +1562,11 @@ async function loadProgram() {
     const daysTaken   = p.days_taken   || 0;
     const duration    = p.duration_days || 30;
     const dailyDose   = p.daily_dose   || 1;
-    const taken       = p.taken_today  || false;
+    const dosesToday  = p.doses_today  || 0;
     const emoji = (CATALOG.find(c => c.id === p.product_id) || {}).emoji || '💊';
     return `
       <div id="tracker-${p.product_id}" class="prog-card"
-           data-days-taken="${daysTaken}" data-duration="${duration}" data-dose="${dailyDose}">
+           data-days-taken="${daysTaken}" data-duration="${duration}" data-dose="${dailyDose}" data-doses-today="${dosesToday}">
         <div class="prog-card-top">
           <div class="prog-card-emoji">${emoji}</div>
           <div class="prog-card-info">
@@ -1572,7 +1576,7 @@ async function loadProgram() {
           ${buildRing(p.product_id, daysTaken, duration)}
           <button onclick="removeProduct('${p.product_id}')" class="prog-delete">×</button>
         </div>
-        ${buildDots(p.product_id, dailyDose, taken)}
+        ${buildDots(p.product_id, dailyDose, dosesToday)}
       </div>`;
   }).join('');
 
@@ -1837,46 +1841,53 @@ async function addToTracker(productId) {
 }
 
 async function tapDot(productId, dot) {
-  const bar = dot.closest('.prog-daily-bar');
+  const bar  = dot.closest('.prog-daily-bar');
+  const card = document.getElementById('tracker-' + productId);
   const dots = [...bar.querySelectorAll('.prog-dot')];
-  if (dots[0].classList.contains('taken')) { toast("Уже отмечено сегодня"); return; }
+  const isFilled = dot.classList.contains('taken');
+  const action = isFilled ? 'remove' : 'add';
+  const dailyDose = parseInt(card?.dataset.dose) || 1;
 
-  // Stagger-fill all dots with animation
-  dots.forEach((d, i) => {
-    setTimeout(() => {
-      d.classList.add('taken', 'popping');
-      d.textContent = '✓';
-      setTimeout(() => d.classList.remove('popping'), 300);
-    }, i * 110);
-  });
+  // Optimistic UI update
+  dot.classList.add('popping');
+  setTimeout(() => dot.classList.remove('popping'), 300);
+  if (action === 'add') {
+    dot.classList.add('taken');
+    dot.textContent = '✓';
+  } else {
+    dot.classList.remove('taken');
+    dot.textContent = '';
+  }
 
-  // Update label
+  // Recalculate label immediately
   const lbl = bar.querySelector('.prog-dot-lbl');
-  setTimeout(() => {
-    if (lbl) { lbl.textContent = 'Принято'; lbl.classList.add('done'); }
-  }, dots.length * 110);
+  const filledCount = dots.filter(d => d.classList.contains('taken')).length;
+  const allDone = filledCount >= dailyDose;
+  if (lbl) {
+    lbl.textContent = allDone ? 'Принято' : filledCount > 0 ? `${filledCount} из ${dailyDose} принято` : 'Отметить приём';
+    lbl.classList.toggle('done', allDone);
+  }
 
   // API call
-  const data = await api("POST", "/api/tracker/log", { product_id: productId });
-  if (data.already_taken) return;
+  const data = await api("POST", "/api/tracker/dose", { product_id: productId, action });
 
-  toast("✓ Принято");
-
-  // Update ring in-place (increment days_taken by 1)
-  const card = document.getElementById('tracker-' + productId);
-  if (!card) return;
-  const daysTaken = (parseInt(card.dataset.daysTaken) || 0) + 1;
-  const duration  = parseInt(card.dataset.duration) || 30;
-  card.dataset.daysTaken = daysTaken;
-
-  const r = 22, circ = +(2 * Math.PI * r).toFixed(2);
-  const offset = +(circ * (1 - Math.min(daysTaken / duration, 1))).toFixed(2);
-  const ring = document.getElementById('ring-' + productId);
-  if (ring) ring.setAttribute('stroke-dashoffset', offset);
-  const daysEl = document.getElementById('ring-days-' + productId);
-  if (daysEl) daysEl.textContent = daysTaken;
-  const meta = card.querySelector('.prog-card-meta');
-  if (meta) meta.textContent = `День ${daysTaken} · курс ${duration} дней`;
+  // Update ring if fully taken for first time
+  if (data.fully_taken && action === 'add' && card) {
+    const daysTaken = (parseInt(card.dataset.daysTaken) || 0) + 1;
+    const duration  = parseInt(card.dataset.duration) || 30;
+    card.dataset.daysTaken = daysTaken;
+    const r = 22, circ = +(2 * Math.PI * r).toFixed(2);
+    const offset = +(circ * (1 - Math.min(daysTaken / duration, 1))).toFixed(2);
+    const ring = document.getElementById('ring-' + productId);
+    if (ring) ring.setAttribute('stroke-dashoffset', offset);
+    const daysEl = document.getElementById('ring-days-' + productId);
+    if (daysEl) daysEl.textContent = daysTaken;
+    const meta = card.querySelector('.prog-card-meta');
+    if (meta) meta.textContent = `День ${daysTaken} · курс ${duration} дней`;
+    toast('✓ Принято');
+  } else if (action === 'remove') {
+    toast('Отмечено как непринятое');
+  }
 }
 
 async function removeProduct(productId) {

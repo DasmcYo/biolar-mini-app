@@ -149,6 +149,15 @@ SCHEMA = """
         UNIQUE(user_id, product_id, logged_at),
         FOREIGN KEY (user_id) REFERENCES users(user_id)
     );
+    CREATE TABLE IF NOT EXISTS tracker_dose_counts (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id    INTEGER NOT NULL,
+        product_id TEXT NOT NULL,
+        date       DATE NOT NULL,
+        count      INTEGER DEFAULT 0,
+        UNIQUE(user_id, product_id, date),
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );
     CREATE TABLE IF NOT EXISTS giveaway_participants (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id       INTEGER UNIQUE NOT NULL,
@@ -354,6 +363,49 @@ async def get_today_logs(user_id: int) -> list[str]:
         [user_id, today],
     )
     return [r["product_id"] for r in _dicts(result)]
+
+
+async def get_doses_today(user_id: int, product_id: str) -> int:
+    from datetime import date
+    today = date.today().isoformat()
+    result = await _q(
+        "SELECT count FROM tracker_dose_counts WHERE user_id=? AND product_id=? AND date=?",
+        [user_id, product_id, today],
+    )
+    rows = _dicts(result)
+    return rows[0]["count"] if rows else 0
+
+
+async def update_dose_count(user_id: int, product_id: str, delta: int) -> int:
+    from datetime import date
+    today = date.today().isoformat()
+    result = await _q(
+        "SELECT count FROM tracker_dose_counts WHERE user_id=? AND product_id=? AND date=?",
+        [user_id, product_id, today],
+    )
+    rows = _dicts(result)
+    current = rows[0]["count"] if rows else 0
+    new_count = max(0, current + delta)
+    if rows:
+        await _q(
+            "UPDATE tracker_dose_counts SET count=? WHERE user_id=? AND product_id=? AND date=?",
+            [new_count, user_id, product_id, today],
+        )
+    else:
+        await _q(
+            "INSERT INTO tracker_dose_counts (user_id, product_id, date, count) VALUES (?, ?, ?, ?)",
+            [user_id, product_id, today, new_count],
+        )
+    return new_count
+
+
+async def unlog_intake(user_id: int, product_id: str):
+    from datetime import date
+    today = date.today().isoformat()
+    await _q(
+        "DELETE FROM tracker_logs WHERE user_id=? AND product_id=? AND logged_at=?",
+        [user_id, product_id, today],
+    )
 
 
 async def get_product_days_taken(user_id: int, product_id: str) -> int:

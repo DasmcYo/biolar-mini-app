@@ -736,13 +736,16 @@ async def tracker_get(request: Request):
         streak = await db.get_streak(tg["id"], p["product_id"])
         days_taken = await db.get_product_days_taken(tg["id"], p["product_id"])
         catalog_p = PRODUCTS.get(p["product_id"], {})
+        daily_dose = catalog_p.get("daily_dose", 1)
+        doses_today = await db.get_doses_today(tg["id"], p["product_id"])
         result.append({
             **p,
             "streak": streak,
             "taken_today": p["product_id"] in today_logs,
+            "doses_today": doses_today,
             "days_taken": days_taken,
             "duration_days": catalog_p.get("duration_days", 30),
-            "daily_dose": catalog_p.get("daily_dose", 1),
+            "daily_dose": daily_dose,
         })
     return {"products": result}
 
@@ -780,6 +783,30 @@ async def tracker_log(body: TrackerLogIn, request: Request):
     if ok:
         await db.award_points(tg["id"], 20)
     return {"ok": ok, "streak": streak, "already_taken": not ok}
+
+
+class TrackerDoseIn(BaseModel):
+    product_id: str
+    action: str  # "add" or "remove"
+
+
+@app.post("/api/tracker/dose")
+async def tracker_dose(body: TrackerDoseIn, request: Request):
+    tg = await get_tg_user_or_session(request)
+    user_id = tg["id"]
+    catalog_p = PRODUCTS.get(body.product_id, {})
+    daily_dose = catalog_p.get("daily_dose", 1)
+    delta = 1 if body.action == "add" else -1
+    new_count = await db.update_dose_count(user_id, body.product_id, delta)
+    fully_taken = new_count >= daily_dose
+    if fully_taken and body.action == "add":
+        ok = await db.log_intake(user_id, body.product_id)
+        if ok:
+            await db.award_points(user_id, 20)
+    elif not fully_taken and body.action == "remove":
+        await db.unlog_intake(user_id, body.product_id)
+    streak = await db.get_streak(user_id, body.product_id)
+    return {"doses_today": new_count, "daily_dose": daily_dose, "fully_taken": fully_taken, "streak": streak}
 
 
 @app.delete("/api/tracker/{product_id}")
