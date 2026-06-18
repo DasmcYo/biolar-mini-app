@@ -1022,6 +1022,7 @@ async def manifest(t: str = ""):
             "icons": [
                 {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
                 {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+                {"src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
             ],
         },
         headers={"Content-Type": "application/manifest+json"},
@@ -1046,6 +1047,11 @@ async def icon512():
 @app.get("/apple-touch-icon.png")
 async def apple_touch_icon():
     return FileResponse("web/apple-touch-icon.png", media_type="image/png")
+
+
+@app.get("/icon-maskable-512.png")
+async def icon_maskable():
+    return FileResponse("web/icon-maskable-512.png", media_type="image/png")
 
 
 @app.api_route("/", methods=["GET", "HEAD"])
