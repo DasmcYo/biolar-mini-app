@@ -324,15 +324,41 @@ tailwind.config = {
     color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  .diary-water-done {
-    margin-top: 4px; border-radius: 1.25rem; padding: 10px 14px;
-    background: linear-gradient(135deg, rgba(91,184,240,.18), rgba(91,184,240,.08));
-    border: 1px solid rgba(91,184,240,.35);
-    display: flex; align-items: center; gap: 10px; animation: waterDone .4s ease; width: 100%; box-sizing: border-box;
+  /* water goal animations */
+  @keyframes waterGlow {
+    0%   { filter: drop-shadow(0 0 0px transparent); }
+    30%  { filter: drop-shadow(0 0 22px #4ade80) drop-shadow(0 0 44px rgba(74,222,128,.45)); }
+    65%  { filter: drop-shadow(0 0 12px rgba(74,222,128,.6)); }
+    100% { filter: drop-shadow(0 0 7px rgba(74,222,128,.35)); }
   }
-  @keyframes waterDone { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
-  .diary-water-done-icon { font-size: 22px; }
-  .diary-water-done-text { font-size: 13px; font-weight: 600; color: #2b8cbe; }
+  @keyframes waterBounce {
+    0%   { transform: scale(1); }
+    18%  { transform: scale(1.08); }
+    40%  { transform: scale(0.95); }
+    62%  { transform: scale(1.04); }
+    80%  { transform: scale(0.98); }
+    100% { transform: scale(1); }
+  }
+  @keyframes waterRipple {
+    0%   { transform: scale(.75); opacity: .65; }
+    100% { transform: scale(1.7);  opacity: 0; }
+  }
+  @keyframes waterCheckIn {
+    0%   { opacity:0; transform: scale(.4); }
+    60%  { opacity:1; transform: scale(1.15); }
+    100% { opacity:1; transform: scale(1); }
+  }
+  .diary-water-ring-wrap.goal-hit .diary-water-ring-svg { animation: waterBounce .7s cubic-bezier(.36,.07,.19,.97) forwards; }
+  .diary-water-ring-wrap.goal-hit svg    { animation: waterGlow 1.4s ease forwards; }
+  .water-ripple {
+    position: absolute; inset: -10px; border-radius: 50%;
+    border: 3px solid #4ade80; opacity: 0;
+    animation: waterRipple .8s ease-out forwards;
+    pointer-events: none;
+  }
+  .water-check {
+    font-size: 28px; animation: waterCheckIn .45s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
 
   /* КБЖУ rings */
   .diary-kbju-rings { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -2731,39 +2757,37 @@ function _waterRingHTML(glasses) {
   const mlDrunk = glasses * 200;
   const progress = Math.min(glasses / Math.max(waterGoalGlasses, 1), 1);
   const offset = +(circ * (1 - progress)).toFixed(2);
-  const pct = Math.round(progress * 100);
+  const pct = Math.round(glasses / Math.max(waterGoalGlasses, 1) * 100);
   const done = glasses >= waterGoalGlasses;
-  const doneBanner = done ? `
-    <div class="diary-water-done" id="water-done-wrap">
-      <span class="diary-water-done-icon">💧</span>
-      <span class="diary-water-done-text">Водный баланс восстановлен</span>
-    </div>` : "";
+  const c1 = done ? "#4ade80" : "#5bb8f0";
+  const c2 = done ? "#16a34a" : "#2178b4";
+  const trackColor = done ? "rgba(74,222,128,.15)" : "rgba(91,184,240,.12)";
   return `
-    <div class="diary-water-ring-wrap">
-      <div class="diary-water-ring-svg">
+    <div class="diary-water-ring-wrap${done ? " goal-hit" : ""}">
+      <div class="diary-water-ring-svg" style="position:relative">
+        ${done ? '<div class="water-ripple"></div>' : ''}
         <svg viewBox="0 0 180 180" width="160" height="160">
           <defs>
             <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#5bb8f0"/>
-              <stop offset="100%" stop-color="#2178b4"/>
+              <stop id="wg-s1" offset="0%" stop-color="${c1}"/>
+              <stop id="wg-s2" offset="100%" stop-color="${c2}"/>
             </linearGradient>
           </defs>
-          <circle cx="90" cy="90" r="${r}" fill="none" stroke="#5bb8f0" stroke-opacity=".12" stroke-width="14"/>
+          <circle cx="90" cy="90" r="${r}" fill="none" stroke="${trackColor}" stroke-width="14"/>
           <circle id="water-ring-arc" cx="90" cy="90" r="${r}" fill="none" stroke="url(#wg)" stroke-width="14"
             stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"
             style="transition:stroke-dashoffset .4s ease"/>
         </svg>
         <div class="diary-water-ring-center">
           <span class="diary-water-ring-ml" id="water-ring-ml">${mlDrunk}</span>
-          <span class="diary-water-ring-goal">из ${waterGoalMl} мл</span>
-          <span class="diary-water-ring-pct" id="water-ring-pct">${pct}%</span>
+          <span class="diary-water-ring-goal" id="water-ring-goal-lbl">из ${waterGoalMl} мл</span>
+          <span class="diary-water-ring-pct" id="water-ring-pct" style="color:${done ? '#4ade80' : '#5bb8f0'}">${pct}%</span>
         </div>
       </div>
       <div class="diary-water-btns">
         <button class="diary-water-btn-minus" onclick="setWaterAmount(waterGlassesCurrent-1)" ${glasses <= 0 ? 'disabled style="opacity:.35"' : ''}>−</button>
-        <button class="diary-water-btn-add" onclick="setWaterAmount(waterGlassesCurrent+1)" ${done ? 'disabled style="opacity:.5"' : ''}>+ Стакан 200 мл</button>
+        <button class="diary-water-btn-add" onclick="setWaterAmount(waterGlassesCurrent+1)">+ Стакан 200 мл</button>
       </div>
-      ${doneBanner}
     </div>`;
 }
 
@@ -2780,36 +2804,59 @@ function buildGlassesTracker(glasses) {
 
 async function setWaterAmount(n) {
   const goal = waterGoalGlasses;
-  waterGlassesCurrent = Math.max(0, Math.min(n, goal));
+  const prevGlasses = waterGlassesCurrent;
+  waterGlassesCurrent = Math.max(0, n);
   const r = 70, circ = +(2 * Math.PI * r).toFixed(2);
   const progress = Math.min(waterGlassesCurrent / Math.max(goal, 1), 1);
   const offset = +(circ * (1 - progress)).toFixed(2);
   const mlDrunk = waterGlassesCurrent * 200;
-  const pct = Math.round(progress * 100);
+  const pct = Math.round(waterGlassesCurrent / Math.max(goal, 1) * 100);
   const done = waterGlassesCurrent >= goal;
+  const justDone = done && prevGlasses < goal;
+  const justUndone = !done && prevGlasses >= goal;
 
+  // Update ring progress
   document.getElementById("water-ring-arc")?.setAttribute("stroke-dashoffset", offset);
   const mlEl = document.getElementById("water-ring-ml");
   if (mlEl) mlEl.textContent = mlDrunk;
   const pctEl = document.getElementById("water-ring-pct");
-  if (pctEl) pctEl.textContent = pct + "%";
+  if (pctEl) { pctEl.textContent = pct + "%"; pctEl.style.color = done ? "#4ade80" : "#5bb8f0"; }
 
-  // Update buttons
+  // Update minus button
   const section = document.getElementById("water-section");
   const minusBtn = section?.querySelector(".diary-water-btn-minus");
-  const addBtn = section?.querySelector(".diary-water-btn-add");
   if (minusBtn) { minusBtn.disabled = waterGlassesCurrent <= 0; minusBtn.style.opacity = waterGlassesCurrent <= 0 ? ".35" : "1"; }
-  if (addBtn) { addBtn.disabled = done; addBtn.style.opacity = done ? ".5" : "1"; }
 
-  // Done banner
-  if (done && !document.getElementById("water-done-wrap")) {
-    section?.querySelector(".diary-water-ring-wrap")?.insertAdjacentHTML("beforeend", `
-      <div class="diary-water-done" id="water-done-wrap">
-        <span class="diary-water-done-icon">💧</span>
-        <span class="diary-water-done-text">Водный баланс восстановлен</span>
-      </div>`);
-  } else if (!done) {
-    document.getElementById("water-done-wrap")?.remove();
+  const wrap = section?.querySelector(".diary-water-ring-wrap");
+
+  if (justDone && wrap) {
+    // → Goal hit: switch to green + animations
+    const s1 = document.getElementById("wg-s1"), s2 = document.getElementById("wg-s2");
+    if (s1) s1.setAttribute("stop-color", "#4ade80");
+    if (s2) s2.setAttribute("stop-color", "#16a34a");
+    wrap.classList.add("goal-hit");
+    // Ripple burst
+    if (!wrap.querySelector(".water-ripple")) {
+      const ripple = document.createElement("div");
+      ripple.className = "water-ripple";
+      wrap.querySelector(".diary-water-ring-svg")?.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 900);
+    }
+    // Second ripple delayed
+    setTimeout(() => {
+      const r2 = document.createElement("div");
+      r2.className = "water-ripple";
+      r2.style.animationDelay = "0s";
+      r2.style.borderColor = "rgba(74,222,128,.5)";
+      wrap.querySelector(".diary-water-ring-svg")?.appendChild(r2);
+      setTimeout(() => r2.remove(), 900);
+    }, 280);
+  } else if (justUndone && wrap) {
+    // → Below goal: back to blue
+    const s1 = document.getElementById("wg-s1"), s2 = document.getElementById("wg-s2");
+    if (s1) s1.setAttribute("stop-color", "#5bb8f0");
+    if (s2) s2.setAttribute("stop-color", "#2178b4");
+    wrap.classList.remove("goal-hit");
   }
 
   try { await api("POST", "/api/diary/water/set", { glasses: waterGlassesCurrent }); } catch(e) {}
