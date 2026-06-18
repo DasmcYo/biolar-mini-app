@@ -2870,12 +2870,12 @@ function openWaterGoalSheet() {
   sheet.innerHTML = `
     <div style="background:var(--card);border-radius:1.5rem 1.5rem 0 0;padding:28px 20px 40px;width:100%;box-sizing:border-box">
       <div style="font-family:Fraunces,serif;font-size:20px;font-weight:600;margin-bottom:6px">Норма воды</div>
-      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">1 стакан = 200 мл · стаканов будет: <span id="wg-glasses-preview">${waterGoalGlasses}</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Укажи свою дневную норму воды</div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
         <input id="wg-input" type="number" step="0.1" min="0.2" max="10" value="${curL}"
           style="flex:1;height:52px;border-radius:1rem;border:1.5px solid var(--border);background:var(--bg);
                  padding:0 16px;font-size:20px;font-weight:600;color:var(--text);outline:none;text-align:center"
-          oninput="document.getElementById('wg-glasses-preview').textContent=Math.ceil(parseFloat(this.value||0)*1000/200)||0">
+          oninput="void 0">
         <span style="font-size:18px;font-weight:600;color:var(--muted)">л</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
