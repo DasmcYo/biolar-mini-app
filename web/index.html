@@ -1943,7 +1943,9 @@ async function loadDiary() {
     const strip = document.querySelector(".diary-cal-strip");
     const active = strip?.querySelector(".diary-cal-day.active");
     if (strip && active) {
-      strip.scrollLeft = active.offsetLeft - strip.offsetWidth / 2 + active.offsetWidth / 2;
+      const sr = strip.getBoundingClientRect();
+      const ar = active.getBoundingClientRect();
+      strip.scrollLeft += ar.left - sr.left - sr.width / 2 + ar.width / 2;
     }
   }, 50);
 }
