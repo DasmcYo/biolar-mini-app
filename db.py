@@ -259,6 +259,11 @@ async def init_db():
         await _q("ALTER TABLE user_goals ADD COLUMN water_goal_ml INTEGER DEFAULT 2000")
     except Exception:
         pass
+    # Migration: add timezone to users
+    try:
+        await _q("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'Europe/Moscow'")
+    except Exception:
+        pass
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
@@ -742,6 +747,50 @@ async def save_chat_id(user_id: int, chat_id: int):
         "ON CONFLICT(user_id) DO UPDATE SET chat_id=excluded.chat_id",
         [user_id, chat_id],
     )
+
+
+async def set_user_timezone(user_id: int, timezone: str):
+    await _q(
+        "UPDATE users SET timezone=? WHERE user_id=?",
+        [timezone, user_id],
+    )
+
+
+async def get_users_without_intake_today(target_hour: int) -> list[dict]:
+    from datetime import datetime
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+    rows = await _q(
+        "SELECT DISTINCT u.user_id, u.first_name, u.timezone, c.chat_id "
+        "FROM users u "
+        "JOIN user_chat_ids c ON c.user_id = u.user_id "
+        "JOIN tracker_products tp ON tp.user_id = u.user_id AND tp.active = 1"
+    )
+    all_users = _dicts(rows)
+    if not all_users:
+        return []
+
+    intake_rows = await _q(
+        "SELECT DISTINCT user_id, logged_at FROM tracker_logs "
+        "WHERE logged_at >= date('now', '-1 day')"
+    )
+    intake_by_user: dict[int, set] = {}
+    for r in _dicts(intake_rows):
+        intake_by_user.setdefault(r["user_id"], set()).add(r["logged_at"])
+
+    result = []
+    for user in all_users:
+        try:
+            tz = ZoneInfo(user.get("timezone") or "Europe/Moscow")
+        except ZoneInfoNotFoundError:
+            tz = ZoneInfo("Europe/Moscow")
+        local_now = datetime.now(tz)
+        if local_now.hour != target_hour:
+            continue
+        today_local = local_now.date().isoformat()
+        if today_local not in intake_by_user.get(user["user_id"], set()):
+            result.append(user)
+    return result
 
 
 async def get_users_for_weekly_summary() -> list[dict]:

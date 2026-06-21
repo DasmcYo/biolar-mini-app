@@ -144,6 +144,7 @@ async def lifespan(app: FastAPI):
     if WEBHOOK_URL:
         await _set_webhook()
     scheduler.add_job(send_daily_reminders, "interval", minutes=1)
+    scheduler.add_job(send_intake_reminders, "cron", hour="*", minute=0)
     scheduler.add_job(send_weekly_summaries, "cron", day_of_week="sun", hour=18, minute=0)
     scheduler.start()
     yield
@@ -559,6 +560,16 @@ async def reminder_set(body: ReminderIn, request: Request):
     return {"ok": True}
 
 
+class TimezoneIn(BaseModel):
+    timezone: str
+
+@app.post("/api/user/timezone")
+async def set_timezone(body: TimezoneIn, request: Request):
+    tg = await get_tg_user_or_session(request)
+    await db.set_user_timezone(tg["id"], body.timezone)
+    return {"ok": True}
+
+
 # ── Планировщик ───────────────────────────────────────────────────────────────
 
 async def _send_tg_message(chat_id: int, text: str):
@@ -607,6 +618,21 @@ async def send_daily_reminders():
             )
         except Exception as e:
             print(f"Reminder send error uid={u['user_id']}: {e}")
+
+
+async def send_intake_reminders():
+    if not BOT_TOKEN:
+        return
+    users = await db.get_users_without_intake_today(13)
+    for u in users:
+        try:
+            name = u.get("first_name") or "друг"
+            await _send_tg_message(
+                u["chat_id"],
+                f"🌿 *{name}, не забудь принять добавки!*\n\nОтметь приём в приложении — это займёт 5 секунд.",
+            )
+        except Exception as e:
+            print(f"Intake reminder error uid={u['user_id']}: {e}")
 
 
 async def send_weekly_summaries():

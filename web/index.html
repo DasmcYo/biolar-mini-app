@@ -1236,6 +1236,11 @@ async function loadHome() {
   const screen = document.getElementById("screen-home");
   screen.innerHTML = '<div class="spinner"></div>';
 
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) api("POST", "/api/user/timezone", { timezone: tz }).catch(() => {});
+  } catch(e) {}
+
   const [data, articlesData] = await Promise.all([
     api("GET", "/api/home"),
     api("GET", "/api/articles"),
