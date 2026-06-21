@@ -959,116 +959,6 @@ tailwind.config = {
                   background:#fff; transition:.2s; box-shadow:0 1px 4px rgba(0,0,0,.2); }
   .toggle-thumb.on { transform:translateX(18px); }
 
-  /* ══ КЛУБ ═══════════════════════════════════════════════════════════════════ */
-
-  /* Level hero */
-  .level-hero {
-    border-radius: 20px; padding: 24px 22px; margin-bottom: 14px;
-    color: #fff; box-shadow: 0 8px 28px rgba(0,0,0,0.18); position: relative; overflow: hidden;
-  }
-  .level-hero::after {
-    content: ""; position: absolute; top: -40px; right: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: rgba(255,255,255,0.07);
-  }
-  .level-name {
-    font-family: Fraunces, Georgia, serif;
-    font-size: 32px; line-height: 1; letter-spacing: -.5px; margin: 6px 0 16px;
-  }
-  .level-pts { font-size: 13px; color: rgba(255,255,255,0.7); margin-bottom: 12px; }
-  .level-pts strong { color: #fff; font-size: 22px; font-family: Fraunces, serif; }
-  .level-prog-wrap { height: 4px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 6px; }
-  .level-prog-bar  { height: 100%; background: rgba(255,255,255,0.8); border-radius: 99px; transition: width .6s; }
-  .level-next { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 600; letter-spacing: .3px; }
-
-
-  /* Challenges */
-  .challenge-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 8px;
-    display: flex; align-items: center; gap: 14px;
-    box-shadow: 0 1px 6px rgba(44,74,46,0.04);
-  }
-  .challenge-icon {
-    width: 42px; height: 42px; border-radius: 11px;
-    background: linear-gradient(135deg, var(--bg), #f0ebe4);
-    border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px; flex-shrink: 0;
-  }
-  .challenge-info { flex: 1; min-width: 0; }
-  .challenge-title { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
-  .challenge-desc  { font-size: 11px; color: var(--muted); margin-bottom: 7px; line-height: 1.4; }
-  .challenge-prog-wrap { height: 3px; background: rgba(44,74,46,0.1); border-radius: 99px; overflow: hidden; }
-  .challenge-prog-bar  { height: 100%; border-radius: 99px; transition: width .5s;
-    background: linear-gradient(90deg, var(--green), var(--green2)); }
-  .challenge-right { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-  .challenge-reward { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: .3px; }
-  .claim-btn {
-    padding: 7px 12px; border-radius: 8px; border: none; cursor: pointer;
-    font-size: 11px; font-weight: 700; letter-spacing: .3px; white-space: nowrap;
-  }
-  .claim-btn.ready   { background: linear-gradient(135deg, var(--green), var(--green2)); color: #f7f3ed; }
-  .claim-btn.claimed { background: rgba(44,74,46,0.08); color: var(--green); cursor: default; }
-  .claim-btn.locked  { background: var(--bg); color: #c0b4a4; border: 1px solid var(--border); cursor: default; }
-
-  /* Leaderboard */
-  .lb-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 13px;
-  }
-  .lb-item:last-child { border: none; }
-  .lb-rank {
-    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 800;
-  }
-  .lb-rank.r1 { background: #ffd700; color: #6a4000; }
-  .lb-rank.r2 { background: #d4d4e0; color: #404060; }
-  .lb-rank.r3 { background: #cd7f32; color: #fff; }
-  .lb-rank.rn { background: var(--bg); color: var(--muted); border: 1px solid var(--border); font-size: 10px; }
-  .lb-name { flex: 1; font-weight: 600; }
-  .lb-pts  { font-weight: 700; color: var(--green); }
-  .lb-me   { background: rgba(44,74,46,0.06); border-radius: 8px; padding: 0 6px; }
-
-  /* Achievements */
-  .ach-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-  .ach-card {
-    background: linear-gradient(180deg,#fff 0%,#faf7f2 100%);
-    border: 1px solid var(--border); border-radius: 12px; padding: 14px 10px; text-align: center;
-    box-shadow: 0 1px 6px rgba(44,74,46,.04);
-  }
-  .ach-card.locked { opacity: .4; filter: grayscale(1); }
-  .ach-icon { font-size: 24px; margin-bottom: 6px; }
-  .ach-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
-  .ach-desc { font-size: 10px; color: var(--muted); line-height: 1.3; }
-
-  /* Referral */
-  .ref-stat-card {
-    background: linear-gradient(135deg, var(--green), var(--green2));
-    border-radius: 18px; padding: 22px 20px; margin-bottom: 14px;
-    box-shadow: 0 8px 28px rgba(44,74,46,.2); color: #f7f3ed;
-  }
-  .ref-big { font-family: Fraunces, serif; font-size: 52px; line-height: 1; letter-spacing: -2px; margin-bottom: 4px; }
-  .ref-sub  { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(247,243,237,.55); }
-  .ref-prog-wrap { height: 2px; background: rgba(247,243,237,.2); border-radius: 99px; margin: 14px 0 6px; overflow: hidden; }
-  .ref-prog-bar  { height: 100%; background: rgba(247,243,237,.7); border-radius: 99px; transition: width .5s; }
-  .ref-next { font-size: 12px; color: rgba(247,243,237,.7); }
-  .ref-levels { list-style: none; }
-  .ref-levels li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-  .ref-levels li:last-child { border: none; }
-  .ref-lvl-badge { font-size: 10px; font-weight: 700; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; white-space: nowrap; min-width: 50px; text-align: center; }
-  .ref-lvl-badge.done { border-color: var(--green2); color: var(--green); }
-  .ref-link-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; font-size: 12px; color: var(--muted); word-break: break-all; line-height: 1.6; }
-
-  /* Giveaway */
-  .giveaway-card {
-    background: linear-gradient(135deg, var(--gold), var(--gold2));
-    border-radius: 18px; padding: 28px 22px; text-align: center;
-    color: #1c1c1a; box-shadow: 0 8px 28px rgba(196,150,90,.28); margin-bottom: 14px;
-  }
-  .giveaway-num { font-family: Fraunces, serif; font-size: 64px; line-height: 1; letter-spacing: -3px; margin-bottom: 4px; }
-  .giveaway-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(28,28,26,.55); }
 </style>
 </head>
 <body>
@@ -1077,7 +967,6 @@ tailwind.config = {
 <div id="screen-program" class="screen"></div>
 <div id="screen-diary"   class="screen"></div>
 <div id="screen-ai"      class="screen"></div>
-<div id="screen-club"    class="screen"></div>
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showScreen('home')" id="nav-home">
@@ -1113,14 +1002,6 @@ tailwind.config = {
     </span>
     <span class="nav-label">Доктор</span>
   </button>
-  <button class="nav-btn" onclick="showScreen('club')" id="nav-club">
-    <span class="nav-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
-      </svg>
-    </span>
-    <span class="nav-label">Клуб</span>
-  </button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -1155,7 +1036,6 @@ async function installPWA() {
     deferredPrompt.prompt();
     await deferredPrompt.userChoice;
     deferredPrompt = null;
-    document.getElementById('install-pwa-card')?.remove();
     return;
   }
 
@@ -1250,7 +1130,6 @@ function showScreen(name) {
   if (name === "program") loadProgram();
   if (name === "diary")   loadDiary();
   if (name === "ai")      loadAI();
-  if (name === "club")    loadClub();
 }
 
 function setScreenHTML(screen, html) {
@@ -1481,11 +1360,22 @@ async function loadHome() {
       <button class="content-toggle" onclick="toggleContent(${i}, this)">Читать далее</button>
     </div>`).join("");
 
+  const installCardHtml = `
+    <div style="background:linear-gradient(135deg,#2d6a4f,#40916c);border-radius:1.25rem;padding:11px 14px;display:flex;align-items:center;gap:12px;margin-bottom:4px;box-shadow:0 4px 16px rgba(44,100,70,.18)">
+      <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">📲</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:13px;color:#fff;line-height:1.2">Установи приложение</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:2px">Работает без браузера</div>
+      </div>
+      <button onclick="installPWA()" style="flex-shrink:0;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:6px 13px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)">Добавить</button>
+    </div>`;
+
   setScreenHTML(screen, `
     ${greetingHtml}
     ${streakHtml}
     ${courseHtml}
     ${wellnessHtml}
+    ${installCardHtml}
     <div style="height:4px"></div>
     <div class="section-head"><span class="label">Открытия</span></div>
     ${contentHtml}
@@ -3142,219 +3032,6 @@ function buildComparison(history, daysInCourse) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// КЛУБ
-// ══════════════════════════════════════════════════════════════════════════
-
-const CHALLENGE_ICONS = {
-  first_product: "🌱", week_streak: "📅", month_streak: "🏆",
-  diary_30: "📓", ref_3: "🤝",
-};
-
-const LEVEL_COLORS = {
-  Bronze:   "linear-gradient(135deg,#b87333,#d4943f)",
-  Silver:   "linear-gradient(135deg,#8888a0,#a8a8c0)",
-  Gold:     "linear-gradient(135deg,#c4965a,#e8b060)",
-  Platinum: "linear-gradient(135deg,#5080a0,#8090b8)",
-};
-
-async function loadClub() {
-  const screen = document.getElementById("screen-club");
-  screen.innerHTML = '<div class="spinner"></div>';
-
-  const data = await api("GET", "/api/club/data");
-
-  const { total_points, level, challenges,
-          leaderboard, ref_code, ref_count, giveaway_total,
-          giveaway_participating, achievements_data } = data;
-
-  // ── Level card ────────────────────────────────────────────────────────
-  const lvlGrad = LEVEL_COLORS[level.name] || LEVEL_COLORS.Bronze;
-  const lvlHtml = `
-    <div style="background:${lvlGrad};border-radius:2.75rem;padding:22px;box-shadow:0 4px 20px rgba(0,0,0,0.15);margin-bottom:14px;color:#fff">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div>
-          <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6);margin-bottom:4px">Уровень</div>
-          <div style="font-family:Fraunces,serif;font-size:24px;font-weight:600">${level.name}</div>
-        </div>
-        <div style="width:56px;height:56px;border-radius:1.25rem;background:rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:24px">👑</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:8px">
-        <span><strong style="color:#fff">${total_points.toLocaleString('ru')}</strong> XP</span>
-        <span>${level.next ? `до ${level.next} — ${(level.next_threshold - total_points).toLocaleString('ru')} XP` : 'Максимальный уровень'}</span>
-      </div>
-      <div style="height:8px;border-radius:99px;background:rgba(255,255,255,0.25);overflow:hidden">
-        <div style="height:100%;width:${level.progress_pct}%;background:#fff;border-radius:99px;transition:width .5s"></div>
-      </div>
-    </div>`;
-
-
-  // ── Challenges ────────────────────────────────────────────────────────
-  const challengesHtml = `
-    <div class="section-head" style="margin-top:4px"><span class="label">Испытания</span></div>
-    ${challenges.map(c => {
-      const pct = Math.round((c.progress / c.total) * 100);
-      let btnState, btnText;
-      if (c.claimed)      { btnState = "claimed"; btnText = "✓ Получено"; }
-      else if (c.met)     { btnState = "ready";   btnText = "Забрать"; }
-      else                { btnState = "locked";  btnText = `${c.progress}/${c.total}`; }
-      return `
-        <div class="challenge-card" id="chal-${c.id}">
-          <div class="challenge-icon">${CHALLENGE_ICONS[c.id] || "⭐"}</div>
-          <div class="challenge-info">
-            <div class="challenge-title">${c.title}</div>
-            <div class="challenge-desc">${c.desc}</div>
-            <div class="challenge-prog-wrap">
-              <div class="challenge-prog-bar" style="width:${pct}%"></div>
-            </div>
-          </div>
-          <div class="challenge-right">
-            <div class="challenge-reward">+${c.reward} pts</div>
-            <button class="claim-btn ${btnState}" onclick="claimChallenge('${c.id}',this)">${btnText}</button>
-          </div>
-        </div>`;
-    }).join("")}`;
-
-  // ── Leaderboard ───────────────────────────────────────────────────────
-  const lbHtml = leaderboard.length ? `
-    <div class="section-head" style="margin-top:4px"><span class="label">Топ участников</span></div>
-    <div class="card">
-      ${leaderboard.map(p => {
-        const rankClass = p.rank === 1 ? "r1" : p.rank === 2 ? "r2" : p.rank === 3 ? "r3" : "rn";
-        const name = p.first_name || p.username || "Участник";
-        const shortName = name.length > 14 ? name.slice(0, 13) + "…" : name;
-        return `
-          <div class="lb-item">
-            <div class="lb-rank ${rankClass}">${p.rank}</div>
-            <div class="lb-name">${shortName}</div>
-            <div class="lb-pts">${p.total_points.toLocaleString("ru")} pts</div>
-          </div>`;
-      }).join("")}
-    </div>` : "";
-
-  // ── Achievements ──────────────────────────────────────────────────────
-  const { streak, course_days, has_products } = achievements_data;
-  const ACHIEVEMENTS = [
-    { icon:"🌱", name:"Первый шаг",   desc:"Добавь продукт",     unlocked: has_products },
-    { icon:"📅", name:"7 дней",       desc:"7 дней подряд",      unlocked: streak >= 7 },
-    { icon:"🌿", name:"Месяц",        desc:"30 дней подряд",     unlocked: streak >= 30 },
-    { icon:"🤝", name:"Советник",     desc:"1 приглашённый",     unlocked: ref_count >= 1 },
-    { icon:"💫", name:"Амбассадор",   desc:"5 приглашённых",     unlocked: ref_count >= 5 },
-    { icon:"🏆", name:"Преданность",  desc:"60 дней всего",      unlocked: course_days >= 60 },
-  ];
-  const achHtml = `
-    <div class="section-head" style="margin-top:4px"><span class="label">Достижения</span></div>
-    <div class="ach-grid">
-      ${ACHIEVEMENTS.map(a => `
-        <div class="ach-card ${a.unlocked ? "" : "locked"}">
-          <div class="ach-icon">${a.icon}</div>
-          <div class="ach-name">${a.name}</div>
-          <div class="ach-desc">${a.desc}</div>
-        </div>`).join("")}
-    </div>`;
-
-  // ── Giveaway ──────────────────────────────────────────────────────────
-  const giveHtml = `
-    <div class="section-head" style="margin-top:4px"><span class="label">Розыгрыш месяца</span></div>
-    <div class="giveaway-card">
-      <div class="giveaway-num" id="giveCount">${giveaway_total}</div>
-      <div class="giveaway-lbl">участников</div>
-    </div>
-    ${giveaway_participating
-      ? `<div class="card" style="text-align:center;padding:18px">
-           <div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div>
-           <div style="font-size:12px;color:var(--muted);margin-top:4px">Итоги в конце месяца. Удачи.</div>
-         </div>`
-      : `<button class="btn gold-btn" onclick="joinGiveaway(this)">Участвовать в розыгрыше</button>`}`;
-
-  // ── Referral ──────────────────────────────────────────────────────────
-  const REF_LEVELS = [
-    {count:3,  reward:"Промокод −15%"},
-    {count:7,  reward:"Промокод −25%"},
-    {count:15, reward:"Бесплатный продукт"},
-  ];
-  const nextRef    = REF_LEVELS.find(l => l.count > ref_count);
-  const refPct     = nextRef ? Math.min((ref_count / nextRef.count) * 100, 100) : 100;
-  const botUsername = "Biolarapp_bot";
-  const refLink    = `https://t.me/${botUsername}?start=ref_${ref_code}`;
-  const shareUrl   = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent("Пройди персональный анализ нутриентов в Biolar")}`;
-
-  const refHtml = `
-    <div class="section-head" style="margin-top:4px"><span class="label">Приглашай друзей</span></div>
-    <div class="ref-stat-card">
-      <div class="ref-big">${ref_count}</div>
-      <div class="ref-sub">Приглашено</div>
-      <div class="ref-prog-wrap"><div class="ref-prog-bar" style="width:${refPct}%"></div></div>
-      <div class="ref-next">${nextRef ? `До следующей награды: ${nextRef.reward}` : "Все награды получены!"}</div>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <span class="label" style="margin-bottom:14px">Уровни наград</span>
-      <ul class="ref-levels" style="margin-top:14px">
-        ${REF_LEVELS.map(l => `
-          <li>
-            <span class="ref-lvl-badge ${ref_count >= l.count ? "done" : ""}">${l.count} чел.</span>
-            <span style="flex:1">${l.reward}</span>
-            ${ref_count >= l.count ? `<span style="color:var(--green);font-weight:700;font-size:14px">✓</span>` : ""}
-          </li>`).join("")}
-      </ul>
-    </div>
-    <span class="label">Твоя ссылка</span>
-    <div class="ref-link-box" style="margin-top:8px;margin-bottom:12px">${refLink}</div>
-    <button class="btn" onclick="window.open('${shareUrl}','_blank')">Поделиться ссылкой</button>
-    <button class="btn outline" style="margin-top:8px" onclick="copyRef('${refLink}')">Скопировать</button>`;
-
-  // ── Share progress card ───────────────────────────────────────────────
-  const shareText = encodeURIComponent(
-    `🌿 Я на курсе Biolar Organics уже ${course_days} дней!\n` +
-    `Стрик: ${streak} дней подряд.\n` +
-    `Пройди персональный анализ нутриентов 👇`
-  );
-  const shareFull = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${shareText}`;
-
-  const shareCardHtml = `
-    <div class="section-head" style="margin-top:4px"><span class="label">Мой прогресс</span></div>
-    <div class="share-progress-card">
-      <div class="share-prog-brand">🌿 Biolar Organics</div>
-      <div class="share-prog-stats">
-        <div class="share-prog-item"><div class="share-prog-num">${course_days}</div><div class="share-prog-lbl">дней курса</div></div>
-        <div class="share-prog-divider"></div>
-        <div class="share-prog-item"><div class="share-prog-num">${streak}</div><div class="share-prog-lbl">стрик</div></div>
-        <div class="share-prog-divider"></div>
-        <div class="share-prog-item"><div class="share-prog-num">${level.name}</div><div class="share-prog-lbl">уровень</div></div>
-      </div>
-    </div>
-    <button class="btn" style="margin-bottom:8px" onclick="window.open('${shareFull}','_blank')">📤 Поделиться прогрессом</button>`;
-
-  // ── PWA install card (всегда показываем) ─────────────────────────────
-  const installHtml = `
-    <div id="install-pwa-card" style="background:var(--card);border-radius:1.75rem;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-      <div style="width:40px;height:40px;border-radius:1rem;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📲</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px;color:var(--text)">На рабочий стол</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:1px">Открывай как обычное приложение</div>
-      </div>
-      <button onclick="installPWA()" style="flex-shrink:0;background:var(--green2);color:#fff;border:none;border-radius:99px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Добавить</button>
-    </div>`;
-
-  // ── Render all ────────────────────────────────────────────────────────
-  setScreenHTML(screen, `
-    <div style="margin-bottom:16px">
-      <span class="label" style="margin-bottom:6px">Biolar Club</span>
-      <div class="serif" style="font-size:26px;letter-spacing:-.2px;margin-top:4px">Твой профиль</div>
-    </div>
-    ${installHtml}
-    ${lvlHtml}
-    ${shareCardHtml}
-    ${challengesHtml}
-    ${lbHtml}
-    ${achHtml}
-    ${giveHtml}
-    <div style="height:8px"></div>
-    ${refHtml}
-    <div style="height:8px"></div>
-  `);
-}
-
-// ══════════════════════════════════════════════════════════════════════════
 // НАПОМИНАНИЯ
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -3391,35 +3068,6 @@ async function saveReminder() {
     await api("POST", "/api/settings/reminder", { reminder_time: time, enabled });
     toast(enabled ? `Напоминание в ${time} включено` : "Напоминание выключено");
   } catch(e) { toast("Ошибка: " + e.message); }
-}
-
-async function claimChallenge(challengeId, btn) {
-  if (btn.classList.contains("claimed") || btn.classList.contains("locked")) return;
-  btn.disabled = true; btn.textContent = "...";
-  const data = await api("POST", "/api/club/challenge/claim", { challenge_id: challengeId });
-  if (data.already_claimed) { btn.classList.replace("ready", "claimed"); btn.textContent = "✓ Получено"; return; }
-  if (!data.ok) { btn.disabled = false; btn.textContent = "Забрать"; return; }
-  btn.classList.replace("ready", "claimed"); btn.textContent = "✓ Получено";
-  toast(`+${data.reward} баллов! Всего: ${data.new_total}`);
-  // Update level card points
-  const lvlPtsEl = document.querySelector(".level-pts strong");
-  if (lvlPtsEl) lvlPtsEl.textContent = data.new_total;
-}
-
-async function joinGiveaway(btn) {
-  btn.disabled = true; btn.textContent = "...";
-  const data = await api("POST", "/api/giveaway/join");
-  const el = document.getElementById("giveCount");
-  if (el) el.textContent = data.total_participants;
-  const card = document.createElement("div");
-  card.className = "card"; card.style.cssText = "text-align:center;padding:18px";
-  card.innerHTML = `<div class="serif" style="font-size:18px;color:var(--green)">Ты участвуешь.</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Итоги в конце месяца. Удачи.</div>`;
-  btn.replaceWith(card);
-  toast("Ты в розыгрыше");
-}
-
-function copyRef(link) {
-  navigator.clipboard.writeText(link).then(() => toast("Ссылка скопирована"));
 }
 
 // ── Старт ──────────────────────────────────────────────────────────────────
