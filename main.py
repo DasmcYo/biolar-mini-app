@@ -1016,30 +1016,37 @@ async def admin_chats(key: str = ""):
             users[uid] = {"name": m["first_name"] or f"user_{uid}", "msgs": []}
         users[uid]["msgs"].append(m)
 
-    blocks = []
-    for uid, u in users.items():
-        msgs_html = ""
-        for m in u["msgs"]:
-            role_label = "👤 Пользователь" if m["role"] == "user" else "✦ Доктор Биолар"
-            color = "#1a3a1c" if m["role"] == "user" else "#4a7c59"
-            bg = "#f0f7f0" if m["role"] == "user" else "#ffffff"
-            time = m["created_at"][:16] if m["created_at"] else ""
-            text = m["content"].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-            msgs_html += f"""
-              <div style="margin-bottom:10px;padding:10px 14px;background:{bg};border-radius:10px;border-left:3px solid {color}">
-                <div style="font-size:11px;color:#888;margin-bottom:4px">{role_label} · {time}</div>
-                <div style="font-size:14px;line-height:1.6">{text}</div>
-              </div>"""
-        blocks.append(f"""
-          <div style="background:#fff;border-radius:14px;padding:20px;margin-bottom:24px;box-shadow:0 2px 12px rgba(0,0,0,.07)">
-            <div style="font-size:16px;font-weight:700;margin-bottom:14px;color:#1a3a1c">
-              {u['name']} <span style="font-size:12px;color:#888;font-weight:400">ID: {uid} · {len(u['msgs'])} сообщений</span>
-            </div>
-            {msgs_html}
-          </div>""")
+    import json as _json
 
     total = len(messages)
     unique = len(users)
+
+    # Собираем данные для JS
+    users_list = []
+    chats_data = {}
+    for uid, u in users.items():
+        last_msg = u["msgs"][-1]
+        last_time = last_msg["created_at"][:16] if last_msg["created_at"] else ""
+        last_preview = last_msg["content"][:60].replace('"', '&quot;')
+        users_list.append({
+            "uid": uid,
+            "name": u["name"],
+            "count": len(u["msgs"]),
+            "last_time": last_time,
+            "last_preview": last_preview,
+        })
+        chats_data[uid] = [
+            {
+                "role": m["role"],
+                "time": m["created_at"][:16] if m["created_at"] else "",
+                "text": m["content"],
+            }
+            for m in u["msgs"]
+        ]
+
+    users_json = _json.dumps(users_list, ensure_ascii=False)
+    chats_json = _json.dumps(chats_data, ensure_ascii=False)
+
     html = f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1047,16 +1054,148 @@ async def admin_chats(key: str = ""):
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Доктор Биолар — чаты</title>
   <style>
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ font-family: -apple-system, Arial, sans-serif; background: #f4f1ec; padding: 24px 16px; }}
-    h1 {{ font-size: 22px; color: #1a3a1c; margin-bottom: 6px; }}
-    .meta {{ font-size: 13px; color: #888; margin-bottom: 24px; }}
+    *{{box-sizing:border-box;margin:0;padding:0}}
+    body{{font-family:-apple-system,Arial,sans-serif;background:#f0ede8;height:100vh;display:flex;flex-direction:column;overflow:hidden}}
+
+    /* Top bar */
+    .topbar{{background:#1a3a1c;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}}
+    .topbar-title{{font-size:17px;font-weight:700;letter-spacing:-.3px}}
+    .topbar-meta{{font-size:12px;color:rgba(255,255,255,.55);margin-left:auto}}
+
+    /* Layout */
+    .layout{{display:flex;flex:1;overflow:hidden}}
+
+    /* Sidebar */
+    .sidebar{{width:300px;flex-shrink:0;background:#fff;border-right:1px solid #e8e3dc;display:flex;flex-direction:column;overflow:hidden}}
+    .search-wrap{{padding:12px;border-bottom:1px solid #f0ede8}}
+    .search-input{{width:100%;padding:8px 12px;border:1px solid #e0dbd4;border-radius:8px;font-size:13px;outline:none;background:#f8f6f2}}
+    .search-input:focus{{border-color:#4a7c59}}
+    .user-list{{overflow-y:auto;flex:1}}
+    .user-item{{padding:12px 14px;cursor:pointer;border-bottom:1px solid #f5f2ed;transition:background .15s;display:flex;gap:10px;align-items:flex-start}}
+    .user-item:hover{{background:#f8f6f2}}
+    .user-item.active{{background:#edf5ef}}
+    .user-avatar{{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#2d6a4f,#40916c);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}}
+    .user-info{{flex:1;min-width:0}}
+    .user-name{{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+    .user-preview{{font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+    .user-meta{{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}}
+    .user-time{{font-size:10px;color:#bbb;white-space:nowrap}}
+    .user-badge{{background:#4a7c59;color:#fff;border-radius:99px;font-size:10px;font-weight:700;padding:1px 6px}}
+    .no-results{{padding:24px;text-align:center;color:#bbb;font-size:13px}}
+
+    /* Chat panel */
+    .chat-panel{{flex:1;display:flex;flex-direction:column;overflow:hidden}}
+    .chat-header{{padding:14px 20px;background:#fff;border-bottom:1px solid #e8e3dc;flex-shrink:0}}
+    .chat-header-name{{font-size:15px;font-weight:700;color:#1a3a1c}}
+    .chat-header-sub{{font-size:12px;color:#999;margin-top:2px}}
+    .chat-messages{{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px}}
+    .empty-state{{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ccc;gap:12px}}
+    .empty-icon{{font-size:48px}}
+    .empty-text{{font-size:14px}}
+
+    /* Messages */
+    .msg{{max-width:75%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}}
+    .msg-time{{font-size:10px;opacity:.5;margin-top:4px}}
+    .msg-wrap{{display:flex;flex-direction:column}}
+    .msg-wrap.user{{align-items:flex-end}}
+    .msg-wrap.assistant{{align-items:flex-start}}
+    .msg.user{{background:#1a3a1c;color:#fff;border-bottom-right-radius:4px}}
+    .msg.assistant{{background:#fff;color:#1a1a1a;border:1px solid #e8e3dc;border-bottom-left-radius:4px}}
+    .msg-role{{font-size:10px;color:#999;margin-bottom:3px;font-weight:600;letter-spacing:.3px;text-transform:uppercase}}
   </style>
 </head>
 <body>
-  <h1>✦ Чаты с Доктор Биолар</h1>
-  <div class="meta">{unique} пользователей · {total} сообщений всего</div>
-  {''.join(blocks) if blocks else '<p style="color:#888">Сообщений пока нет</p>'}
+
+<div class="topbar">
+  <span class="topbar-title">✦ Доктор Биолар — чаты</span>
+  <span class="topbar-meta">{unique} польз. · {total} сообщений</span>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="search-wrap">
+      <input class="search-input" type="text" placeholder="Поиск по имени..." oninput="filterUsers(this.value)" id="search">
+    </div>
+    <div class="user-list" id="user-list"></div>
+  </div>
+
+  <div class="chat-panel" id="chat-panel">
+    <div class="empty-state">
+      <div class="empty-icon">💬</div>
+      <div class="empty-text">Выбери пользователя слева</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const USERS = {users_json};
+const CHATS = {chats_json};
+let activeUid = null;
+
+function initials(name) {{
+  return name.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase() || "?";
+}}
+
+function escHtml(s) {{
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\\n/g,"<br>");
+}}
+
+function renderUserList(users) {{
+  const el = document.getElementById("user-list");
+  if (!users.length) {{
+    el.innerHTML = '<div class="no-results">Никого не найдено</div>';
+    return;
+  }}
+  el.innerHTML = users.map(u => `
+    <div class="user-item ${{activeUid == u.uid ? 'active' : ''}}" onclick="openChat(${{u.uid}})" id="ui-${{u.uid}}">
+      <div class="user-avatar">${{initials(u.name)}}</div>
+      <div class="user-info">
+        <div class="user-name">${{escHtml(u.name)}}</div>
+        <div class="user-preview">${{escHtml(u.last_preview)}}</div>
+      </div>
+      <div class="user-meta">
+        <div class="user-time">${{u.last_time.slice(5)}}</div>
+        <div class="user-badge">${{u.count}}</div>
+      </div>
+    </div>`).join("");
+}}
+
+function filterUsers(q) {{
+  const filtered = q.trim()
+    ? USERS.filter(u => u.name.toLowerCase().includes(q.toLowerCase()))
+    : USERS;
+  renderUserList(filtered);
+}}
+
+function openChat(uid) {{
+  activeUid = uid;
+  document.querySelectorAll(".user-item").forEach(el => el.classList.remove("active"));
+  const item = document.getElementById("ui-" + uid);
+  if (item) item.classList.add("active");
+
+  const user = USERS.find(u => u.uid == uid);
+  const msgs = CHATS[uid] || [];
+  const panel = document.getElementById("chat-panel");
+
+  const msgsHtml = msgs.map(m => `
+    <div class="msg-wrap ${{m.role}}">
+      <div class="msg-role">${{m.role === 'user' ? '👤 Пользователь' : '✦ Доктор Биолар'}}</div>
+      <div class="msg ${{m.role}}">${{escHtml(m.text)}}<div class="msg-time">${{m.time}}</div></div>
+    </div>`).join("");
+
+  panel.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-header-name">${{escHtml(user.name)}}</div>
+      <div class="chat-header-sub">ID: ${{uid}} · ${{user.count}} сообщений · последнее ${{user.last_time}}</div>
+    </div>
+    <div class="chat-messages" id="chat-msgs">${{msgsHtml}}</div>`;
+
+  const chatMsgs = document.getElementById("chat-msgs");
+  if (chatMsgs) chatMsgs.scrollTop = chatMsgs.scrollHeight;
+}}
+
+renderUserList(USERS);
+</script>
 </body>
 </html>"""
 
