@@ -2069,11 +2069,11 @@ async function sendChat(text) {
   const msgs = document.getElementById("chat-msgs");
   if (!msgs) return;
   msgs.insertAdjacentHTML("beforeend", `<div class="msg user"><div class="msg-bubble">${text}</div></div>`);
-  document.getElementById("screen-ai")?.scrollTo(0, 999999);
+  window.scrollTo(0, document.body.scrollHeight);
 
   const data = await api("POST", "/api/ai/chat", { message: text });
   msgs.insertAdjacentHTML("beforeend", `<div class="msg bot"><div class="msg-bubble">${data.message}</div></div>`);
-  document.getElementById("screen-ai")?.scrollTo(0, 999999);
+  window.scrollTo(0, document.body.scrollHeight);
   CHAT_MESSAGES.push({ role:"user", text }, { role:"bot", text: data.message });
 }
 
@@ -2155,7 +2155,7 @@ async function initAIChat(isNew) {
           `<div class="msg ${role}"><div class="msg-bubble">${escAI(clean)}</div></div>`
         );
       });
-      document.getElementById("screen-ai")?.scrollTo(0, 999999);
+      setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 50);
       return; // есть история — онбординг не нужен
     }
   } catch(e) {}
@@ -2186,7 +2186,7 @@ async function sendAI(text) {
     msgs.insertAdjacentHTML("beforeend",
       `<div class="msg user"><div class="msg-bubble">${escAI(text)}</div></div>`
     );
-    document.getElementById("screen-ai")?.scrollTo(0, 999999);
+    window.scrollTo(0, document.body.scrollHeight);
     const sugsEl = document.getElementById("ai-sugs");
     if (sugsEl) sugsEl.style.display = "none";
   }
@@ -2195,7 +2195,7 @@ async function sendAI(text) {
   msgs.insertAdjacentHTML("beforeend",
     `<div class="msg bot" id="${typingId}"><div class="msg-bubble" style="color:var(--muted)">...</div></div>`
   );
-  document.getElementById("screen-ai")?.scrollTo(0, 999999);
+  window.scrollTo(0, document.body.scrollHeight);
 
   let data;
   try {
@@ -2237,7 +2237,7 @@ async function sendAI(text) {
     msgs.appendChild(row);
   }
 
-  document.getElementById("screen-ai")?.scrollTo(0, 999999);
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 async function addOneProduct(productId, btn) {
